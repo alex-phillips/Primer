@@ -1,0 +1,196 @@
+<?php
+/**
+ * @author Alex Phillips
+ * Date: 3/18/14
+ * Time: 12:26 PM
+ */
+
+// dev error reporting
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
+
+if (!defined('PRIMER_CORE')) {
+    define('PRIMER_CORE', dirname(dirname(__FILE__)));
+}
+
+require_once(PRIMER_CORE . '/lib/PasswordCompatibilityLibrary.php');
+
+/**
+ * the autoloading function, which will be called every time a file "is missing"
+ * NOTE: don't get confused, this is not "__autoload", the now deprecated function
+ * The PHP Framework Interoperability Group (@see https://github.com/php-fig/fig-standards) recommends using a
+ * standardized autoloader https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md, so we do:
+ *
+ * @param $class
+ */
+function autoload($class)
+{
+    // First attempt libs directory, then attempt Objects in libs
+
+    $libs = scandir(PRIMER_CORE . '/lib');
+    foreach ($libs as $file) {
+        if (strtolower($file) == strtolower($class . '.php')) {
+            require_once(PRIMER_CORE . "/lib/" . $file);
+            return;
+        }
+    }
+
+    $core = scandir(PRIMER_CORE . '/Core');
+    foreach ($core as $file) {
+        if (strtolower($file) == strtolower($class . '.php')) {
+            require_once(PRIMER_CORE . "/Core/" . $file);
+            return;
+        }
+    }
+
+    $models = scandir(APP_ROOT . '/Models');
+    foreach ($models as $file) {
+        if (strtolower($file) == strtolower($class . '.php')) {
+            require_once(APP_ROOT . "/Models/" . $file);
+            return;
+        }
+    }
+
+    $controllers = scandir(APP_ROOT . '/Controllers');
+    foreach ($controllers as $file) {
+        if (strtolower($file) == strtolower($class . '.php')) {
+            require_once(APP_ROOT . "/Controllers/" . $file);
+            return;
+        }
+    }
+}
+
+spl_autoload_register("autoload");
+
+class Primer
+{
+    private static $_jsValues;
+    private static $_values = array();
+
+    public static function setJSValue($key, $value, $category = "default") {
+        if (self::$_jsValues == null) {
+            self::$_jsValues = new stdClass();
+        }
+
+        $path = explode('.', $category);
+        $o = self::$_jsValues;
+        foreach ($path as $p) {
+            if (!isset($o->$p)) {
+                $o->$p = new stdClass();
+            }
+            $o = $o->$p;
+        }
+
+        $o->$key = $value;
+    }
+
+    public static function getJSValues()
+    {
+        return self::$_jsValues;
+    }
+
+    /**
+     * Sets a key/value pair in the template registry
+     *
+     * @param string $key name of the key
+     * @param mixed $value
+     * @param string $category category in which to file the key/value pair; can be a dot-separated path
+     */
+    public static function setValue ($key, $value, $category = "default")
+    {
+        if (self::$_values == null)
+        {
+            self::$_values = new stdClass ();
+        }
+
+        $path = explode ('.', $category);
+        $o = self::$_values;
+        foreach ($path as $p)
+        {
+            if (!isset ($o->$p))
+            {
+                $o->$p = new stdClass ();
+            }
+            $o = $o->$p;
+        }
+
+        $o->$key = $value;
+    }
+
+    /**
+     * Retrieves a key/value pair from the template registry
+     *
+     * @param string $key name of the key
+     * @param string $category category in which to file the key/value pair; ; can be a dot-separated path
+     * @return mixed value of the key if set, otherwise null
+     */
+    public static function getValue ($key, $category = "default")
+    {
+        if (self::$_values == null)
+        {
+            return null;
+        }
+
+        $path = explode ('.', $category);
+        $o = self::$_values;
+
+        foreach ($path as $p)
+        {
+            if (!isset ($o->$p))
+            {
+                return null;
+            }
+            $o = $o->$p;
+        }
+
+        if (!isset ($o->$key))
+        {
+            return null;
+        }
+
+        return $o->$key;
+    }
+
+    /**
+     * Deletes a key/value pair from the template registry
+     *
+     * @param string $key name of the key
+     * @param string $category category in which to file the key/value pair; ; can be a dot-separated path
+     */
+    public static function deleteValue ($key, $category = "default")
+    {
+        if (self::$_values == null)
+        {
+            return;
+        }
+
+        $path = explode ('.', $category);
+        $o = self::$_values;
+
+        foreach ($path as $p)
+        {
+            if (!isset ($o->$p))
+            {
+                return;
+            }
+            $o = $o->$p;
+        }
+
+        if (!isset ($o->$key))
+        {
+            return;
+        }
+
+        unset ($o->$key);
+
+        return;
+    }
+
+    public static function logMessage ($msg, $filename = 'default')
+    {
+        $pid = getmypid();
+        $dt = date("Y-m-d H:i:s (T)");
+        $fullpath = LOG_PATH . $filename;
+        error_log("$dt\t$pid\t$msg\n", 3, $fullpath);
+    }
+}
