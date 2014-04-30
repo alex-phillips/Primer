@@ -1,6 +1,6 @@
 <?php
 
-class Posts_Controller extends App_Controller
+class PostsController extends AppController
 {
     /* @var $model Post */
     public $name = 'post';
@@ -83,7 +83,7 @@ class Posts_Controller extends App_Controller
             $this->request->data['post']['id_user'] = Session::read('id_user');
 
             // Only create slug on creation so bookmarks always work in title is edited/changed
-            $slug = preg_replace('/[^A-Za-z0-9-]+/', '-', strtolower($this->request->data['post']['title']));
+            $slug = Inflector::slug($this->request->data['post']['title'], '-');
             // Check to make sure slug doesn't exist, if it does, add timestamp
             $posts = $this->Post->find(array(
                 'conditions' => array(

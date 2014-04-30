@@ -5,7 +5,7 @@
  * Time: 10:56 PM
  */
 
-class App_Controller extends Controller
+class AppController extends Controller
 {
 
 }

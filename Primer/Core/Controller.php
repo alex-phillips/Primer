@@ -24,10 +24,10 @@ class Controller
      */
     public function loadModel()
     {
-        $path = '/Models/' . ucfirst($this->name) . '.php';
+        $path = MODELS_PATH . ucfirst($this->name) . '.php';
         // @TODO: Find better way to handle in model doesn't exist
-        if (file_exists(APP_ROOT . $path)) {
-            require_once(APP_ROOT . $path);
+        if (file_exists($path)) {
+            Primer::requireFile($path);
 
             $modelName = ucfirst($this->name);
             $this->{$modelName} = new $modelName();

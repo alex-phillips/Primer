@@ -1,6 +1,6 @@
 <?php
 
-class Pages_Controller extends App_Controller
+class PagesController extends AppController
 {
     public $name = 'page';
 

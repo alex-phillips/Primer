@@ -7,7 +7,6 @@ class Bootstrap
 {
     public $request;
 
-    private $_url = array();
     private $_controller = null;
 
     /**
@@ -26,7 +25,7 @@ class Bootstrap
         Primer::setValue('conroller', Router::$controller);
         Primer::setValue('action', Router::$action);
         // Check if chosen controller exists, otherwise, 404
-        if (file_exists(APP_ROOT . '/Controllers/' . ucfirst(Router::$controller) . '_Controller.php')) {
+        if (file_exists(CONTROLLERS_PATH . Primer::getControllerName(Router::$controller) . '.php')) {
             $this->_loadController(Router::$controller);
             $this->_callControllerMethod();
         }
@@ -42,7 +41,7 @@ class Bootstrap
      */
     private function _loadController($controller)
     {
-        $controllerName = $controller . '_Controller';
+        $controllerName = Primer::getControllerName($controller);
         $this->_controller = new $controllerName;
         $this->_controller->loadModel();
     }

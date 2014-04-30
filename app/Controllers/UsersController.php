@@ -1,6 +1,6 @@
 <?php
 
-class Users_Controller extends App_Controller
+class UsersController extends AppController
 {
     public $name = 'user';
 
