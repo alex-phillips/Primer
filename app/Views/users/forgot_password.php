@@ -1,5 +1,5 @@
 <h1>Request a password reset</h1>
-Enter your username and you'll get a mail with instructions:
+Enter your username and you'll get an email with instructions
 <!-- request password reset form box -->
 <?php
 
