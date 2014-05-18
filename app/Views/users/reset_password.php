@@ -19,5 +19,3 @@ $this->Form->add('newpass2', array(
     'label' => 'Repeat New Password',
 ));
 $this->Form->end();
-
-?>
