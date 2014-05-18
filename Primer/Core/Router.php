@@ -9,9 +9,17 @@ require_once(APP_ROOT . '/Config/routes.php');
 
 class Router
 {
+    /////////////////////////////////////////////////
+    // PROPERTIES, PUBLIC
+    /////////////////////////////////////////////////
+
     public static $controller = 'pages';
     public static $action = 'index';
     public static $args = array();
+
+    /////////////////////////////////////////////////
+    // PROPERTIES, PRIVATE AND PROTECTED
+    /////////////////////////////////////////////////
 
     private static $_url = array();
     private static $_routes = array();
@@ -82,7 +90,7 @@ class Router
 
         if (self::$_url) {
             self::$controller = self::$_url[0];
-            if (sizeof(self::$_url) === 1 || preg_match('#.+:.+#', self::$_url[1])) {
+            if (sizeof(self::$_url) === 1 || preg_match('#\?.+#', self::$_url[1]) ||  preg_match('#.+:.+#', self::$_url[1])) {
                 self::$action = 'index';
                 $args = array_slice(self::$_url, 1);
             }
