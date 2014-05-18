@@ -8,9 +8,9 @@ echo $this->post->title;
 echo $this->post->body;
 
 $this->Form->create('users');
-$this->Form->add('id_post', array(
+$this->Form->add('id', array(
     'type' => 'hidden',
-    'value' => $this->post->id_post,
+    'value' => $this->post->id,
 ));
 $this->Form->end(array(
     'value' => 'Delete Post',
