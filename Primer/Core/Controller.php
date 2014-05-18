@@ -18,6 +18,7 @@ class Controller
 
         $this->view = new View();
 
+        // @TODO need a better way to give View the same components as Controller
         foreach ($this->components as $component) {
             if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . '.php')) {
                 Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . '.php');
@@ -27,6 +28,7 @@ class Controller
         }
         Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'Request.php');
         $this->request = Request::getInstance();
+        $this->view->request = $this->request;
 
         $this->view->paginator = new Paginator($this->pagination_config);
         $this->loadModel();
