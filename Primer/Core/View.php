@@ -45,6 +45,7 @@ class View
                     echo json_encode(Primer::getValue('rendering_object'));
                     break;
                 default:
+                    Router::error404();
                     break;
             }
             exit;
