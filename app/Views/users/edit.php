@@ -1,9 +1,9 @@
 <?php
 
 $this->Form->create('users');
-$this->Form->add('id_user', array(
+$this->Form->add('id', array(
     'type' => 'hidden',
-    'value' => Session::read('id_user'),
+    'value' => $this->Session->read('id'),
 ));
 $this->Form->add('email', array(
     'label' => 'Email Address',
