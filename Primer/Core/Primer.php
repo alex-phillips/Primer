@@ -13,7 +13,11 @@ if (!defined('PRIMER_CORE')) {
     define('PRIMER_CORE', dirname(dirname(__FILE__)));
 }
 
-require_once(PRIMER_CORE . '/lib/PasswordCompatibilityLibrary.php');
+define('MODELS_PATH', APP_ROOT . DS . 'Models' . DS);
+define('CONTROLLERS_PATH', APP_ROOT . DS . 'Controllers' . DS);
+
+Primer::requireFile(PRIMER_CORE . '/lib/PasswordCompatibilityLibrary.php');
+spl_autoload_register('Primer::autoload');
 
 /**
  * the autoloading function, which will be called every time a file "is missing"
@@ -23,49 +27,55 @@ require_once(PRIMER_CORE . '/lib/PasswordCompatibilityLibrary.php');
  *
  * @param $class
  */
-function autoload($class)
-{
-    // First attempt libs directory, then attempt Objects in libs
-
-    $libs = scandir(PRIMER_CORE . '/lib');
-    foreach ($libs as $file) {
-        if (strtolower($file) == strtolower($class . '.php')) {
-            require_once(PRIMER_CORE . "/lib/" . $file);
-            return;
-        }
-    }
-
-    $core = scandir(PRIMER_CORE . '/Core');
-    foreach ($core as $file) {
-        if (strtolower($file) == strtolower($class . '.php')) {
-            require_once(PRIMER_CORE . "/Core/" . $file);
-            return;
-        }
-    }
-
-    $models = scandir(APP_ROOT . '/Models');
-    foreach ($models as $file) {
-        if (strtolower($file) == strtolower($class . '.php')) {
-            require_once(APP_ROOT . "/Models/" . $file);
-            return;
-        }
-    }
-
-    $controllers = scandir(APP_ROOT . '/Controllers');
-    foreach ($controllers as $file) {
-        if (strtolower($file) == strtolower($class . '.php')) {
-            require_once(APP_ROOT . "/Controllers/" . $file);
-            return;
-        }
-    }
-}
-
-spl_autoload_register("autoload");
 
 class Primer
 {
     private static $_jsValues;
     private static $_values = array();
+    private static $_loadedFiles = array();
+
+    public static function autoload($class)
+    {
+        // First attempt libs directory, then attempt Objects in libs
+        $dir = scandir(PRIMER_CORE . '/lib');
+        foreach ($dir as $file) {
+            if (strtolower($file) == strtolower($class . '.php')) {
+                Primer::requireFile(PRIMER_CORE . "/lib/" . $file);
+                return;
+            }
+        }
+
+        $dir = scandir(PRIMER_CORE . '/Core');
+        foreach ($dir as $file) {
+            if (strtolower($file) == strtolower($class . '.php')) {
+                Primer::requireFile(PRIMER_CORE . "/Core/" . $file);
+                return;
+            }
+        }
+
+        $dir = scandir(MODELS_PATH);
+        foreach ($dir as $file) {
+            if (strtolower($file) == strtolower($class . '.php')) {
+                Primer::requireFile(MODELS_PATH . $file);
+                return;
+            }
+        }
+
+        $dir = scandir(CONTROLLERS_PATH);
+        foreach ($dir as $file) {
+            if (strtolower($file) == strtolower($class . '.php')) {
+                Primer::requireFile(CONTROLLERS_PATH . $file);
+                return;
+            }
+        }
+    }
+
+    public static function requireFile($filename)
+    {
+        if (!in_array($filename, self::$_loadedFiles)) {
+            require_once("$filename");
+        }
+    }
 
     public static function setJSValue($key, $value, $category = "default") {
         if (self::$_jsValues == null) {
@@ -90,7 +100,7 @@ class Primer
     }
 
     /**
-     * Sets a key/value pair in the template registry
+     * Sets a key/value pair in the framework
      *
      * @param string $key name of the key
      * @param mixed $value
@@ -100,7 +110,7 @@ class Primer
     {
         if (self::$_values == null)
         {
-            self::$_values = new stdClass ();
+            self::$_values = new \stdClass ();
         }
 
         $path = explode ('.', $category);
@@ -109,7 +119,7 @@ class Primer
         {
             if (!isset ($o->$p))
             {
-                $o->$p = new stdClass ();
+                $o->$p = new \stdClass ();
             }
             $o = $o->$p;
         }
@@ -118,7 +128,7 @@ class Primer
     }
 
     /**
-     * Retrieves a key/value pair from the template registry
+     * Retrieves a key/value pair from the framework
      *
      * @param string $key name of the key
      * @param string $category category in which to file the key/value pair; ; can be a dot-separated path
@@ -126,25 +136,21 @@ class Primer
      */
     public static function getValue ($key, $category = "default")
     {
-        if (self::$_values == null)
-        {
+        if (self::$_values == null) {
             return null;
         }
 
         $path = explode ('.', $category);
         $o = self::$_values;
 
-        foreach ($path as $p)
-        {
-            if (!isset ($o->$p))
-            {
+        foreach ($path as $p) {
+            if (!isset ($o->$p)) {
                 return null;
             }
             $o = $o->$p;
         }
 
-        if (!isset ($o->$key))
-        {
+        if (!isset ($o->$key)) {
             return null;
         }
 
@@ -152,32 +158,28 @@ class Primer
     }
 
     /**
-     * Deletes a key/value pair from the template registry
+     * Deletes a key/value pair from the framework
      *
      * @param string $key name of the key
      * @param string $category category in which to file the key/value pair; ; can be a dot-separated path
      */
     public static function deleteValue ($key, $category = "default")
     {
-        if (self::$_values == null)
-        {
+        if (self::$_values == null) {
             return;
         }
 
         $path = explode ('.', $category);
         $o = self::$_values;
 
-        foreach ($path as $p)
-        {
-            if (!isset ($o->$p))
-            {
+        foreach ($path as $p) {
+            if (!isset ($o->$p)) {
                 return;
             }
             $o = $o->$p;
         }
 
-        if (!isset ($o->$key))
-        {
+        if (!isset ($o->$key)) {
             return;
         }
 
@@ -192,5 +194,10 @@ class Primer
         $dt = date("Y-m-d H:i:s (T)");
         $fullpath = LOG_PATH . $filename;
         error_log("$dt\t$pid\t$msg\n", 3, $fullpath);
+    }
+
+    public static function getControllerName($string)
+    {
+        return ucfirst(Inflector::pluralize($string) . 'Controller');
     }
 }
