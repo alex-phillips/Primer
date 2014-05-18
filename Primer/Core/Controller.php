@@ -5,13 +5,33 @@
  */
 class Controller
 {
-    public $pagination_config = array(
+    /////////////////////////////////////////////////
+    // PROPERTIES, PRIVATE AND PROTECTED
+    /////////////////////////////////////////////////
+
+    /*
+     * Variable of the model name of the controller
+     * i.e. 'User' model for UsersController
+     */
+    protected $_modelName;
+
+    /*
+     * Boolean to determine if a model has been loaded for the controller
+     */
+    protected $_modelLoaded = false;
+
+    /*
+     * Array of components to be loaded into controller, model, and view
+     */
+    protected $_components = array();
+
+    /*
+     * Default pagination settings
+     */
+    protected $_paginationConfig = array(
         'perPage' => 10,
         'instance' => 'p'
     );
-    protected $_modelName;
-    protected $_modelLoaded = false;
-    protected $_components = array();
 
     public function __construct()
     {
@@ -37,7 +57,7 @@ class Controller
         $this->request = Request::getInstance();
         $this->view->request = $this->request;
 
-        $this->view->paginator = new Paginator($this->pagination_config);
+        $this->view->paginator = new Paginator($this->_paginationConfig);
     }
 
     /**

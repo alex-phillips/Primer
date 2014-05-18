@@ -6,8 +6,8 @@ class PostsController extends AppController
     public $name = 'post';
 
     // Override default config for pagination
-    public $pagination_config = array(
-        'perPage' => 10,
+    protected $_paginationConfig = array(
+        'perPage' => 2,
         'instance' => 'p'
     );
 
