@@ -5,7 +5,8 @@
  */
 class Controller
 {
-    public $request;
+    protected $_modelName;
+    public $components = array();
     public $pagination_config = array(
         'perPage' => 10,
         'instance' => 'p'
@@ -13,10 +14,22 @@ class Controller
 
     public function __construct()
     {
-        $this->request = Request::getInstance();
+        $this->_modelName = strtolower(Inflector::singularize(str_replace('Controller', '', get_class($this))));
+
         $this->view = new View();
 
+        foreach ($this->components as $component) {
+            if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . '.php')) {
+                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . '.php');
+                $this->$component = $component::getInstance();
+                $this->view->$component = $this->$component;
+            }
+        }
+        Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'Request.php');
+        $this->request = Request::getInstance();
+
         $this->view->paginator = new Paginator($this->pagination_config);
+        $this->loadModel();
     }
 
     /**
@@ -24,13 +37,11 @@ class Controller
      */
     public function loadModel()
     {
-        $path = MODELS_PATH . ucfirst($this->name) . '.php';
+        $path = MODELS_PATH . ucfirst($this->_modelName) . '.php';
         // @TODO: Find better way to handle in model doesn't exist
         if (file_exists($path)) {
             Primer::requireFile($path);
-
-            $modelName = ucfirst($this->name);
-            $this->{$modelName} = new $modelName();
+            $this->{ucfirst($this->_modelName)} = new $this->_modelName();
         }
 
         // @TODO: do we need to handle situation where model doesn't exist for controller? i.e. pages
@@ -41,14 +52,8 @@ class Controller
         return true;
     }
 
-    /**
-     * Control browser redirects
-     *
-     * @param $location
-     */
-    public function redirect($location)
+    public function afterFilter()
     {
-        header("Location: " . $location);
-        exit;
+        return true;
     }
 }
