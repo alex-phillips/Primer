@@ -5,18 +5,25 @@ require_once(PRIMER_CORE . '/lib/Paginator.php');
 class View
 {
 
+    /*
+     * Additional CSS files to be included at render
+     */
     private static $_cssFiles = '';
+
+    /*
+     * Additional JS files to be included at render
+     */
     private static $_jsFiles = array();
+
 
     public $filename;
     public $title = '';
     public $paginator;
     public $Form;
-    public $request;
+    public $template = 'default';
 
     public function __construct() {
         $this->title = Primer::getValue('action');
-        $this->request = Request::getInstance();
     }
 
     /**
@@ -24,9 +31,8 @@ class View
      * and using the passed in file to render the contents of the page.
      *
      * @param $filename
-     * @param string $template
      */
-    public function render($filename, $template = 'default')
+    public function render($filename)
     {
         list($controller) = explode('_', strtolower(Primer::getValue('controller')), 1);
         $this->Form = new Form($controller, Primer::getValue('action'));
@@ -44,28 +50,28 @@ class View
             exit;
         }
         else {
-            require_once("app/Views/templates/$template.php");
+            require_once("Views/templates/$this->template.php");
         }
 
-        Session::delete('messages');
+        $this->Session->delete('messages');
         exit(1);
     }
 
-    public function get_contents ()
+    public function getContents ()
     {
-        require_once("app/{$this->filename}");
+        require_once("{$this->filename}");
     }
 
     public function flash()
     {
         $markup = '';
-        if (Session::read('flash_messages')) {
-            foreach (Session::read('flash_messages') as $error => $class) {
+        if ($this->Session->read('flash_messages')) {
+            foreach ($this->Session->read('flash_messages') as $error => $class) {
                 $markup .= "<div class='system-message $class'>" . $error . "</div>";
             }
         }
 
-        Session::delete('flash_messages');
+        $this->Session->delete('flash_messages');
         return $markup;
     }
 
