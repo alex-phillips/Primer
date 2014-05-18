@@ -5,14 +5,14 @@
  * Time: 5:28 PM
  */
 
-class Session
+class Session extends Component
 {
-    private static $_flash_messages = array();
+    private $_flashMessages = array();
 
-    public static function init()
+    protected function __construct()
     {
-        // if no session exist, start the session
-        if (session_id() == '') {
+        // If no session exist, start the session
+        if (session_id() === '') {
             session_start();
         }
     }
@@ -20,13 +20,13 @@ class Session
     /**
      * Destroy the session and unset all session values
      */
-    public static function destroy()
+    public function destroy()
     {
         if (session_id() != '') {
-            session_destroy();
             foreach ($_SESSION as $k => $v) {
-                self::delete($k);
+                $this->delete($k);
             }
+            session_destroy();
         }
     }
 
@@ -36,7 +36,7 @@ class Session
      * @param $key
      * @param null $value
      */
-    public static function write($key, $value = null)
+    public function write($key, $value = null)
     {
         if (is_array($key) || is_object($key)) {
             foreach ($key as $k => $v) {
@@ -55,7 +55,7 @@ class Session
      * @param mixed $key Usually a string, right ?
      * @return mixed
      */
-    public static function read($key)
+    public function read($key)
     {
         if (isset($_SESSION[$key])) {
             return $_SESSION[$key];
@@ -68,7 +68,7 @@ class Session
      *
      * @param $key
      */
-    public static function delete($key)
+    public function delete($key)
     {
         unset($_SESSION[$key]);
     }
@@ -80,32 +80,32 @@ class Session
      * @param $message
      * @param string $class
      */
-    public static function setFlash($message, $class = '')
+    public function setFlash($message, $class = '')
     {
-        self::$_flash_messages[$message] = $class;
-        self::write('flash_messages', self::$_flash_messages);
+        // @TODO: maybe we can skip variable and write straight to $_SESSION
+        $this->_flashMessages[$message] = $class;
+        $this->write('flash_messages', $this->_flashMessages);
     }
 
     /**
      * Control browser redirects
-     * @depricated use controller redirect function
+     * @depricated use Router redirect function
      * @param $header
      */
-    public static function redirect($header)
+    public function redirect($header)
     {
-        self::write('messages', self::$_flash_messages);
-        header("Location: " . $header);
-        exit;
+        $this->write('messages', $this->_flashMessages);
+        Router::redirect($header);
     }
 
     /**
      * @return bool|mixed
      * @depricated
      */
-    public static function isUserLoggedIn()
+    public function isUserLoggedIn()
     {
-        if (self::read('user_logged_in') != null) {
-            return self::read('user_logged_in');
+        if ($this->read('user_logged_in') != null) {
+            return $this->read('user_logged_in');
         }
         return false;
     }
@@ -116,13 +116,13 @@ class Session
      * @return bool
      * @depricated
      */
-    public static function isAdmin()
+    public function isAdmin()
     {
-        if (self::read('role') == 'admin') {
+        if ($this->read('role') == 'admin') {
             return true;
         }
 
-        if (self::read('username') == 'admin') {
+        if ($this->read('username') == 'admin') {
             return true;
         }
 

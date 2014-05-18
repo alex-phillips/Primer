@@ -4,15 +4,15 @@
  * and actions.
  */
 
-class Auth
+class Auth extends Component
 {
     /**
-     * Initialize auth static class with methods that need to run for
-     * every render.
+     * Initialize Component
      */
-    public static function init()
+    protected function __construct()
     {
-        self::loginWithCookie();
+        $this->Session = Session::getInstance();
+        $this->loginWithCookie();
     }
 
     /**
@@ -23,16 +23,16 @@ class Auth
      *
      * @return bool true if render can access action without login
      */
-    public static function allow($actions = array())
+    public function allow($actions = array())
     {
         if (in_array(Primer::getValue('action'), $actions)) {
             return true;
         }
 
-        if (Session::isUserLoggedIn()) {
+        if ($this->Session->isUserLoggedIn()) {
             return true;
         }
-        Session::setFlash('You must be logged in to do that', 'warning');
+        $this->Session->setFlash('You must be logged in to do that', 'warning');
         Router::redirect('/');
     }
 
@@ -41,7 +41,7 @@ class Auth
      *
      * @return bool
      */
-    public static function loginWithCookie()
+    public function loginWithCookie()
     {
         $cookie = isset($_COOKIE['rememberme']) ? $_COOKIE['rememberme'] : '';
 
@@ -61,13 +61,13 @@ class Auth
             $user = $user->findById($user_id);
 
             if ($user->rememberme_token == $token) {
-                Session::write($user);
-                Session::write('user_logged_in', true);
+                $this->Session->write($user);
+                $this->Session->write('user_logged_in', true);
                 return true;
             }
             else {
                 setcookie('rememberme', false, time() - (3600 * 3650), '/', DOMAIN);
-                Session::destroy();
+                $this->Session->destroy();
             }
         }
 
