@@ -6,6 +6,7 @@
 class Controller
 {
     protected $_modelName;
+    protected $_modelLoaded = false;
     public $components = array();
     public $pagination_config = array(
         'perPage' => 10,
@@ -14,16 +15,22 @@ class Controller
 
     public function __construct()
     {
-        $this->_modelName = strtolower(Inflector::singularize(str_replace('Controller', '', get_class($this))));
+        $this->_modelName = ucfirst(strtolower(Inflector::singularize(str_replace('Controller', '', get_class($this)))));
 
+        // Load Model (if controller's model exists)
+        $this->loadModel();
+        // Load View
         $this->view = new View();
 
-        // @TODO need a better way to give View the same components as Controller
+        // @TODO need a better way to give View the same components as Controller. Helpers?
         foreach ($this->components as $component) {
             if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . '.php')) {
                 Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . '.php');
                 $this->$component = $component::getInstance();
                 $this->view->$component = $this->$component;
+                if ($this->_modelLoaded) {
+                    $this->{$this->_modelName}->$component = $this->$component;
+                }
             }
         }
         Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'Request.php');
@@ -31,7 +38,6 @@ class Controller
         $this->view->request = $this->request;
 
         $this->view->paginator = new Paginator($this->pagination_config);
-        $this->loadModel();
     }
 
     /**
@@ -39,11 +45,12 @@ class Controller
      */
     public function loadModel()
     {
-        $path = MODELS_PATH . ucfirst($this->_modelName) . '.php';
+        $path = MODELS_PATH . $this->_modelName . '.php';
         // @TODO: Find better way to handle in model doesn't exist
         if (file_exists($path)) {
             Primer::requireFile($path);
-            $this->{ucfirst($this->_modelName)} = new $this->_modelName();
+            $this->{$this->_modelName} = new $this->_modelName();
+            $this->_modelLoaded = true;
         }
 
         // @TODO: do we need to handle situation where model doesn't exist for controller? i.e. pages
