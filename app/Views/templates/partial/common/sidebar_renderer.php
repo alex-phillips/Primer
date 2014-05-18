@@ -11,7 +11,7 @@ class sidebar_renderer
     public static function render()
     {
         // If viewing a user's page, attempt to render user's music feed
-        if (Primer::getValue('controller') === 'users' && Primer::getValue('action') === 'view') {
+        if (Router::$controller === 'users' && Router::$action === 'view') {
             if ($user = Primer::getValue('rendering_object')) {
                 return self::render_music_feed($user->username);
             }
@@ -26,7 +26,7 @@ class sidebar_renderer
         return <<<__TEXT__
             <h5>Links</h5>
             <ul class="side-nav">
-                <li><a href="https://github.com/exonintrendo/mvc-framework">PrimerPHP</a></li>
+                <li><a href="https://github.com/exonintrendo/PrimerPHP">PrimerPHP</a></li>
             </ul>
 
             <div class="panel panel-default">
