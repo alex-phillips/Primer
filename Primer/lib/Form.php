@@ -26,8 +26,8 @@ class Form
         $class = "";
 
         // TODO: there's gotta be a better way to do this...
-        $this->_objectName = $model->_className;
-        $this->_schema = $model->getSchema();
+        $this->_objectName = $model::getClassName();
+        $this->_schema = $model::getSchema();
 
         $action = '';
         if (isset($params['action'])) {
@@ -106,12 +106,7 @@ __TEXT__;
             $type = 'text';
         }
 
-        if (isset($params['multi_values']) && $params['multi_values'] == true) {
-            $form_name = "data[{$this->_objectName}][$name][{$params['name']}]'";
-        }
-        else {
-            $form_name = "data[{$this->_objectName}][$name]";
-        }
+        $form_name = "data[{$this->_objectName}][$name]";
 
         $label_markup = $this->build_label($form_name, $label, $type);
 
