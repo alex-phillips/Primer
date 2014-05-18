@@ -5,6 +5,8 @@
  * Time: 2:38 PM
  */
 
+require_once(APP_ROOT . '/Config/routes.php');
+
 class Router
 {
     public static $controller = 'pages';
@@ -80,12 +82,26 @@ class Router
 
         if (self::$_url) {
             self::$controller = self::$_url[0];
-            if (sizeof(self::$_url) === 1) {
+            if (sizeof(self::$_url) === 1 || preg_match('#.+:.+#', self::$_url[1])) {
                 self::$action = 'index';
+                $args = array_slice(self::$_url, 1);
             }
             else {
                 self::$action = self::$_url[1];
-                self::$args = array_slice(self::$_url, 2);
+                $args = array_slice(self::$_url, 2);
+            }
+            /*
+             * Check for arguments. If an argument is passed with a colon,
+             * ex: page:1, then match it as a key-value pair. Otherwise, add
+             * it as an index.
+             */
+            foreach ($args as $arg) {
+                if (preg_match('#.+:.+#', $arg)) {
+                    list($key, $value) = explode(':', $arg);
+                }
+                else {
+                    self::$args[] = $arg;
+                }
             }
         }
         return;
@@ -123,7 +139,7 @@ class Router
     public static function error404()
     {
         header("HTTP/1.0 404 Not Found");
-        $ec = new Error_Controller();
+        $ec = new ErrorController();
         $ec->view->set('title', 'Page Not Found');
         $ec->error404();
     }
