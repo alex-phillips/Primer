@@ -149,14 +149,7 @@ class PostsController extends AppController
         Primer::setValue('rendering_object', $this->Post);
 
         $this->view->title = $this->Post->title;
-
-        $cp = $this->Post->getCustomProperties();
-        if (isset($cp->supress_date) && $cp->supress_date == 'true') {
-
-        }
-        else {
-            $this->view->set('subtitle', date('F d, Y', strtotime($this->Post->created)));
-        }
+        $this->view->set('subtitle', date('F d, Y', strtotime($this->Post->created)));
         $this->view->render('posts/view');
     }
 
