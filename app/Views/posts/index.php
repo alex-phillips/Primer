@@ -5,8 +5,8 @@ $markup = '';
 if ($this->posts) {
     foreach ($this->posts as $post) {
         $edit_link = '';
-        if (Session::read('role') === 'admin') {
-            $edit_link = '<a href="/posts/edit/' . $post->id_post . '">Edit</a>';
+        if ($this->Session->read('role') === 'admin') {
+            $edit_link = '<a href="/posts/edit/' . $post->id . '">Edit</a>';
         }
         $date = date('F d, Y', strtotime($post->created));
         $panel = 'panel-default';
@@ -15,18 +15,18 @@ if ($this->posts) {
         }
 
         $admin_links = '';
-        if (Session::read('role') === 'admin' || Session::read('id_user') == $post->id_user) {
+        if ($this->Session->read('role') === 'admin' || $this->Session->read('id') == $post->id_user) {
             $admin_links = <<<__TEXT__
                 <br/><br/>
-                <a href="/posts/edit/$post->id_post">Edit</a> |
-                <a href="/posts/delete/$post->id_post">Delete</a>
+                <a href="/posts/edit/$post->id">Edit</a> |
+                <a href="/posts/delete/$post->id">Delete</a>
 __TEXT__;
 
         }
 
         $markup .= <<<___HTML___
             <article>
-                <h3><a href="/posts/view/$post->slug">$post->title</a></h3>
+                <h3><a href="/posts/view/$post->id">$post->title</a></h3>
                 <h6>$date</h6>
                 <p>$post->body</p>
                 $admin_links
