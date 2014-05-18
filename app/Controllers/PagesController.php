@@ -4,17 +4,11 @@ class PagesController extends AppController
 {
     public $name = 'page';
 
-    function index()
+    public function index()
     {
-        $this->view->render('pages/index');
     }
 
-    function details()
-    {
-        $this->view->render('pages/index');
-    }
-
-    function movies()
+    public function movies()
     {
         if (isset($_REQUEST['ajax'])) {
             $movies = file_get_contents(APP_ROOT . '/public/content/movies.json');
@@ -64,14 +58,14 @@ __TEXT__;
         $this->view->render('pages/movies');
     }
 
-    function movies_bootstrap()
+    public function movies_bootstrap()
     {
         View::addJS('angular/bootstrap');
         $this->view->title = 'Movies';
         $this->view->render('pages/movies_bootstrap');
     }
 
-    function tv_shows()
+    public function tv_shows()
     {
         $this->view->render('pages/tv_shows');
     }
