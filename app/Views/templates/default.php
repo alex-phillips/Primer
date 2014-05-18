@@ -1,4 +1,4 @@
-<?php require_once('app/Views/templates/partial/common/doc_head.php'); ?>
+<?php require_once('Views/templates/partial/common/doc_head.php'); ?>
 
 <nav id="mobile-nav" hidden>
     <ul>
@@ -29,7 +29,7 @@
                     </li>
                     <li class="divider hidden-xs"></li>
                     <li>
-                        <a href="/pages/movies/">
+                        <a href="/movies/">
                             <span class="glyphicon glyphicon-film"></span>&nbsp;&nbsp;
                             Movies
                         </a>
@@ -39,9 +39,9 @@
                 <ul class="nav navbar-nav navbar-right">
                     <li class="divider hidden-xs"></li>
                     <?php
-                    if (Session::isUserLoggedIn()) {
-                        $id_user = Session::read('id_user');
-                        $username = Session::read('username');
+                    if ($this->Session->isUserLoggedIn()) {
+                        $id_user = $this->Session->read('id');
+                        $username = $this->Session->read('username');
                         echo <<<__TEXT__
                             <li class="dropdown">
                                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">$username <b class="caret"></b></a>
@@ -100,7 +100,7 @@ __TEXT__;
 
                 <!--  Flash Messages  -->
                 <?php
-                $this->get_contents();
+                $this->getContents();
                 if (isset($this->paginator)) {
                     echo $this->paginator->page_links_list();
                 }
@@ -114,7 +114,7 @@ __TEXT__;
             <!-- Sidebar -->
             <div class="col-sm-3">
                 <?php
-                require_once('app/Views/templates/partial/common/sidebar_renderer.php');
+                require_once('Views/templates/partial/common/sidebar_renderer.php');
                 echo sidebar_renderer::render();
                 ?>
             </div>
@@ -135,4 +135,4 @@ __TEXT__;
     </div>
 </div>
 
-<?php require_once('app/Views/templates/partial/common/doc_tail.php'); ?>
+<?php require_once('Views/templates/partial/common/doc_tail.php'); ?>
