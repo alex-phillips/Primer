@@ -32,11 +32,6 @@ class Post extends Model
         }
     }
 
-    public function beforeSave()
-    {
-        return true;
-    }
-
     public function getCustomProperties()
     {
         return unserialize($this->custom_properties);
