@@ -391,7 +391,7 @@ class Model
                     else {
                         $message = $rules['required']['message'];
                     }
-                    Session::setFlash($message, 'failure');
+                    $this->Session->setFlash($message, 'failure');
                     return false;
                 }
             }
@@ -417,7 +417,7 @@ class Model
                         if (!empty($results)) {
                             foreach ($results as $result) {
                                 if ($result->{$this->_idField} != $this->{$this->_idField}) {
-                                    Session::setFlash($message, 'failure');
+                                    $this->Session->setFlash($message, 'failure');
                                     return false;
                                 }
                             }
@@ -425,42 +425,42 @@ class Model
                         break;
                     case 'email':
                         if (!filter_var($this->$field, FILTER_VALIDATE_EMAIL)) {
-                            Session::setFlash($message, 'failure');
+                            $this->Session->setFlash($message, 'failure');
                             return false;
                         }
                         break;
                     // Validate alpha-numeric field
                     case 'alphaNumeric':
                         if (!ctype_alnum($this->$field)) {
-                            Session::setFlash($message, 'failure');
+                            $this->Session->setFlash($message, 'failure');
                             return false;
                         }
                         break;
                     // Validate numeric field
                     case 'numeric':
                         if (!is_numeric($this->$field)) {
-                            Session::setFlash($message, 'failure');
+                            $this->Session->setFlash($message, 'failure');
                             return false;
                         }
                         break;
                     // Validate max length
                     case 'max_length':
                         if (strlen($this->$field) > $info['size']) {
-                            Session::setFlash($message, 'failure');
+                            $this->Session->setFlash($message, 'failure');
                             return false;
                         }
                         break;
                     // Validate min length
                     case 'min_length':
                         if (strlen($this->$field) < $info['size']) {
-                            Session::setFlash($message, 'failure');
+                            $this->Session->setFlash($message, 'failure');
                             return false;
                         }
                         break;
                     // Validate custom regex
                     case 'regex':
                         if (!preg_match($info['rule'], $this->$field)) {
-                            Session::setFlash($message, 'failure');
+                            $this->Session->setFlash($message, 'failure');
                             return false;
                         }
                         break;
