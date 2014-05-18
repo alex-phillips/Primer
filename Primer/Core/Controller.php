@@ -5,13 +5,13 @@
  */
 class Controller
 {
-    protected $_modelName;
-    protected $_modelLoaded = false;
-    public $components = array();
     public $pagination_config = array(
         'perPage' => 10,
         'instance' => 'p'
     );
+    protected $_modelName;
+    protected $_modelLoaded = false;
+    protected $_components = array();
 
     public function __construct()
     {
@@ -23,7 +23,7 @@ class Controller
         $this->view = new View();
 
         // @TODO need a better way to give View the same components as Controller. Helpers?
-        foreach ($this->components as $component) {
+        foreach ($this->_components as $component) {
             if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . '.php')) {
                 Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . '.php');
                 $this->$component = $component::getInstance();

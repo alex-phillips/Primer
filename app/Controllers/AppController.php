@@ -7,7 +7,7 @@
 
 class AppController extends Controller
 {
-    public $components = array(
+    protected $_components = array(
         'Session',
         'Auth',
     );
