@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Class Model
  * @author Alex Phillips
@@ -7,32 +6,37 @@
  * Class in which all models are inherited from. Contains all 'generic' database
  * interactions and validation for models.
  */
+
 class Model
 {
-    /*
-     * Schema variable is built from the table in the database for the Model.
-     * This is used to determine what values to set, default values, and what
-     * to insert and update in the database when the save() method is called.
-     */
-    protected static $_schema;
+    /////////////////////////////////////////////////
+    // PROPERTIES, PRIVATE AND PROTECTED
+    /////////////////////////////////////////////////
 
     /*
      * This is the ID field in the database for the object. This is stored so
      * we know what the primary key for the table is for each model.
      */
-    protected $_id_field;
+    protected $_idField;
 
     /*
-     * Created variable that every model will have. This is automatically
-     * created *once* when a row is created in the database.
+     * Name of the model's table in the database. This is set automatically
+     * unless overridden.
      */
-    public $created;
+    protected $_tableName;
 
     /*
-     * Modified variable that every model will have. This is automatically
-     * updated when a row is altered in the database.
+     * Name of the current instance's model. Used for automatically creating
+     * new instances when returning objects.
      */
-    public $modified;
+    protected $_className;
+
+    /*
+     * Schema variable is built from the table in the database for the Model.
+     * This is used to determine what values to set, default values, and what
+     * to insert and update in the database when the save() method is called.
+     */
+    protected static $_schema = array();
 
     /*
      * Validation array contains rules to check on each model field.
@@ -45,6 +49,10 @@ class Model
      * Database variable to handle all query creations and executions.
      */
     protected static $db;
+
+    /*
+     * Array of variables to pass to PDO to bind in preparing DB queries
+     */
     protected static $bindings = array();
 
     /**
@@ -53,52 +61,68 @@ class Model
      */
     public function __construct($params = array())
     {
-        $this->_tableName = Inflector::pluralize(strtolower(get_class($this)));
-        $this->_className = strtolower(get_class($this));
-        $this->_id_field = "id_{$this->_className}";
+        $this->_tableName = static::getTableName();
+        $this->_className = static::getClassName();
+        $this->_idField = "id";
 
         try {
-            static::$db = new Database();
-            static::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            self::$db = new Database();
         } catch (PDOException $e) {
             die('Database connection could not be established.');
         }
 
-        $this->getSchema();
+        static::getSchema();
         if (!empty($params)) {
             $this->set($params);
         }
     }
 
-    public function getSchema()
+    public static function getClassName()
     {
-        if (!static::$_schema) {
-            $query = "DESCRIBE {$this->_tableName};";
-            $sth = static::$db->prepare($query);
-            $sth->execute(static::$bindings);
+        return strtolower(get_called_class());
+    }
+
+    public static function getTableName()
+    {
+        return Inflector::pluralize(strtolower(get_called_class()));
+    }
+
+    public static function getSchema()
+    {
+        $className = static::getClassName();
+        $tableName = static::getTableName();
+        if (!isset(static::$_schema[$className])) {
+            $query = "DESCRIBE {$tableName};";
+            $sth = self::$db->prepare($query);
+            $sth->execute(self::$bindings);
             $fields = $sth->fetchAll();
 
             foreach ($fields as $info) {
-                static::$_schema[$info->Field] = array(
+                static::$_schema[$className][$info->Field] = array(
                     'type' => $info->Type,
                     'null' => $info->Null,
                     'key' => $info->Key,
                     'default' => $info->Default,
                     'extra' => $info->Extra
                 );
-                if ($info->Key === 'PRI') {
-                    $this->_id_field = $info->Field;
-                }
             }
         }
-        return static::$_schema;
+        return static::$_schema[$className];
     }
 
+    /**
+     * This is the master find function for all models. All find functions
+     * are essentially calling this function with certain parameters set.
+     * Ex: findCount is this function with count set to TRUE automatically.
+     *
+     * @param array $params
+     *
+     * @return array
+     */
     public function find($params = array())
     {
-        static::$bindings = array();
+        self::$bindings = array();
         $return_objects = true;
-        $bindings = array();
 
         $where = '';
         if (isset($params['conditions'])) {
@@ -106,7 +130,6 @@ class Model
         }
 
         $fields = '*';
-        $count = '';
         if (isset($params['fields']) && is_array($params['fields'])) {
             $fields = implode(', ', $params['fields']);
         }
@@ -138,8 +161,8 @@ class Model
 
         $query = "SELECT $fields FROM {$this->_tableName} $where $order $limit $offset;";
 
-        $sth = static::$db->prepare($query);
-        $sth->execute(static::$bindings);
+        $sth = self::$db->prepare($query);
+        $sth->execute(self::$bindings);
 
         $results = array();
         foreach ($sth->fetchAll() as $result) {
@@ -176,12 +199,12 @@ class Model
             }
             else {
                 if (preg_match('# LIKE$#', $k)) {
-                    $retval[] = "$k :$k" . sizeof(static::$bindings) . "";
+                    $retval[] = "$k :$k" . sizeof(self::$bindings) . "";
                 }
                 else {
-                    $retval[] = "$k = :$k" . sizeof(static::$bindings) . "";
+                    $retval[] = "$k = :$k" . sizeof(self::$bindings) . "";
                 }
-                static::$bindings[":$k" . sizeof(static::$bindings)] = $v;
+                self::$bindings[":$k" . sizeof(self::$bindings)] = $v;
             }
         }
         return implode(" $conjunction ", $retval);
@@ -213,7 +236,7 @@ class Model
     public function set($params)
     {
         $params = (array)$params;
-        foreach ($this->getSchema() as $variable => $info) {
+        foreach (static::getSchema() as $variable => $info) {
             // Instantiate variable if a value was given for it
             if (isset($params[$variable])) {
                 $this->$variable = $params[$variable];
@@ -226,8 +249,8 @@ class Model
         }
 
         // Always instantiate the ID field even though it is requried
-        if (!isset($this->{$this->_id_field})) {
-            $this->{$this->_id_field} = null;
+        if (!isset($this->{$this->_idField})) {
+            $this->{$this->_idField} = null;
         }
     }
 
@@ -242,7 +265,7 @@ class Model
     {
         $params = (array)$params;
         foreach ($params as $variable => $value) {
-            if (array_key_exists($variable, $this->getSchema())) {
+            if (array_key_exists($variable, static::getSchema())) {
                 $this->$variable = $value;
             }
         }
@@ -296,63 +319,62 @@ class Model
             return false;
         }
 
-        $key_bindings = array();
+        self::$bindings = array();
         $columns = array();
-        $values = array();
         $set = array();
 
         foreach ($this as $col => $val) {
             if ($col == 'created'  || $col == 'modified') {
                 continue;
             }
-            else if (array_key_exists($col, static::$_schema)) {
-                $key_bindings[":$col"] = $val;
+            else if (array_key_exists($col, static::getSchema())) {
+                self::$bindings[":$col"] = $val;
 
-                // Columns and Values are used for Insert
+                // @TODO: try and get rid of $set and $columns by using array walk. i.e. - this might not be any more efficient.
+                // Columns are used for INSERT
                 $columns[] = $col;
-                $values[] = ":$col";
-
-                // Set array is used for updating
+                // Set array is used for UPDATE
                 $set[] = "$col = :$col";
             }
         }
 
-        static::$db->beginTransaction();
+        self::$db->beginTransaction();
 
-        if ($this->{"{$this->_id_field}"} != null) {
+        // If ID is not null, then UPDATE row in the database, else INSERT new row
+        if ($this->{"{$this->_idField}"} !== null) {
             // Update query
             $set[] = "modified = :modified";
 
-            $query = "UPDATE {$this->_tableName} SET " . implode(', ', $set) . " WHERE {$this->_id_field} = :id_val";
-            $key_bindings[':id_val'] = $this->{"{$this->_id_field}"};
-            $key_bindings[':modified'] = date("Y-m-d H:i:s");
+            $query = "UPDATE {$this->_tableName} SET " . implode(', ', $set) . " WHERE {$this->_idField} = :id_val";
+            self::$bindings[':id_val'] = $this->{"{$this->_idField}"};
+            self::$bindings[':modified'] = date("Y-m-d H:i:s");
 
-            $sth = static::$db->prepare($query);
-            $success = $sth->execute($key_bindings);
+            $sth = self::$db->prepare($query);
+            $success = $sth->execute(self::$bindings);
         }
         else {
             // Insert query
             $columns[] = 'created';
-            $values[] = ':created';
+            self::$bindings[':created'] = date("Y-m-d H:i:s");
 
-            $query = "INSERT INTO {$this->_tableName} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $values) . ")";
-            $key_bindings[':created'] = date("Y-m-d H:i:s");
+            $query = "INSERT INTO {$this->_tableName} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', array_keys(self::$bindings)) . ")";
 
-            $sth = static::$db->prepare($query);
+            $sth = self::$db->prepare($query);
 
-            $success = $sth->execute($key_bindings);
-            $this->{"{$this->_id_field}"} = static::$db->lastInsertId();
+            $success = $sth->execute(self::$bindings);
+            $this->{"{$this->_idField}"} = self::$db->lastInsertId();
         }
 
         if ($this->afterSave() == false) {
-            static::$db->rollBack();
+            self::$db->rollBack();
             return false;
         }
 
-        static::$db->commit();
+        self::$db->commit();
         return $success;
     }
 
+    // @TODO: move validating to its own class
     private function validate()
     {
         foreach (static::$validate as $field => $rules) {
@@ -394,7 +416,7 @@ class Model
                         ));
                         if (!empty($results)) {
                             foreach ($results as $result) {
-                                if ($result->{$this->_id_field} != $this->{$this->_id_field}) {
+                                if ($result->{$this->_idField} != $this->{$this->_idField}) {
                                     Session::setFlash($message, 'failure');
                                     return false;
                                 }
@@ -450,17 +472,18 @@ class Model
 
     public function delete()
     {
-        $sth = static::$db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_id_field} = :id;");
+        $sth = self::$db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
         $success = $sth->execute(array(
-            ':id' => $this->{$this->_id_field},
+            ':id' => $this->{$this->_idField},
         ));
 
         return $success;
     }
 
+    // @TODO: should make these functions static
     public function deleteById($id)
     {
-        $sth = static::$db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_id_field} = :id;");
+        $sth = self::$db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
         $success = $sth->execute(array(
             ':id' => $id,
         ));
@@ -470,7 +493,7 @@ class Model
 
     public function findById($id)
     {
-        $sth = static::$db->prepare("SELECT * FROM {$this->_tableName} WHERE {$this->_id_field} = :id;");
+        $sth = self::$db->prepare("SELECT * FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
         $sth->execute(array(
             ':id' => $id,
         ));
