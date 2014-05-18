@@ -3,7 +3,7 @@
 $this->Form->create('posts');
 $this->Form->add('id_post', array(
     'type' => 'hidden',
-    'value' => $this->post->id_post,
+    'value' => $this->post->id,
 ));
 $this->Form->add('type', array(
     'value' => $this->post->type,
