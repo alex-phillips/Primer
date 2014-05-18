@@ -14,12 +14,6 @@ class Bootstrap
      */
     public function __construct()
     {
-        /* Initialize main components */
-        Session::init();
-        Auth::init();
-        $this->request = Request::getInstance();
-
-        require_once(APP_ROOT . '/Config/routes.php');
         Router::dispatch();
 
         Primer::setValue('conroller', Router::$controller);
@@ -43,7 +37,6 @@ class Bootstrap
     {
         $controllerName = Primer::getControllerName($controller);
         $this->_controller = new $controllerName;
-        $this->_controller->loadModel();
     }
     
     /**
@@ -66,5 +59,6 @@ class Bootstrap
         call_user_func_array(array($this->_controller, 'beforeFilter'), Router::$args);
         call_user_func_array(array($this->_controller, Router::$action), Router::$args);
         call_user_func_array(array($this->_controller, 'afterFilter'), Router::$args);
+        $this->_controller->view->render(Router::$controller . DS . Router::$action);
     }
 }
