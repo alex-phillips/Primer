@@ -515,7 +515,6 @@ class Model
         return $success;
     }
 
-    // @TODO: should make these functions static
     public static function deleteById($id)
     {
         $idField = static::getIdField();
