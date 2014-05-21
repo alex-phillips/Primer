@@ -61,9 +61,9 @@ class Model
      */
     public function __construct($params = array())
     {
+        $this->_idField = static::getIdField();
         $this->_tableName = static::getTableName();
         $this->_className = static::getClassName();
-        $this->_idField = "id";
 
         try {
             self::$db = new Database();
@@ -75,6 +75,11 @@ class Model
         if (!empty($params)) {
             $this->set($params);
         }
+    }
+
+    public static function getIdField()
+    {
+        return 'id';
     }
 
     public static function getClassName()
@@ -108,6 +113,29 @@ class Model
             }
         }
         return static::$_schema[$className];
+    }
+
+    public function __call($name, $arguments)
+    {
+        /*
+         * Build magic 'findByFIELD' functions
+         */
+        if (preg_match('#\Afind.*By(.+)$#', $name, $matches)) {
+            $field = strtolower($matches[1]);
+            $params = array(
+                'conditions' => array(
+                    $field => $arguments[0]
+                )
+            );
+            if (preg_match("#\\AfindFirstBy{$matches[1]}$#", $matches[0])) {
+                $params['limit'] = 1;
+                return $this->findFirst($params);
+            }
+
+            if (array_key_exists($field, static::getSchema())) {
+                return $this->find($params);
+            }
+        }
     }
 
     /**
