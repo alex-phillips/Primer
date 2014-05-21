@@ -116,7 +116,7 @@ class Model
     }
 
     /**
-     * Overloaded functions
+     * Overloaded instance functions
      *
      * @param $name
      * @param $arguments
@@ -129,19 +129,37 @@ class Model
          * Build magic 'findByFIELD' functions
          */
         if (preg_match('#\Afind.*By(.+)$#', $name, $matches)) {
+            return static::__callStatic($name, $arguments);
+        }
+    }
+
+    /**
+     * Overloaded static functions
+     *
+     * @param $name
+     * @param $arguments
+     *
+     * @return array|null
+     */
+    public static function __callStatic($name, $arguments)
+    {
+        /*
+         * Build magic 'findByFIELD' functions
+         */
+        if (preg_match('#\Afind.*By(.+)$#', $name, $matches)) {
             $field = strtolower($matches[1]);
             $params = array(
                 'conditions' => array(
                     $field => $arguments[0]
                 )
             );
-            if (preg_match("#\\AfindFirstBy{$matches[1]}$#", $matches[0])) {
+            if (!preg_match("#\\AfindAllBy{$matches[1]}$#", $matches[0])) {
                 $params['limit'] = 1;
-                return $this->findFirst($params);
+                return static::findFirst($params);
             }
 
             if (array_key_exists($field, static::getSchema())) {
-                return $this->find($params);
+                return static::find($params);
             }
         }
     }
@@ -155,14 +173,16 @@ class Model
      *
      * @return array
      */
-    public function find($params = array())
+    public static function find($params = array())
     {
+        $className = static::getClassName();
+        $tableName = static::getTableName();
         self::$bindings = array();
         $return_objects = true;
 
         $where = '';
         if (isset($params['conditions'])) {
-            $where = 'WHERE ' . $this->_buildFindConditions($params['conditions']);
+            $where = 'WHERE ' . static::_buildFindConditions($params['conditions']);
         }
 
         $fields = '*';
@@ -195,7 +215,7 @@ class Model
             $offset = 'OFFSET ' . $params['offset'];
         }
 
-        $query = "SELECT $fields FROM {$this->_tableName} $where $order $limit $offset;";
+        $query = "SELECT $fields FROM {$tableName} $where $order $limit $offset;";
 
         $sth = self::$db->prepare($query);
         $sth->execute(self::$bindings);
@@ -203,7 +223,7 @@ class Model
         $results = array();
         foreach ($sth->fetchAll() as $result) {
             if ($return_objects) {
-                $results[] = new $this->_className($result);
+                $results[] = new $className($result);
             }
             else {
                 $results[] = $result;
@@ -222,15 +242,15 @@ class Model
      *
      * @return string
      */
-    protected function _buildFindConditions($conditions, $conjunction = '')
+    protected static function _buildFindConditions($conditions, $conjunction = '')
     {
         $retval = array();
         foreach ($conditions as $k => $v) {
             if ((strtoupper($k) === 'OR' || strtoupper($k) === 'AND') && is_array($v)) {
-                $retval[] = '(' . $this->_buildFindConditions($v, strtoupper($k)) . ')';
+                $retval[] = '(' . static::_buildFindConditions($v, strtoupper($k)) . ')';
             }
             else if (is_array($v)) {
-                $retval[] = $this->_buildFindConditions($v);
+                $retval[] = static::_buildFindConditions($v);
             }
             else {
                 if (preg_match('# LIKE$#', $k)) {
@@ -245,17 +265,17 @@ class Model
         return implode(" $conjunction ", $retval);
     }
 
-    public function findFirst($params = array())
+    public static function findFirst($params = array())
     {
         $params['limit'] = 1;
-        $results = $this->find($params);
+        $results = static::find($params);
         return (!empty($results)) ? $results[0] : null;
     }
 
-    public function findCount($params = array())
+    public static function findCount($params = array())
     {
         $params['count'] = true;
-        $results = $this->find($params);
+        $results = static::find($params);
         return $results[0]->{"COUNT(*)"};
     }
 
