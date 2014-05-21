@@ -547,17 +547,4 @@ class Model
         return $success;
     }
 
-    public static function findById($id)
-    {
-        $idField = static::getIdField();
-        $tableName = static::getTableName();
-        $sth = self::$db->prepare("SELECT * FROM {$tableName} WHERE {$idField} = :id;");
-        $sth->execute(array(
-            ':id' => $id,
-        ));
-
-        $o = new static($sth->fetch());
-        return $o;
-    }
-
 }
