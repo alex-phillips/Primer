@@ -82,7 +82,7 @@ class PostsController extends AppController
 
         if ($this->request->is('post')) {
 
-            $this->request->data['post']['id_user'] = $this->Session->read('id_user');
+            $this->request->data['post']['id_user'] = $this->Session->read('id');
 
             // Only create slug on creation so bookmarks always work in title is edited/changed
             $slug = Inflector::slug($this->request->data['post']['title'], '-');
@@ -165,7 +165,7 @@ class PostsController extends AppController
             $this->Session->redirect('/posts/');
         }
 
-        if ($this->Post->id_user != $this->Session->read('id_user') && !$this->Session->isAdmin()) {
+        if ($this->Post->id_user != $this->Session->read('id') && !$this->Session->isAdmin()) {
             $this->Session->setFlash('You are not authorized to edit that post', 'warning');
             $this->Session->redirect('/posts/');
         }
