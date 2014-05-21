@@ -115,6 +115,14 @@ class Model
         return static::$_schema[$className];
     }
 
+    /**
+     * Overloaded functions
+     *
+     * @param $name
+     * @param $arguments
+     *
+     * @return array|null
+     */
     public function __call($name, $arguments)
     {
         /*
@@ -207,8 +215,7 @@ class Model
 
     /**
      * This is a recursive function that will traverse an array to build the find
-     * conditions for a query much like CakePHP's method to build queries through
-     * its find() function.
+     * conditions for a query.
      *
      * @param $conditions
      * @param string $conjunction
@@ -223,7 +230,7 @@ class Model
                 $retval[] = '(' . $this->_buildFindConditions($v, strtoupper($k)) . ')';
             }
             else if (is_array($v)) {
-                $retval[] = $this->buildConditions($v);
+                $retval[] = $this->_buildFindConditions($v);
             }
             else {
                 if (preg_match('# LIKE$#', $k)) {
@@ -509,9 +516,11 @@ class Model
     }
 
     // @TODO: should make these functions static
-    public function deleteById($id)
+    public static function deleteById($id)
     {
-        $sth = self::$db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
+        $idField = static::getIdField();
+        $tableName = static::getTableName();
+        $sth = self::$db->prepare("DELETE FROM {$tableName} WHERE {$idField} = :id;");
         $success = $sth->execute(array(
             ':id' => $id,
         ));
@@ -519,14 +528,16 @@ class Model
         return $success;
     }
 
-    public function findById($id)
+    public static function findById($id)
     {
-        $sth = self::$db->prepare("SELECT * FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
+        $idField = static::getIdField();
+        $tableName = static::getTableName();
+        $sth = self::$db->prepare("SELECT * FROM {$tableName} WHERE {$idField} = :id;");
         $sth->execute(array(
             ':id' => $id,
         ));
 
-        $o = new $this($sth->fetch());
+        $o = new static($sth->fetch());
         return $o;
     }
 
