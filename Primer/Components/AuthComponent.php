@@ -4,14 +4,14 @@
  * and actions.
  */
 
-class Auth extends Component
+class AuthComponent extends Component
 {
     /**
      * Initialize Component
      */
     protected function __construct()
     {
-        $this->Session = Session::getInstance();
+        $this->Session = SessionComponent::getInstance();
         $this->loginWithCookie();
     }
 

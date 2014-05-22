@@ -5,7 +5,7 @@
  * Time: 5:53 PM
  */
 
-class Request extends Component
+class RequestComponent extends Component
 {
     private $_requestMethod;
     public $data;

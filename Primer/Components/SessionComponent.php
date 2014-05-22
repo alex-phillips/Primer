@@ -5,7 +5,7 @@
  * Time: 5:28 PM
  */
 
-class Session extends Component
+class SessionComponent extends Component
 {
     private $_flashMessages = array();
 

@@ -44,17 +44,17 @@ class Controller
 
         // @TODO need a better way to give View the same components as Controller. Helpers?
         foreach ($this->_components as $component) {
-            if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . '.php')) {
-                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . '.php');
-                $this->$component = $component::getInstance();
+            if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php')) {
+                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php');
+                $this->$component = call_user_func(array($component . 'Component', 'getInstance'));
                 $this->view->$component = $this->$component;
                 if ($this->_modelLoaded) {
                     $this->{$this->_modelName}->$component = $this->$component;
                 }
             }
         }
-        Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'Request.php');
-        $this->request = Request::getInstance();
+        Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'RequestComponent.php');
+        $this->request = RequestComponent::getInstance();
         $this->view->request = $this->request;
 
         $this->view->paginator = new Paginator($this->_paginationConfig);
