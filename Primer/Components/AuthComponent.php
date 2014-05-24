@@ -6,6 +6,15 @@
 
 class AuthComponent extends Component
 {
+    /////////////////////////////////////////////////
+    // PROPERTIES, PUBLIC
+    /////////////////////////////////////////////////
+
+    /*
+     * Session instance
+     */
+    public $Session;
+
     /**
      * Initialize Component
      */
