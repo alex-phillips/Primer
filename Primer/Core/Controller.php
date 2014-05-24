@@ -16,11 +16,6 @@ class Controller
     protected $_modelName;
 
     /*
-     * Boolean to determine if a model has been loaded for the controller
-     */
-    protected $_modelLoaded = false;
-
-    /*
      * Array of components to be loaded into controller, model, and view
      */
     protected $_components = array();
@@ -48,9 +43,6 @@ class Controller
                 Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php');
                 $this->$component = call_user_func(array($component . 'Component', 'getInstance'));
                 $this->view->$component = $this->$component;
-                if ($this->_modelLoaded) {
-                    $this->{$this->_modelName}->$component = $this->$component;
-                }
             }
         }
         Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'RequestComponent.php');
@@ -70,7 +62,6 @@ class Controller
         if (file_exists($path)) {
             Primer::requireFile($path);
             $this->{$this->_modelName} = new $this->_modelName();
-            $this->_modelLoaded = true;
         }
 
         // @TODO: do we need to handle situation where model doesn't exist for controller? i.e. pages

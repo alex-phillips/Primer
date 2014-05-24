@@ -10,6 +10,15 @@
 class Model
 {
     /////////////////////////////////////////////////
+    // PROPERTIES, PUBLIC
+    /////////////////////////////////////////////////
+
+    /*
+     * Session instance
+     */
+    public $Session;
+
+    /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE AND PROTECTED
     /////////////////////////////////////////////////
 
@@ -64,6 +73,9 @@ class Model
         $this->_idField = static::getIdField();
         $this->_tableName = static::getTableName();
         $this->_className = static::getClassName();
+
+        // @TODO: has to be a better way to do this
+        $this->Session = SessionComponent::getInstance();
 
         try {
             self::$db = new Database();
