@@ -43,16 +43,13 @@ class User extends Model
 
     protected function beforeSave()
     {
-        // now it gets a little bit crazy: check if we have a constant HASH_COST_FACTOR defined (in config/hashing.php),
-        // if so: put the value into $this->hash_cost_factor, if not, make $this->hash_cost_factor = null
-        $hash_cost_factor = (defined('HASH_COST_FACTOR') ? HASH_COST_FACTOR : null);
-
         // crypt the user's password with the PHP 5.5's password_hash() function, results in a 60 character hash string
         // the PASSWORD_DEFAULT constant is defined by the PHP 5.5, or if you are using PHP 5.3/5.4, by the password hashing
         // compatibility library. the third parameter looks a little bit shitty, but that's how those PHP 5.5 functions
         // want the parameter: as an array with, currently only used with 'cost' => XX.
+        // @TODO: need to transfer password hashing and retrieval to Auth component
         if (isset($this->password)) {
-            $this->password = password_hash($this->password, PASSWORD_DEFAULT, array('cost' => $hash_cost_factor));
+            $this->password = password_hash($this->password, PASSWORD_DEFAULT, array('cost' => HASH_COST_FACTOR));
         }
 
         // escapin' this, additionally removing everything that could be (html/javascript-) code
