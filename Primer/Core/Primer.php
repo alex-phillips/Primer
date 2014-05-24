@@ -16,7 +16,7 @@ if (!defined('PRIMER_CORE')) {
 define('MODELS_PATH', APP_ROOT . DS . 'Models' . DS);
 define('CONTROLLERS_PATH', APP_ROOT . DS . 'Controllers' . DS);
 
-Primer::requireFile(PRIMER_CORE . '/lib/PasswordCompatibilityLibrary.php');
+Primer::requireFile(PRIMER_CORE . DS . 'lib' . DS . 'PasswordCompatibilityLibrary.php');
 spl_autoload_register('Primer::autoload');
 
 /**
@@ -36,36 +36,64 @@ class Primer
 
     public static function autoload($class)
     {
+        // Load components
+        if (preg_match('#.+Component$#', $class)) {
+            try {
+                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $class . '.php');
+                return;
+            }
+            catch (Exception $e) {
+                echo $e->getMessage();
+                exit;
+            }
+        }
+
+        // Load controllers
+        if (preg_match('#.+Controller$#', $class)) {
+            try {
+                Primer::requireFile(CONTROLLERS_PATH . DS . $class . '.php');
+                return;
+            }
+            catch (Exception $e) {
+                echo $e->getMessage();
+                exit;
+            }
+        }
+
         // First attempt libs directory, then attempt Objects in libs
         $dir = scandir(PRIMER_CORE . '/lib');
-        foreach ($dir as $file) {
-            if (strtolower($file) == strtolower($class . '.php')) {
-                Primer::requireFile(PRIMER_CORE . "/lib/" . $file);
+        if (in_array($class . '.php', $dir)) {
+            try {
+                Primer::requireFile(PRIMER_CORE . DS . "lib" . DS . $class . '.php');
                 return;
+            }
+            catch (Exception $e) {
+                echo $e->getMessage();
+                exit;
             }
         }
 
         $dir = scandir(PRIMER_CORE . '/Core');
-        foreach ($dir as $file) {
-            if (strtolower($file) == strtolower($class . '.php')) {
-                Primer::requireFile(PRIMER_CORE . "/Core/" . $file);
+        if (in_array($class . '.php', $dir)) {
+            try {
+                Primer::requireFile(PRIMER_CORE . DS . "Core" . DS . $class . '.php');
                 return;
+            }
+            catch (Exception $e) {
+                echo $e->getMessage();
+                exit;
             }
         }
 
         $dir = scandir(MODELS_PATH);
-        foreach ($dir as $file) {
-            if (strtolower($file) == strtolower($class . '.php')) {
-                Primer::requireFile(MODELS_PATH . $file);
+        if (in_array($class . '.php', $dir)) {
+            try {
+                Primer::requireFile(MODELS_PATH . $class . '.php');
                 return;
             }
-        }
-
-        $dir = scandir(CONTROLLERS_PATH);
-        foreach ($dir as $file) {
-            if (strtolower($file) == strtolower($class . '.php')) {
-                Primer::requireFile(CONTROLLERS_PATH . $file);
-                return;
+            catch (Exception $e) {
+                echo $e->getMessage();
+                exit;
             }
         }
     }
