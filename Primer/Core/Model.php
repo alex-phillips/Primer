@@ -77,15 +77,22 @@ class Model
         // @TODO: has to be a better way to do this
         $this->Session = SessionComponent::getInstance();
 
-        try {
-            self::$db = new Database();
-        } catch (PDOException $e) {
-            die('Database connection could not be established.');
-        }
+        self::init();
 
         static::getSchema();
         if (!empty($params)) {
             $this->set($params);
+        }
+    }
+
+    public static function init()
+    {
+        if (!self::$db) {
+            try {
+                self::$db = new Database();
+            } catch (PDOException $e) {
+                die('Database connection could not be established.');
+            }
         }
     }
 
