@@ -13,10 +13,14 @@ class Form
     private $_schema = array();
     private $_markup;
 
+    private $request;
+
     public function __construct($controller, $action)
     {
         $this->_controller = $controller;
         $this->_action = $action;
+
+        $this->request = RequestComponent::getInstance();
     }
 
     public function create($object, $method = 'post', $params = null)
@@ -65,7 +69,10 @@ __TEXT__;
         }
 
         $value = '';
-        if (isset($params['value'])) {
+        if (isset($this->request->data[$this->_objectName][$name])) {
+            $value = $this->request->data[$this->_objectName][$name];
+        }
+        else if (isset($params['value'])) {
             $value = $params['value'];
         }
 
@@ -108,7 +115,8 @@ __TEXT__;
 
         $form_name = "data[{$this->_objectName}][$name]";
 
-        $label_markup = $this->build_label($form_name, $label, $type);
+        $required = isset($params['required']) ? $params['required'] : false;
+        $label_markup = $this->build_label($form_name, $label, $type, $required);
 
         switch ($type) {
             case 'textarea':
@@ -154,17 +162,19 @@ __TEXT__;
 
     }
 
-    private function build_label($field, $label = null, $type)
+    private function build_label($field, $label = null, $type, $required = false)
     {
         if ($label == null) {
             $label = $field;
         }
 
+        $required = ($required === true) ? 'required' : '';
+
         $hide = '';
         if ($type == 'hidden') {
             $hide = 'hidden';
         }
-        return '<label for="' . $field . '" ' . $hide . '>' . $label . '</label>';
+        return '<label for="' . $field . '" ' . $hide . ' class="' . $required . '">' . $label . '</label>';
     }
 
     public function end($params = array(), $return = false)
