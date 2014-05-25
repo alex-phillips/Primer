@@ -2,8 +2,6 @@
 
 class PagesController extends AppController
 {
-    public $name = 'page';
-
     public function index()
     {
     }
