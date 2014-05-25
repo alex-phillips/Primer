@@ -2,7 +2,7 @@ require './primer'
 
 class IPChecker
 
-  @@monitor_file = './monitors/current_ip'
+  @monitor_file = './monitors/current_ip'
 
   def self.run
     require 'net/http'
@@ -10,8 +10,8 @@ class IPChecker
     active_ip = Net::HTTP.get(URI.parse('http://ipecho.net/plain'))
     self.log_message('Active IP is ' + active_ip)
 
-    if (File.exists?(@@monitor_file))
-        recorded_ip = File.read(@@monitor_file)
+    if (File.exists?(@monitor_file))
+        recorded_ip = File.read(@monitor_file)
         self.log_message('Recorded IP is ' + recorded_ip.gsub("\n",''))
     else
         recorded_ip = nil
@@ -24,7 +24,7 @@ class IPChecker
         self.log_message('IP address has changed')
     end
 
-    fh = File.open(@@monitor_file, 'w')
+    fh = File.open(@monitor_file, 'w')
     fh.puts active_ip
     fh.close
   end
