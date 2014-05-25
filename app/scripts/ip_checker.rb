@@ -1,43 +1,39 @@
+require './primer'
+
 class IPChecker
 
-    def initialize
-        require 'net/http'
+  @@monitor_file = './monitors/current_ip'
 
-        active_ip = Net::HTTP.get(URI.parse('http://ipecho.net/plain'))
-        puts 'Active IP is ' + active_ip
+  def self.run
+    require 'net/http'
 
-        if (File.exists?('current_ip'))
-            recorded_ip = File.read('current_ip')
-            puts 'Recorded IP is ' + recorded_ip
-        else
-            recorded_ip = nil
-            puts 'No recorded IP.'
-        end
+    active_ip = Net::HTTP.get(URI.parse('http://ipecho.net/plain'))
+    self.log_message('Active IP is ' + active_ip)
 
-        if (active_ip.eql? recorded_ip)
-            puts 'No IP change'
-        else
-            puts 'IP address has changed'
-        end
-
-        self.logMsg('active ip is ' + active_ip)
-        fh = File.open('current_ip', 'w')
-        fh.puts active_ip
-        fh.close
+    if (File.exists?(@@monitor_file))
+        recorded_ip = File.read(@@monitor_file)
+        self.log_message('Recorded IP is ' + recorded_ip.gsub("\n",''))
+    else
+        recorded_ip = nil
+        self.log_message('No recorded IP.')
     end
 
-    def logMsg message
-        Framework.logMsg 'ip_monitor', message
+    if (active_ip.eql? recorded_ip)
+        self.log_message('No IP change')
+    else
+        self.log_message('IP address has changed')
     end
+
+    fh = File.open(@@monitor_file, 'w')
+    fh.puts active_ip
+    fh.close
+  end
+
+  def self.log_message message
+    Primer.log_message 'ip_monitor_ruby', message
+    puts message
+  end
 
 end
 
-class Framework
-
-    def self.logMsg logfile, message
-        fh = File.open(logfile, 'a')
-        fh.puts(message)
-        fh.close
-    end
-
-end
+IPChecker.run
