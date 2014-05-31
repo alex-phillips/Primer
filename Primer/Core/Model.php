@@ -481,7 +481,6 @@ class Model
                 }
 
                 switch ($rule) {
-                    // Validate e-mail
                     case 'unique':
                         $results = $this->find(array(
                             'conditions' => array(
@@ -497,6 +496,7 @@ class Model
                             }
                         }
                         break;
+                    // Validate e-mail
                     case 'email':
                         if (!filter_var($this->$field, FILTER_VALIDATE_EMAIL)) {
                             $this->Session->setFlash($message, 'failure');
@@ -527,6 +527,13 @@ class Model
                     // Validate min length
                     case 'min_length':
                         if (strlen($this->$field) < $info['size']) {
+                            $this->Session->setFlash($message, 'failure');
+                            return false;
+                        }
+                        break;
+                    // Validate list of options
+                    case 'in_list':
+                        if (!in_array($this->$field, $info['list'])) {
                             $this->Session->setFlash($message, 'failure');
                             return false;
                         }
