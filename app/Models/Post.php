@@ -9,8 +9,8 @@ class Post extends Model
             ),
         ),
         'type' => array(
-            'options' =>  array(
-                'in_array' => array(
+            'in_list' =>  array(
+                'list' => array(
                     'post',
                     'quote',
                 ),
