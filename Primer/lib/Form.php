@@ -11,6 +11,7 @@ class Form
     private $_action;
     private $_objectName = 'default';
     private $_schema = array();
+    private $_validate = array();
     private $_markup;
 
     private $request;
@@ -31,7 +32,8 @@ class Form
 
         // TODO: there's gotta be a better way to do this...
         $this->_objectName = $model::getClassName();
-        $this->_schema = $model::getSchema();
+        $this->_schema = $model::getSchema() ?: array();
+        $this->_validate = $model::$validate ?: array();
 
         $action = '';
         if (isset($params['action'])) {
@@ -81,10 +83,23 @@ __TEXT__;
             $type = $params['type'];
         }
         else if (array_key_exists($name, $this->_schema)) {
-            if (isset($this->_schema[$name]['options'])) {
+            if (array_key_exists($name, $this->_validate) && array_key_exists('in_list', $this->_validate[$name])) {
                 $type = 'select';
                 $options_markup = '';
-                foreach ($this->_schema[$name]['options'] as $option) {
+                foreach ($this->_validate[$name]['in_list']['list'] as $option) {
+                    if ($value == $option) {
+                        $options_markup .= "<option value=\"{$option}\" selected=\"selected\">$option</option>";
+                    }
+                    else {
+                        $options_markup .= "<option value=\"{$option}\">$option</option>";
+                    }
+
+                }
+            }
+            else if (isset($params['options'])) {
+                $type = 'select';
+                $options_markup = '';
+                foreach ($params['options'] as $option) {
                     if ($value == $option) {
                         $options_markup .= "<option value=\"{$option}\" selected=\"selected\">$option</option>";
                     }
