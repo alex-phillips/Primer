@@ -9,10 +9,12 @@ class Form
 {
     private $_controller;
     private $_action;
+    private $_model;
     private $_objectName = 'default';
     private $_schema = array();
     private $_validate = array();
     private $_markup;
+    private static $_fileCounter = 0;
 
     private $request;
 
@@ -26,14 +28,14 @@ class Form
 
     public function create($object, $method = 'post', $params = null)
     {
-        $modelName = Inflector::singularize($object);
-        $model = new $modelName;
+        $modelName = Primer::getModelName($object);
+        $this->_model = new $modelName;
         $class = "";
 
         // TODO: there's gotta be a better way to do this...
-        $this->_objectName = $model::getClassName();
-        $this->_schema = $model::getSchema() ?: array();
-        $this->_validate = $model::$validate ?: array();
+        $this->_objectName = call_user_func(array($this->_model, 'getClassName'));
+        $this->_schema = call_user_func(array($this->_model, 'getSchema'));
+        $this->_validate = call_user_func(array($this->_model, 'getValidationArray'));
 
         $action = '';
         if (isset($params['action'])) {
@@ -51,8 +53,13 @@ class Form
             }
         }
 
+        $enctype = '';
+        if (isset($params['enctype'])) {
+            $enctype = 'enctype="' . $params['enctype'] . '"';
+        }
+
         $this->_markup = <<<__TEXT__
-            <form id="{$this->_controller}{$this->_action}Form" method="$method" action="$action" class="$class"$attrs>
+            <form id="{$this->_controller}{$this->_action}Form" $enctype method="$method" action="$action" class="$class"$attrs>
 __TEXT__;
 
     }
@@ -61,6 +68,25 @@ __TEXT__;
     {
         $label = $name;
         $class = "";
+
+        // @TODO: add support for future associtions such as HABTM, has many, etc.
+        if (preg_match('#\Aid_(.+)$#', $name, $matches)) {
+            if (isset($this->_model->belongsTo)) {
+                if (is_array($this->_model->belongsTo)) {
+
+                }
+                else if (is_string($this->_model->belongsTo)) {
+                    if (Primer::getModelName($matches[1]) === $this->_model->belongsTo) {
+                        $owners = call_user_func(array(Primer::getModelName($matches[1]), 'find'));
+                        $params['options'] = array();
+                        $params['use_option_keys'] = true;
+                        foreach ($owners as $owner) {
+                            $params['options'][$owner->id] = $owner->name;
+                        }
+                    }
+                }
+            }
+        }
 
         if (isset($params['label'])) {
             $label = $params['label'];
@@ -83,28 +109,24 @@ __TEXT__;
             $type = $params['type'];
         }
         else if (array_key_exists($name, $this->_schema)) {
-            if (array_key_exists($name, $this->_validate) && array_key_exists('in_list', $this->_validate[$name])) {
-                $type = 'select';
-                $options_markup = '';
-                foreach ($this->_validate[$name]['in_list']['list'] as $option) {
-                    if ($value == $option) {
-                        $options_markup .= "<option value=\"{$option}\" selected=\"selected\">$option</option>";
-                    }
-                    else {
-                        $options_markup .= "<option value=\"{$option}\">$option</option>";
-                    }
-
-                }
+            if (array_key_exists($name, $this->_validate) && array_key_exists('in_list', $this->_validate[$name]) && !isset($params['options'])) {
+                $params['options'] = $this->_validate[$name]['in_list']['list'];
             }
-            else if (isset($params['options'])) {
+            if (isset($params['options'])) {
                 $type = 'select';
                 $options_markup = '';
-                foreach ($params['options'] as $option) {
-                    if ($value == $option) {
-                        $options_markup .= "<option value=\"{$option}\" selected=\"selected\">$option</option>";
+                foreach ($params['options'] as $index => $option) {
+                    if (isset($params['use_option_keys']) && $params['use_option_keys'] === true) {
+                        $optionValue = $index;
                     }
                     else {
-                        $options_markup .= "<option value=\"{$option}\">$option</option>";
+                        $optionValue = $option;
+                    }
+                    if ($value == $option) {
+                        $options_markup .= "<option value=\"{$optionValue}\" selected=\"selected\">$option</option>";
+                    }
+                    else {
+                        $options_markup .= "<option value=\"{$optionValue}\">$option</option>";
                     }
 
                 }
@@ -129,6 +151,10 @@ __TEXT__;
         }
 
         $form_name = "data[{$this->_objectName}][$name]";
+        if ($type === 'file') {
+            $form_name = 'file' . self::$_fileCounter;
+            self::$_fileCounter++;
+        }
 
         $required = isset($params['required']) ? $params['required'] : false;
         $label_markup = $this->build_label($form_name, $label, $type, $required);
