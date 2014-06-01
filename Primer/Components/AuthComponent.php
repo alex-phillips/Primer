@@ -41,7 +41,7 @@ class AuthComponent extends Component
         if ($this->Session->isUserLoggedIn()) {
             return true;
         }
-        $this->Session->setFlash('You must be logged in to do that', 'warning');
+        $this->Session->setFlash('You must be logged in to do that', 'notice');
         Router::redirect('/');
     }
 
