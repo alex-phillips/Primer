@@ -66,8 +66,6 @@ class Controller
         else {
             Model::init();
         }
-
-        // @TODO: do we need to handle situation where model doesn't exist for controller? i.e. pages
     }
 
     public function beforeFilter()
