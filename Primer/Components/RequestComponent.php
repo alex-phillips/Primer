@@ -8,12 +8,19 @@
 class RequestComponent extends Component
 {
     private $_requestMethod;
-    public $data;
+    public $data = array();
+    public $files = array();
 
     protected function __construct()
     {
         foreach ($_REQUEST as $key => $value) {
             $this->$key = $value;
+        }
+
+        if (isset($_FILES) && !empty($_FILES)) {
+            foreach ($_FILES as $name => $info) {
+                $this->files[$name] = $info;
+            }
         }
 
         $this->_requestMethod = $_SERVER['REQUEST_METHOD'];
