@@ -7,7 +7,13 @@
  */
 
 define('ROOT', dirname(dirname(dirname(__FILE__))));
-require_once(ROOT . '/app/Config/config.php');
+
+if (file_exists(ROOT . '/app/Config/' . $_SERVER['SERVER_NAME'] . '.php')) {
+    require_once(ROOT . '/app/Config/' . $_SERVER['SERVER_NAME'] . '.php');
+}
+else {
+    require_once(ROOT . '/app/Config/config.php');
+}
 
 // checking for minimum PHP version
 if (version_compare(PHP_VERSION, '5.3.7', '<') ) {
