@@ -126,7 +126,8 @@ class Router
         if (!$url) {
             $url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
         }
-        $url = trim($url, '/');
+        $components = parse_url($url);
+        $url = trim($components['path'], '/');
         $url = filter_var($url, FILTER_SANITIZE_URL);
         if ($url) {
             return explode('/', $url);
@@ -141,6 +142,9 @@ class Router
      */
     public static function redirect($location)
     {
+        if ($location === 'referrer') {
+            $location = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
+        }
         header("Location: " . $location);
         exit;
     }
