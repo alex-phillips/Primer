@@ -16,6 +16,20 @@ class Bootstrap
     {
         Router::dispatch();
 
+        if (defined(UNDER_CONSTRUCTION) && UNDER_CONSTRUCTION === true) {
+            $session = SessionComponent::getInstance();
+            if (!$session->isUserLoggedIn()) {
+                if (Router::$controller !== 'users') {
+                    echo '<h1>Under Construction</h1>';
+                    exit;
+                }
+                if (Router::$action !== 'login') {
+                    echo '<h1>Under Construction</h1>';
+                    exit;
+                }
+            }
+        }
+
         Primer::setValue('conroller', Router::$controller);
         Primer::setValue('action', Router::$action);
         // Check if chosen controller exists, otherwise, 404
@@ -49,7 +63,6 @@ class Bootstrap
      */
     private function _callControllerMethod()
     {
-
         if (!method_exists($this->_controller, Router::$action)) {
             Router::error404();
         }
