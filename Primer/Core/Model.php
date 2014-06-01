@@ -101,9 +101,17 @@ class Model
         return 'id';
     }
 
-    public static function getClassName()
+    public static function getForeignIdField($class)
     {
-        return strtolower(get_called_class());
+        return 'id_' . self::getClassName($class);
+    }
+
+    public static function getClassName($class = null)
+    {
+        if (!$class) {
+            return strtolower(get_called_class());
+        }
+        return strtolower(Inflector::singularize($class));
     }
 
     public static function getTableName()
@@ -132,6 +140,11 @@ class Model
             }
         }
         return static::$_schema[$className];
+    }
+
+    public static function getValidationArray()
+    {
+        return static::$validate;
     }
 
     /**
@@ -393,6 +406,10 @@ class Model
             return false;
         }
 
+        if (!$this->verifyRelationships()) {
+            return false;
+        }
+
         self::$bindings = array();
         $columns = array();
         $set = array();
@@ -446,6 +463,33 @@ class Model
 
         self::$db->commit();
         return $success;
+    }
+
+    private function verifyRelationships()
+    {
+        /*
+         * Verify 'belongs to' relationships
+         */
+        if (isset($this->belongsTo)) {
+            if (is_array($this->belongsTo)) {
+
+            }
+            else if (is_string($this->belongsTo)) {
+                $ownerModel = Primer::getModelName($this->belongsTo);
+                try {
+                    $ownerId = $this->{$this->getForeignIdField($this->belongsTo)};
+                    $owner = call_user_func(array($ownerModel, 'findById'), $ownerId);
+                    if (!($owner instanceof $ownerModel)) {
+                        return false;
+                    }
+                }
+                catch (Exception $e) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     // @TODO: move validating to its own class
@@ -558,6 +602,7 @@ class Model
             ':id' => $this->{$this->_idField},
         ));
 
+        unset($this);
         return $success;
     }
 
