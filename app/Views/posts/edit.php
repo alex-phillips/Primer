@@ -20,6 +20,9 @@ $this->Form->add('title', array(
 $this->Form->add('body', array(
     'value' => $this->post->body,
     'label' => 'Body',
+    'additional_attrs' => array(
+        'rows' => 10,
+    ),
 ));
 $this->Form->end();
 

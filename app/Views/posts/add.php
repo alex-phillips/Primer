@@ -30,6 +30,9 @@ if (isset($_REQUEST['data']['post']['body'])) {
         ));
         $this->Form->add('body', array(
             'label' => 'Body',
+            'additional_attrs' => array(
+                'rows' => 10,
+            ),
         ));
         $this->Form->end();
 
