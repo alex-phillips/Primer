@@ -159,12 +159,20 @@ __TEXT__;
         $required = isset($params['required']) ? $params['required'] : false;
         $label_markup = $this->build_label($form_name, $label, $type, $required);
 
+        $additionalAttrs = array();
+        if (isset($params['additional_attrs'])) {
+            foreach ($params['additional_attrs'] as $attribute => $val) {
+                $additionalAttrs[] = "$attribute=\"$val\"";
+            }
+        }
+        $additionalAttrs = implode(' ', $additionalAttrs);
+
         switch ($type) {
             case 'textarea':
                 $this->_markup .= <<<__TEXT__
                     <div class="field $name">
                         $label_markup
-                        <textarea id="$name" name="$form_name" class="$class">$value</textarea>
+                        <textarea id="$name" name="$form_name" class="$class" $additionalAttrs>$value</textarea>
                     </div>
 __TEXT__;
                 break;
@@ -172,7 +180,7 @@ __TEXT__;
                 $this->_markup .= <<<__TEXT__
                     <div class="field $name">
                         $label_markup
-                        <select name="$form_name" value="$value" class="$class"/>
+                        <select name="$form_name" value="$value" class="$class" $additionalAttrs/>
                             $options_markup
                         </select>
                     </div>
@@ -186,7 +194,7 @@ __TEXT__;
                 $this->_markup .= <<<__TEXT__
                     <div class="field checkbox">
                         <label>
-                            <input type="$type" name="$form_name" value="1" class="$class" $checked/> $label
+                            <input type="$type" name="$form_name" value="1" class="$class" $checked $additionalAttrs/> $label
                         </label>
                     </div>
 __TEXT__;
@@ -195,7 +203,7 @@ __TEXT__;
                 $this->_markup .= <<<__TEXT__
                     <div class="field $name">
                         $label_markup
-                        <input type="$type" name="$form_name" value="$value" class="$class"/>
+                        <input type="$type" name="$form_name" value="$value" class="$class" $additionalAttrs/>
                     </div>
 __TEXT__;
                 break;
