@@ -24,11 +24,14 @@ __TEXT__;
 
         }
 
+        $markdownParser = new Parsedown();
+        $body = $markdownParser->text(htmlspecialchars($post->body, ENT_QUOTES, 'utf-8'));
+
         $markup .= <<<___HTML___
             <article>
                 <h3><a href="/posts/view/$post->id">$post->title</a></h3>
                 <h6>$date</h6>
-                <p>$post->body</p>
+                <p>$body</p>
                 $admin_links
             </article>
             <hr/>
