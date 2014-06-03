@@ -7,3 +7,48 @@
         height: 45px;width: 0;
     }
 }
+
+div#mobile-nav-header {
+    background-color: #333333;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+    height: 45px;
+    padding: 10px 0;
+    width: 100%;
+
+    // Font to match bootstrap theme
+    font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 19px;
+    font-weight: 300;
+
+    @media (max-width: $screen-xs-max) {
+        display: table !important;
+    }
+
+    a {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .left-menu {
+        width: 50px;
+        display: table-cell;
+        background: center center no-repeat transparent;
+        cursor: pointer;
+        background-image: url( data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADhJREFUeNpi/P//PwOtARMDHQBdLGFBYtMq3BiHT3DRPU4YR4NrNAmPJuHRJDyahEeT8Ii3BCDAAF0WBj5Er5idAAAAAElFTkSuQmCC );
+    }
+
+    .site-name {
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .right-menu {
+        height: 100%;
+        min-width: 50px;
+        display: table-cell;
+    }
+}
