@@ -8,8 +8,15 @@
     </ul>
 </nav>
 <div>
+    <div id="mobile-nav-header" class="visible-xs">
+        <div class="left-menu"></div>
+        <div class="site-name">
+            <a href="/"><?php echo SITE_NAME; ?></a>
+        </div>
+        <div class="right-menu"></div>
+    </div>
     <header style="padding-bottom: 20px;">
-        <div class="navbar navbar-default" role="navigation" style="margin-bottom: 0;">
+        <div class="navbar navbar-default hidden-xs" role="navigation" style="margin-bottom: 0;">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
                     <span class="icon-bar"></span>
