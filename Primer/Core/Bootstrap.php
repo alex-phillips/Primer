@@ -16,7 +16,7 @@ class Bootstrap
     {
         Router::dispatch();
 
-        if (defined(UNDER_CONSTRUCTION) && UNDER_CONSTRUCTION === true) {
+        if (defined('UNDER_CONSTRUCTION') && UNDER_CONSTRUCTION === true) {
             $session = SessionComponent::getInstance();
             if (!$session->isUserLoggedIn()) {
                 if (Router::$controller !== 'users') {
