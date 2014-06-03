@@ -1,11 +1,8 @@
 require([
     'jquery',
-    'js_config',
-    'ckeditor-jquery'
+    'js_config'
 ],
     function($, js_config) {
-
-        $('textarea#body').ckeditor();
 
         var custom_properties = function()
         {
