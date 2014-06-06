@@ -42,7 +42,7 @@ class View
         if (isset($this->request->format)) {
             switch ($this->request->format) {
                 case 'json':
-                    echo json_encode(Primer::getValue('rendering_object'));
+                    echo Primer::getValue('rendering_object')->JSONSerialize();
                     break;
                 default:
                     Router::error404();

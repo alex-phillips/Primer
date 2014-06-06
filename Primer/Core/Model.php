@@ -618,4 +618,14 @@ class Model
         return $success;
     }
 
+    public function JSONSerialize()
+    {
+        $retval = new stdClass();
+        foreach ($this as $key => $value) {
+            if (array_key_exists($key, $this->getSchema())) {
+                $retval->$key = $value;
+            }
+        }
+        return json_encode($retval);
+    }
 }
