@@ -3,9 +3,12 @@ define([
     'underscore',
     'bootstrap',
     'mmenu',
-    'vendor/jquery_plugins/unveil'
+    'vendor/jquery_plugins/unveil',
+    'prism'
 ], function ($, _) {
     'use strict';
+
+    window.Prism.highlightAll();
 
     $("#mobile-nav").mmenu();
     $("#mobile-nav-header").find(".left-menu").click(function(){

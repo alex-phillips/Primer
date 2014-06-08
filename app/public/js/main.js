@@ -7,7 +7,8 @@ require.config({
         'modernizr': 'vendor/modernizr',
         'angular': '//ajax.googleapis.com/ajax/libs/angularjs/1.2.12/angular.min',
         'ckeditor': '../libs/ckeditor/ckeditor',
-        'ckeditor-jquery': '../libs/ckeditor/adapters/jquery'
+        'ckeditor-jquery': '../libs/ckeditor/adapters/jquery',
+        'prism': 'vendor/prism'
     },
     shim: {
         'jquery': {
