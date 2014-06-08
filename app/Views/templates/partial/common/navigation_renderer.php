@@ -10,8 +10,8 @@ class navigation_renderer
 {
     protected static $_config = array(
         'left_nav' => array(
-            '<span class="glyphicon glyphicon-pencil"></span>&nbsp;&nbsp;Posts' => '/',
-            '<span class="glyphicon glyphicon-film"></span>&nbsp;&nbsp;Movies' => '/movies/',
+            '<span class="glyphicon glyphicon-pencil hidden-xs">&nbsp;</span>Posts' => '/',
+            '<span class="glyphicon glyphicon-film hidden-xs">&nbsp;</span>Movies' => '/movies/',
         ),
         'right_nav' => array(
             '{{username}}' => array(
@@ -26,8 +26,8 @@ class navigation_renderer
 
     public static function buildDesktopNav()
     {
-        $leftNav = self::buildDesktopLinks(self::$_config['left_nav']);
-        $rightNav = self::buildDesktopLinks(self::$_config['right_nav']);
+        $leftNav = self::buildLinks(self::$_config['left_nav']);
+        $rightNav = self::buildLinks(self::$_config['right_nav']);
         return <<<__TEXT__
             <div class="navbar navbar-default hidden-xs" role="navigation" style="margin-bottom: 0;">
                 <div class="navbar-header">
@@ -51,7 +51,14 @@ __TEXT__;
 
     }
 
-    protected static function buildDesktopLinks($config, $addDividers = true)
+    public static function buildMobileNav()
+    {
+        $links = self::buildLinks(self::$_config['left_nav'], false);
+        $links .= self::buildLinks(self::$_config['right_nav'], false);
+        return '<ul>' . $links . '</ul>';
+    }
+
+    protected static function buildLinks($config, $addDividers = true)
     {
         $divider = $addDividers ? '<li class="divider hidden-xs"></li>' : '';
         $markup = $divider;
@@ -75,11 +82,11 @@ __TEXT__;
                 else {
                     $markup .= <<<__TEXT__
                    <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">$label <b class="caret"></b></a>
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">$label <b class="caret hidden-xs"></b></a>
                         <ul class="dropdown-menu">
 __TEXT__;
 
-                    $markup .= self::buildDesktopLinks($info, false);
+                    $markup .= self::buildLinks($info, false);
                     $markup .= '</ul></li>' . $divider;
                 }
             }
