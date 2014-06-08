@@ -16,61 +16,10 @@
         <div class="right-menu"></div>
     </div>
     <header style="padding-bottom: 20px;">
-        <div class="navbar navbar-default hidden-xs" role="navigation" style="margin-bottom: 0;">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="/">Alex Phillips</a>
-            </div>
-            <div class="navbar-collapse collapse navbar-responsive-collapse">
-                <ul class="nav navbar-nav">
-                    <li class="divider hidden-xs"></li>
-                    <li>
-                        <a href="/posts/">
-                            <span class="glyphicon glyphicon-pencil"></span>&nbsp;&nbsp;
-                            Posts
-                        </a>
-                    </li>
-                    <li class="divider hidden-xs"></li>
-                    <li>
-                        <a href="/movies/">
-                            <span class="glyphicon glyphicon-film"></span>&nbsp;&nbsp;
-                            Movies
-                        </a>
-                    </li>
-                    <li class="divider hidden-xs"></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    <li class="divider hidden-xs"></li>
-                    <?php
-                    if ($this->Session->isUserLoggedIn()) {
-                        $id_user = $this->Session->read('id');
-                        $username = $this->Session->read('username');
-                        echo <<<__TEXT__
-                            <li class="dropdown">
-                                <a class="dropdown-toggle" data-toggle="dropdown" href="#">$username <b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="/users/view/$id_user">View Account</a></li>
-                                    <li><a href="/users/edit/$id_user">Edit Account</a></li>
-                                    <li><a href="/posts/add/">New Post</a></li>
-                                </ul>
-                            </li>
-                            <li class="divider hidden-xs"></li>
-__TEXT__;
-
-                        echo '<li><a href="/users/logout/">Log Out</a></li>';
-                    }
-                    else {
-                        echo '<li><a href="/users/login/">Log In</a></li>';
-                    }
-                    ?>
-                </ul>
-            </div><!-- /.nav-collapse -->
-        </div>
-
+        <?php
+        Primer::requireFile('Views/templates/partial/common/navigation_renderer.php');
+        echo navigation_renderer::buildDesktopNav();
+        ?>
         <div class="banner">
             <div class="container">
                 <div class="row">
