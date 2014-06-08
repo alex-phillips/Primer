@@ -138,7 +138,7 @@ class UsersController extends AppController
     {
         // If no ID is passed, use currently logged in user
         if ($id == null) {
-            $id = $this->Session->read('id');
+            Router::redirect('/users/edit/' . $this->Session->read('id'));
         }
 
         if ($id != $this->Session->read('id') && !$this->Session->isAdmin()) {
