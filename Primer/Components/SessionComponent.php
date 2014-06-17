@@ -7,8 +7,14 @@
 
 class SessionComponent extends Component
 {
+    /*
+     * Array that contains system messages
+     */
     private $_flashMessages = array();
 
+    /**
+     * Class constructor - initializes session of one is not currently active
+     */
     protected function __construct()
     {
         // If no session exist, start the session
@@ -77,18 +83,27 @@ class SessionComponent extends Component
      * Set flash message to be outputted to user on the next view rendered.
      * Can pass in a type to apply CSS styles (i.e. success, failure, warning)
      *
-     * @param $message
+     * @param $messages
      * @param string $class
      */
-    public function setFlash($message, $class = '')
+    public function setFlash($messages, $class = '')
     {
         // @TODO: maybe we can skip variable and write straight to $_SESSION
-        $this->_flashMessages[$message] = $class;
+        if (is_array($messages)) {
+            foreach ($messages as $message) {
+                $this->_flashMessages[$message] = $class;
+                $this->write('flash_messages', $this->_flashMessages);
+            }
+        }
+        else {
+            $this->_flashMessages[$messages] = $class;
+        }
         $this->write('flash_messages', $this->_flashMessages);
     }
 
     /**
      * Control browser redirects
+     *
      * @depricated use Router redirect function
      * @param $header
      */
@@ -99,6 +114,8 @@ class SessionComponent extends Component
     }
 
     /**
+     * Function that returns true if user is currently logged in, otherwise, false
+     *
      * @return bool|mixed
      * @depricated
      */
@@ -111,7 +128,7 @@ class SessionComponent extends Component
     }
 
     /**
-     * Return true if the user's
+     * Return true if the user's 'role' is 'admin'
      *
      * @return bool
      * @depricated
