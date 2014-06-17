@@ -32,8 +32,15 @@ class Bootstrap
 
         Primer::setValue('conroller', Router::$controller);
         Primer::setValue('action', Router::$action);
-        // Check if chosen controller exists, otherwise, 404
-        if (file_exists(CONTROLLERS_PATH . Primer::getControllerName(Router::$controller) . '.php')) {
+
+        /*
+         * Check if chosen controller exists, otherwise, 404
+         *
+         * We don't want to call Primer::getControllerName here because we don't
+         * want /pages/index and /page/index to both work. That function will
+         * properly pluralize and format regardless if that controller exists.
+         */
+        if (file_exists(CONTROLLERS_PATH . strtolower(ucfirst(Router::$controller)) . 'Controller.php')) {
             $this->_loadController(Router::$controller);
             $this->_callControllerMethod();
         }
