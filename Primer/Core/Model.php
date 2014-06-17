@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Model
  * @author Alex Phillips
@@ -6,7 +7,6 @@
  * Class in which all models are inherited from. Contains all 'generic' database
  * interactions and validation for models.
  */
-
 class Model
 {
     /////////////////////////////////////////////////
@@ -14,9 +14,9 @@ class Model
     /////////////////////////////////////////////////
 
     /*
-     * Session instance
+     * Array that contains validation and save error messages
      */
-    public $Session;
+    public $errors = array();
 
     /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE AND PROTECTED
@@ -52,17 +52,17 @@ class Model
      * This is not validation for forms or clientside validation, but
      * validation before a model is created or updated in the database.
      */
-    protected static $validate = array();
+    protected static $_validate = array();
 
     /*
      * Database variable to handle all query creations and executions.
      */
-    protected static $db;
+    protected static $_db;
 
     /*
      * Array of variables to pass to PDO to bind in preparing DB queries
      */
-    protected static $bindings = array();
+    protected static $_bindings = array();
 
     /**
      * creates a PDO database connection when a model is constructed
@@ -74,9 +74,6 @@ class Model
         $this->_tableName = static::getTableName();
         $this->_className = static::getClassName();
 
-        // @TODO: has to be a better way to do this
-        $this->Session = SessionComponent::getInstance();
-
         self::init();
 
         static::getSchema();
@@ -87,9 +84,9 @@ class Model
 
     public static function init()
     {
-        if (!self::$db) {
+        if (!self::$_db) {
             try {
-                self::$db = new Database();
+                self::$_db = new Database();
             } catch (PDOException $e) {
                 die('Database connection could not be established.');
             }
@@ -125,8 +122,8 @@ class Model
         $tableName = static::getTableName();
         if (!isset(static::$_schema[$className])) {
             $query = "DESCRIBE {$tableName};";
-            $sth = self::$db->prepare($query);
-            $sth->execute(self::$bindings);
+            $sth = self::$_db->prepare($query);
+            $sth->execute(self::$_bindings);
             $fields = $sth->fetchAll();
 
             foreach ($fields as $info) {
@@ -144,7 +141,7 @@ class Model
 
     public static function getValidationArray()
     {
-        return static::$validate;
+        return static::$_validate;
     }
 
     /**
@@ -209,7 +206,7 @@ class Model
     {
         $className = static::getClassName();
         $tableName = static::getTableName();
-        self::$bindings = array();
+        self::$_bindings = array();
         $return_objects = true;
 
         $where = '';
@@ -249,8 +246,8 @@ class Model
 
         $query = "SELECT $fields FROM {$tableName} $where $order $limit $offset;";
 
-        $sth = self::$db->prepare($query);
-        $sth->execute(self::$bindings);
+        $sth = self::$_db->prepare($query);
+        $sth->execute(self::$_bindings);
 
         $results = array();
         foreach ($sth->fetchAll() as $result) {
@@ -286,12 +283,12 @@ class Model
             }
             else {
                 if (preg_match('# LIKE$#', $k)) {
-                    $retval[] = "$k :$k" . sizeof(self::$bindings) . "";
+                    $retval[] = "$k :$k" . sizeof(self::$_bindings) . "";
                 }
                 else {
-                    $retval[] = "$k = :$k" . sizeof(self::$bindings) . "";
+                    $retval[] = "$k = :$k" . sizeof(self::$_bindings) . "";
                 }
-                self::$bindings[":$k" . sizeof(self::$bindings)] = $v;
+                self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
             }
         }
         return implode(" $conjunction ", $retval);
@@ -402,7 +399,8 @@ class Model
             return false;
         }
 
-        if (!$this->validate()) {
+        $this->validate();
+        if (!empty($this->errors)) {
             return false;
         }
 
@@ -410,7 +408,7 @@ class Model
             return false;
         }
 
-        self::$bindings = array();
+        self::$_bindings = array();
         $columns = array();
         $set = array();
 
@@ -419,7 +417,7 @@ class Model
                 continue;
             }
             else if (array_key_exists($col, static::getSchema())) {
-                self::$bindings[":$col"] = $val;
+                self::$_bindings[":$col"] = $val;
 
                 // @TODO: try and get rid of $set and $columns by using array walk. i.e. - this might not be any more efficient.
                 // Columns are used for INSERT
@@ -429,7 +427,7 @@ class Model
             }
         }
 
-        self::$db->beginTransaction();
+        self::$_db->beginTransaction();
 
         // If ID is not null, then UPDATE row in the database, else INSERT new row
         if ($this->{"{$this->_idField}"} !== null) {
@@ -437,31 +435,31 @@ class Model
             $set[] = "modified = :modified";
 
             $query = "UPDATE {$this->_tableName} SET " . implode(', ', $set) . " WHERE {$this->_idField} = :id_val";
-            self::$bindings[':id_val'] = $this->{"{$this->_idField}"};
-            self::$bindings[':modified'] = date("Y-m-d H:i:s");
+            self::$_bindings[':id_val'] = $this->{"{$this->_idField}"};
+            self::$_bindings[':modified'] = date("Y-m-d H:i:s");
 
-            $sth = self::$db->prepare($query);
-            $success = $sth->execute(self::$bindings);
+            $sth = self::$_db->prepare($query);
+            $success = $sth->execute(self::$_bindings);
         }
         else {
             // Insert query
             $columns[] = 'created';
-            self::$bindings[':created'] = date("Y-m-d H:i:s");
+            self::$_bindings[':created'] = date("Y-m-d H:i:s");
 
-            $query = "INSERT INTO {$this->_tableName} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', array_keys(self::$bindings)) . ")";
+            $query = "INSERT INTO {$this->_tableName} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', array_keys(self::$_bindings)) . ")";
 
-            $sth = self::$db->prepare($query);
+            $sth = self::$_db->prepare($query);
 
-            $success = $sth->execute(self::$bindings);
-            $this->{"{$this->_idField}"} = self::$db->lastInsertId();
+            $success = $sth->execute(self::$_bindings);
+            $this->{"{$this->_idField}"} = self::$_db->lastInsertId();
         }
 
         if ($this->afterSave() == false) {
-            self::$db->rollBack();
+            self::$_db->rollBack();
             return false;
         }
 
-        self::$db->commit();
+        self::$_db->commit();
         return $success;
     }
 
@@ -495,8 +493,7 @@ class Model
     // @TODO: move validating to its own class
     private function validate()
     {
-        foreach (static::$validate as $field => $rules) {
-
+        foreach (static::$_validate as $field => $rules) {
             // FIRST, test if field is required
             if ($this->$field == '') {
                 // If not required and
@@ -509,8 +506,7 @@ class Model
                     else {
                         $message = $rules['required']['message'];
                     }
-                    $this->Session->setFlash($message, 'failure');
-                    return false;
+                    $this->errors[] = $message;
                 }
             }
 
@@ -534,8 +530,7 @@ class Model
                         if (!empty($results)) {
                             foreach ($results as $result) {
                                 if ($result->{$this->_idField} != $this->{$this->_idField}) {
-                                    $this->Session->setFlash($message, 'failure');
-                                    return false;
+                                    $this->errors[] = $message;
                                 }
                             }
                         }
@@ -543,61 +538,53 @@ class Model
                     // Validate e-mail
                     case 'email':
                         if (!filter_var($this->$field, FILTER_VALIDATE_EMAIL)) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                     // Validate alpha-numeric field
                     case 'alphaNumeric':
                         if (!ctype_alnum($this->$field)) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                     // Validate numeric field
                     case 'numeric':
                         if (!is_numeric($this->$field)) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                     // Validate max length
                     case 'max_length':
                         if (strlen($this->$field) > $info['size']) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                     // Validate min length
                     case 'min_length':
                         if (strlen($this->$field) < $info['size']) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                     // Validate list of options
                     case 'in_list':
                         if (!in_array($this->$field, $info['list'])) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                     // Validate custom regex
                     case 'regex':
                         if (!preg_match($info['rule'], $this->$field)) {
-                            $this->Session->setFlash($message, 'failure');
-                            return false;
+                            $this->errors[] = $message;
                         }
                         break;
                 }
             }
         }
-        return true;
     }
 
     public function delete()
     {
-        $sth = self::$db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
+        $sth = self::$_db->prepare("DELETE FROM {$this->_tableName} WHERE {$this->_idField} = :id;");
         $success = $sth->execute(array(
             ':id' => $this->{$this->_idField},
         ));
@@ -610,7 +597,7 @@ class Model
     {
         $idField = static::getIdField();
         $tableName = static::getTableName();
-        $sth = self::$db->prepare("DELETE FROM {$tableName} WHERE {$idField} = :id;");
+        $sth = self::$_db->prepare("DELETE FROM {$tableName} WHERE {$idField} = :id;");
         $success = $sth->execute(array(
             ':id' => $id,
         ));
