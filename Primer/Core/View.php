@@ -1,10 +1,10 @@
 <?php
-
-require_once(PRIMER_CORE . '/lib/Paginator.php');
+/**
+ * Class View
+ */
 
 class View
 {
-
     /*
      * Additional CSS files to be included at render
      */
@@ -15,14 +15,38 @@ class View
      */
     private static $_jsFiles = array();
 
-
+    /*
+     * This variable holds the filename of the view to be rendered inside the
+     * template
+     */
     public $filename;
+
+    /*
+     * Title that is used in the HTML tag. Also accessible in views and templates
+     */
     public $title = '';
+
+    /*
+     * Variable that holds the paginator object to build pagination as well as
+     * the paging links
+     */
     public $paginator;
+
+    /*
+     * Variable that holds the Form object to build forms inside of views
+     */
     public $Form;
+
+    /*
+     * This determines the template file that is to be used
+     */
     public $template = 'default';
 
-    public function __construct() {
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
         $this->title = Primer::getValue('action');
     }
 
@@ -58,11 +82,20 @@ class View
         exit(1);
     }
 
-    public function getContents ()
+    /**
+     * This function requires the correct view to be rendered inside of the
+     * template
+     */
+    protected function getContents ()
     {
         require_once("{$this->filename}");
     }
 
+    /**
+     * Function to format and return system messages to display in the view
+     *
+     * @return string
+     */
     public function flash()
     {
         $markup = '';
@@ -76,6 +109,12 @@ class View
         return $markup;
     }
 
+    /**
+     * Function for use in controller to set variables to be used in the view
+     *
+     * @param $key
+     * @param $value
+     */
     public function set($key, $value)
     {
         $this->$key = $value;
@@ -102,6 +141,7 @@ class View
 
     /**
      * Gets the array of all required CSS files
+     *
      * @return array
      */
     public static function getCSS ()
@@ -127,6 +167,7 @@ class View
 
     /**
      * Gets the array of all required javascript modules
+     *
      * @return array
      */
     public static function getJS ()
@@ -137,5 +178,4 @@ class View
         }
         return self::$_jsFiles;
     }
-
 }
