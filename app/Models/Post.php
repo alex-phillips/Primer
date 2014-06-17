@@ -2,7 +2,7 @@
 
 class Post extends Model
 {
-    public static $validate = array(
+    protected static $_validate = array(
         'title' => array(
             'required' => array(
                 'message' => 'Title cannot be left blank'

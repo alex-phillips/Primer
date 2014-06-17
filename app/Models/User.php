@@ -6,7 +6,7 @@
  */
 class User extends Model
 {
-    public static $validate = array(
+    protected static $_validate = array(
         'email' => array(
             'required' => array(
                 'message' => 'E-mail cannot be left blank'
