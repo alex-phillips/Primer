@@ -28,10 +28,24 @@ spl_autoload_register('Primer::autoload');
  * @param $class
  */
 
+/**
+ * Class Primer
+ */
 class Primer
 {
+    /*
+     * Contains values to be passed and used in JavaScript through RequireJS
+     */
     private static $_jsValues;
+
+    /*
+     * Contains values that may be accessible throughout the framework
+     */
     private static $_values = array();
+
+    /*
+     * Contains files that have already been loaded
+     */
     private static $_loadedFiles = array();
 
     public static function autoload($class)
@@ -73,6 +87,7 @@ class Primer
             }
         }
 
+        // Attempt to load in Core files
         $dir = scandir(PRIMER_CORE . '/Core');
         if (in_array($class . '.php', $dir)) {
             try {
@@ -85,6 +100,7 @@ class Primer
             }
         }
 
+        // Attempt to load in Model files
         $dir = scandir(MODELS_PATH);
         if (in_array($class . '.php', $dir)) {
             try {
@@ -98,6 +114,11 @@ class Primer
         }
     }
 
+    /**
+     * Function to load in file only if it has not already been included
+     *
+     * @param $filename
+     */
     public static function requireFile($filename)
     {
         if (!in_array($filename, self::$_loadedFiles)) {
@@ -105,6 +126,13 @@ class Primer
         }
     }
 
+    /**
+     * Function to set new values to be passed to JavaScript via RequireJS
+     *
+     * @param $key
+     * @param $value
+     * @param string $category
+     */
     public static function setJSValue($key, $value, $category = "default") {
         if (self::$_jsValues == null) {
             self::$_jsValues = new stdClass();
@@ -122,6 +150,11 @@ class Primer
         $o->$key = $value;
     }
 
+    /**
+     * Function to retrieve values passed from PHP to JavaScript via RequireJS
+     *
+     * @return mixed
+     */
     public static function getJSValues()
     {
         return self::$_jsValues;
@@ -216,6 +249,12 @@ class Primer
         return;
     }
 
+    /**
+     * Global function to log any messages to a framework-specific log file
+     *
+     * @param $msg
+     * @param string $filename
+     */
     public static function logMessage ($msg, $filename = 'default')
     {
         $pid = getmypid();
