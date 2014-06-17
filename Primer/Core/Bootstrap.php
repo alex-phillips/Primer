@@ -40,7 +40,7 @@ class Bootstrap
          * want /pages/index and /page/index to both work. That function will
          * properly pluralize and format regardless if that controller exists.
          */
-        if (file_exists(CONTROLLERS_PATH . strtolower(ucfirst(Router::$controller)) . 'Controller.php')) {
+        if (file_exists(CONTROLLERS_PATH . ucfirst(strtolower(Router::$controller)) . 'Controller.php')) {
             $this->_loadController(Router::$controller);
             $this->_callControllerMethod();
         }
