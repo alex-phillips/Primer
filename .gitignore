@@ -1,2 +1,7 @@
 # SASS cache files
 app/public/css/sass/.sass-cache
+
+# Config files
+app/public/Config/config.php
+app/public/Config/codersmanifesto.com.php
+app/public/Config/httpd
