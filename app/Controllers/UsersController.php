@@ -5,7 +5,6 @@ class UsersController extends AppController
     public function beforeFilter()
     {
         $this->Auth->allow(array(
-            'index',
             'login',
             'logout',
             'view',
@@ -15,11 +14,6 @@ class UsersController extends AppController
             'forgot_password',
             'verify',
         ));
-    }
-
-    public function index()
-    {
-
     }
 
     public function login()
@@ -200,7 +194,7 @@ class UsersController extends AppController
                 Router::redirect('/users/view/' . $id);
             }
             else {
-                $this->Session->setFlash('There was a problem updating your information. Please try again.', 'failure');
+                $this->Session->setFlash($this->User->errors, 'failure');
                 Router::redirect('/users/edit/' . $id);
             }
 
@@ -335,6 +329,9 @@ class UsersController extends AppController
                 $this->User->activation_hash = null;
                 if ($this->User->save()) {
                     $this->Session->setFlash('You may now log in', 'success');
+                }
+                else {
+                    $this->Session->setFlash($this->User->errors, 'failure');
                 }
             }
             else {
