@@ -59,7 +59,7 @@ class User extends Model
         if (isset($this->email)) {
             $this->email = htmlentities($this->email, ENT_QUOTES);
 
-            if (!isset($this->avatar)) {
+            if (!$this->avatar) {
                 $this->avatar = $this->_getGravatarImageUrl($this->email);
             }
         }
