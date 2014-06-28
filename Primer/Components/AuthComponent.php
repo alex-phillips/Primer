@@ -42,7 +42,22 @@ class AuthComponent extends Component
             return true;
         }
         $this->Session->setFlash('You must be logged in to do that', 'notice');
-        Router::redirect('/');
+        $referrer = $_SERVER['REQUEST_URI'];
+        Router::redirect('/login/?forward_to=' . htmlspecialchars($referrer, ENT_QUOTES, 'utf-8'));
+    }
+
+    public function login($model)
+    {
+        foreach ($model as $key => $val) {
+            if (array_key_exists($key, $model->getSchema())) {
+                $this->Session->write('Auth.' . $key, $val);
+            }
+        }
+    }
+
+    public function logout()
+    {
+        $this->Session->delete('Auth');
     }
 
     /**
@@ -70,16 +85,35 @@ class AuthComponent extends Component
             $user = $user->findById($user_id);
 
             if ($user->rememberme_token == $token) {
-                $this->Session->write($user);
-                $this->Session->write('user_logged_in', true);
+                $this->login($user);
                 return true;
             }
             else {
                 setcookie('rememberme', false, time() - (3600 * 3650), '/', DOMAIN);
-                $this->Session->destroy();
+                $this->logout();
             }
         }
 
         return false;
+    }
+
+    /**
+     * crypt the user's password with the PHP 5.5's password_hash() function, results in a 60 character hash string
+     * the PASSWORD_DEFAULT constant is defined by the PHP 5.5, or if you are using PHP 5.3/5.4, by the password hashing
+     * compatibility library. the third parameter looks a little bit shitty, but that's how those PHP 5.5 functions
+     * want the parameter: as an array with, currently only used with 'cost' => XX.
+     *
+     * @param $string
+     *
+     * @return bool|false|string
+     */
+    public function hash($string)
+    {
+        return password_hash($string, PASSWORD_DEFAULT, array('cost' => HASH_COST_FACTOR));
+    }
+
+    public function verifyHash($string1, $string2)
+    {
+        return password_verify($string1, $string2);
     }
 }
