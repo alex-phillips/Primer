@@ -8,14 +8,15 @@
 class RequestComponent extends Component
 {
     private $_requestMethod;
-    public $data = array();
+
+    public $post = array();
+    public $query = array();
     public $files = array();
 
     protected function __construct()
     {
-        foreach ($_REQUEST as $key => $value) {
-            $this->$key = $value;
-        }
+        $this->post = new ParameterContainer($_POST);
+        $this->query = new ParameterContainer($_GET);
 
         if (isset($_FILES) && !empty($_FILES)) {
             foreach ($_FILES as $name => $info) {
