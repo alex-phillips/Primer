@@ -48,6 +48,7 @@ class View
     public function __construct()
     {
         $this->title = Primer::getValue('action');
+        $this->Form = new Form(Router::$controller, Primer::getValue('action'));
     }
 
     /**
@@ -58,9 +59,6 @@ class View
      */
     public function render($filename)
     {
-        list($controller) = explode('_', strtolower(Primer::getValue('controller')), 1);
-        $this->Form = new Form($controller, Primer::getValue('action'));
-
         $this->filename = 'Views/' . $filename . '.php';
 
         if (isset($this->request->format)) {
