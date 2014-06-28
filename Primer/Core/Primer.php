@@ -116,14 +116,36 @@ class Primer
 
     /**
      * Function to load in file only if it has not already been included
+     * @TODO: might need to remove this. if not used properly, a file could be required in the wrong scope.
      *
      * @param $filename
      */
     public static function requireFile($filename)
     {
         if (!in_array($filename, self::$_loadedFiles)) {
+            self::$_loadedFiles[] = $filename;
             require_once("$filename");
         }
+    }
+
+    /**
+     * Function to determine if a file has already been included to
+     * bypass expensive PHP require_once logic if it's unnecessary.
+     *
+     * NOTE: Once this is called with a path, that path will always return true
+     * regardless of whether or not it was actually required in the code.
+     *
+     * @param $filename
+     *
+     * @return bool
+     */
+    public static function fileIncluded($filename)
+    {
+        if (!in_array($filename, self::$_loadedFiles)) {
+            self::$_loadedFiles[] = $filename;
+            return false;
+        }
+        return true;
     }
 
     /**
