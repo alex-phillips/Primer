@@ -6,7 +6,7 @@
  * Time: 9:23 PM
  */
 
-class navigation_renderer
+class navigationRenderer
 {
     protected static $_config = array(
         'left_nav' => array(
@@ -63,10 +63,10 @@ __TEXT__;
         $divider = $addDividers ? '<li class="divider hidden-xs"></li>' : '';
         $markup = $divider;
         foreach ($config as $label => $info) {
-            $label = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigation_renderer', 'handleSpecialCases'), $label);
+            $label = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigationRenderer', 'handleSpecialCases'), $label);
             if ($label) {
                 if (!is_array($info)) {
-                    $info = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigation_renderer', 'handleSpecialCases'), $info);
+                    $info = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigationRenderer', 'handleSpecialCases'), $info);
                     if ($label && $info) {
                         $markup .= <<<__TEXT__
                     <li>
@@ -106,7 +106,7 @@ __TEXT__;
         switch($string) {
             case 'username':
                 if ($Session->isUserLoggedIn()) {
-                    $retval = $Session->read('username');
+                    $retval = $Session->read('Auth.username');
                 }
                 break;
             case 'Login':
