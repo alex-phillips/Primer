@@ -66,8 +66,8 @@ Primer::requireFile('Views/templates/partial/common/navigationRenderer.php');
             <!-- Sidebar -->
             <div class="col-sm-3">
                 <?php
-                require_once('Views/templates/partial/common/sidebar_renderer.php');
-                echo sidebar_renderer::render();
+                require_once('Views/templates/partial/common/sidebarRenderer.php');
+                echo sidebarRenderer::render();
                 ?>
             </div>
 
