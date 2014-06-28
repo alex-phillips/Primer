@@ -7,6 +7,7 @@
 
 class SessionComponent extends Component
 {
+    private $_sessionContainer;
     /*
      * Array that contains system messages
      */
@@ -21,6 +22,8 @@ class SessionComponent extends Component
         if (session_id() === '') {
             session_start();
         }
+
+        $this->_sessionContainer = new SessionContainer($_SESSION);
     }
 
     /**
@@ -29,7 +32,7 @@ class SessionComponent extends Component
     public function destroy()
     {
         if (session_id() != '') {
-            foreach ($_SESSION as $k => $v) {
+            foreach ($this->_sessionContainer as $k => $v) {
                 $this->delete($k);
             }
             session_destroy();
@@ -44,15 +47,7 @@ class SessionComponent extends Component
      */
     public function write($key, $value = null)
     {
-        if (is_array($key) || is_object($key)) {
-            foreach ($key as $k => $v) {
-                $_SESSION[$k] = $v;
-            }
-
-            return;
-        }
-
-        $_SESSION[$key] = $value;
+        $this->_sessionContainer->set($key, $value);
     }
 
     /**
@@ -63,10 +58,7 @@ class SessionComponent extends Component
      */
     public function read($key)
     {
-        if (isset($_SESSION[$key])) {
-            return $_SESSION[$key];
-        }
-        return null;
+        return $this->_sessionContainer->get($key);
     }
 
     /**
@@ -76,7 +68,7 @@ class SessionComponent extends Component
      */
     public function delete($key)
     {
-        unset($_SESSION[$key]);
+        $this->_sessionContainer->delete($key);
     }
 
     /**
@@ -88,7 +80,6 @@ class SessionComponent extends Component
      */
     public function setFlash($messages, $class = '')
     {
-        // @TODO: maybe we can skip variable and write straight to $_SESSION
         if (is_array($messages)) {
             foreach ($messages as $message) {
                 $this->_flashMessages[$message] = $class;
@@ -102,18 +93,6 @@ class SessionComponent extends Component
     }
 
     /**
-     * Control browser redirects
-     *
-     * @depricated use Router redirect function
-     * @param $header
-     */
-    public function redirect($header)
-    {
-        $this->write('messages', $this->_flashMessages);
-        Router::redirect($header);
-    }
-
-    /**
      * Function that returns true if user is currently logged in, otherwise, false
      *
      * @return bool|mixed
@@ -121,8 +100,8 @@ class SessionComponent extends Component
      */
     public function isUserLoggedIn()
     {
-        if ($this->read('user_logged_in') != null) {
-            return $this->read('user_logged_in');
+        if ($this->read('Auth')) {
+            return true;
         }
         return false;
     }
@@ -135,14 +114,22 @@ class SessionComponent extends Component
      */
     public function isAdmin()
     {
-        if ($this->read('role') == 'admin') {
+        if ($this->read('Auth.role') == 'admin') {
             return true;
         }
 
-        if ($this->read('username') == 'admin') {
+        if ($this->read('Auth.username') == 'admin') {
             return true;
         }
 
         return false;
+    }
+}
+
+class SessionContainer extends ParameterContainer
+{
+    public function __construct(&$parameters)
+    {
+        $this->_parameters = &$parameters;
     }
 }
