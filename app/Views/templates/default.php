@@ -1,10 +1,10 @@
 <?php
 require_once('Views/templates/partial/common/doc_head.php');
-Primer::requireFile('Views/templates/partial/common/navigation_renderer.php');
+Primer::requireFile('Views/templates/partial/common/navigationRenderer.php');
 ?>
 
 <nav id="mobile-nav" hidden>
-    <?php echo navigation_renderer::buildMobileNav(); ?>
+    <?php echo navigationRenderer::buildMobileNav(); ?>
 </nav>
 <div>
     <div id="mobile-nav-header" class="visible-xs">
@@ -15,7 +15,7 @@ Primer::requireFile('Views/templates/partial/common/navigation_renderer.php');
         <div class="right-menu"></div>
     </div>
     <header style="padding-bottom: 20px;">
-        <?php echo navigation_renderer::buildDesktopNav(); ?>
+        <?php echo navigationRenderer::buildDesktopNav(); ?>
         <div class="banner">
             <div class="container">
                 <div class="row">
