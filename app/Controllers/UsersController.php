@@ -20,23 +20,23 @@ class UsersController extends AppController
     {
         $this->view->title = 'Login';
         // Redirect if user is already logged in
-        if ($this->Session->read('user_logged_in')) {
+        if ($this->Session->isUserLoggedIn()) {
             Router::redirect('/');
         }
 
         if ($this->request->is('post')) {
-            if (empty($this->request->data['user']['username'])) {
-                $this->Session->setFlash('Username cannot be left blank' . $this->request->data['user']['username'], 'failure');
+            if (!$this->request->post->get('data.user.username')) {
+                $this->Session->setFlash('Username cannot be left blank', 'failure');
                 Router::redirect('/users/login/');
             }
-            if (empty($this->request->data['user']['password'])) {
+            if (!$this->request->post->get('data.user.password')) {
                 $this->Session->setFlash('Password cannot be left blank', 'failure');
                 Router::redirect('/users/login/');
             }
 
             $users = $this->User->find(array(
                 'conditions' => array(
-                    'username' => $this->request->data['user']['username'],
+                    'username' => $this->request->post->get('data.user.username'),
                 )
             ));
             if (empty($users)) {
@@ -50,24 +50,23 @@ class UsersController extends AppController
                 Router::redirect('/users/login/');
             }
 
-            if (password_verify($this->request->data['user']['password'], $this->User->password) == false) {
+            if ($this->Auth->verifyHash($this->request->post->get('data.user.password'), $this->User->password) === false) {
                 $this->Session->setFlash('Username or password is incorrect', 'failure');
                 Router::redirect('/users/login/');
             }
 
             if ($this->User->active == 1) {
-                $this->Session->write($this->User);
-                $this->Session->write('user_logged_in', true);
+                $this->Auth->login($this->User);
 
                 // Set remember me token and cookie
-                if (isset($this->request->data['user']['rememberme'])) {
+                if ($this->request->post->get('data.user.rememberme')) {
 
                     // generate 64 char random string
                     $random_token_string = hash('sha256', mt_rand());
 
-                    $this->request->data['user']['rememberme_token'] = $random_token_string;
-                    $this->request->data['user']['id'] = $this->User->id;
-                    $this->User->set($this->request->data['user']);
+                    $this->request->post->set('data.user.rememberme_token', $random_token_string);
+                    $this->request->post->Set('data.user.id', $this->User->id);
+                    $this->User->set($this->request->post->get('data.user'));
                     $this->User->save();
 
                     // generate cookie string that consists of userid, randomstring and combined hash of both
@@ -80,6 +79,10 @@ class UsersController extends AppController
                 }
 
                 $this->Session->setFlash('Welcome, ' . $this->User->username, 'success');
+
+                if ($referrer = $this->request->query->get('forward_to')) {
+                    Router::redirect($referrer);
+                }
                 Router::redirect('/');
             }
             else {
@@ -91,7 +94,7 @@ class UsersController extends AppController
 
     public function logout()
     {
-        $this->Session->destroy();
+        $this->Auth->logout();
         setcookie('rememberme', false, time() - (3600 * 3650), '/', DOMAIN);
         Router::redirect('/');
     }
@@ -99,7 +102,7 @@ class UsersController extends AppController
     public function view($id = null)
     {
         if ($id == null) {
-            Router::redirect('/users/view/' . $this->Session->read('id'));
+            Router::redirect('/users/view/' . $this->Session->read('Auth.id'));
         }
 
         if (is_numeric($id)) {
@@ -132,10 +135,10 @@ class UsersController extends AppController
     {
         // If no ID is passed, use currently logged in user
         if ($id == null) {
-            Router::redirect('/users/edit/' . $this->Session->read('id'));
+            Router::redirect('/users/edit/' . $this->Session->read('Auth.id'));
         }
 
-        if ($id != $this->Session->read('id') && !$this->Session->isAdmin()) {
+        if ($id != $this->Session->read('Auth.id') && !$this->Session->isAdmin()) {
             $this->Session->setFlash("You are not authorized to edit that user", 'failure');
             Router::redirect('/users/index');
         }
@@ -154,42 +157,42 @@ class UsersController extends AppController
             // Some form SPECIFIC validation
 
             // Require current password to save changes
-            if (!isset($this->request->data['user']['password']) || $this->request->data['user']['password'] == '') {
+            if (!$this->request->post->get('data.user.password')) {
                 $this->Session->setFlash("Please enter your current password to save changes", 'failure');
                 return;
             }
             // Verify current password is correct
-            else if (!password_verify($this->request->data['user']['password'], $this->User->password)) {
+            else if (!password_verify($this->request->post->get('data.user.password'), $this->User->password)) {
                 $this->Session->setFlash("Current password is incorrect", 'failure');
                 return;
             }
 
-            if ($this->request->data['user']['newpass1'] != $this->request->data['user']['newpass2']) {
+            if ($this->request->post->get('data.user.newpass1') != $this->request->post->get('data.user.newpass2')) {
                 $this->Session->setFlash("The new passwords don't match", 'failure');
                 return;
             }
 
-            if ($this->request->data['user']['newpass1'] != '') {
-                $this->request->data['user']['password'] = $this->request->data['user']['newpass1'];
+            if ($newPassword = $this->request->post->get('data.user.newpass1')) {
+                $this->request->post->set('data.user.password', $newPassword);
             }
 
             // Escape email address
-            $this->request->data['user']['email'] = htmlentities($this->request->data['user']['email'], ENT_QUOTES);
+            $this->request->post->set('data.user.email', htmlentities($this->request->post->get('data.user.email'), ENT_QUOTES));
 
             // TODO: better way to go about doing this, for security reasons. For ALL models...
             // We are already checking ownership on one of the ID's, but which is best, and they
             // either BOTH need to equal, or make the SQL query on the one we check...
-            if ($id != $this->request->data['user']['id']) {
+            if ($id != $this->request->post->get('data.user.id')) {
                 $this->Session->setFlash('User IDs do not match. Please try again.', 'failure');
                 Router::redirect('/users/edit/' . $id);
             }
 
             // Attempt to update the user in the database
-            $this->User->set($this->request->data['user']);
+            $this->User->set($this->request->post->get('data.user'));
             if ($this->User->save()) {
                 // Find user again to get updated information into the Session
                 $this->User = $this->User->findById($id);
-                $this->Session->write($this->User);
+                $this->Auth->login($this->User);
                 $this->Session->setFlash('Your account has been successfully updated', 'success');
                 Router::redirect('/users/view/' . $id);
             }
@@ -204,10 +207,10 @@ class UsersController extends AppController
         Primer::setJSValue('bio', $this->User->bio, 'user');
     }
 
-    public function delete($id)
+    public function delete($id = null)
     {
         if ($this->request->is('post') && $this->Session->isAdmin()) {
-            $this->User->deleteById($this->request->data['user']['id']);
+            $this->User->deleteById($this->request->post->get('data.user.id'));
             Router::redirect('/users/');
         }
     }
@@ -222,28 +225,28 @@ class UsersController extends AppController
             // Check Captcha
             $captcha = new Captcha();
 
-            if (!$captcha->checkCaptcha($this->request->data['user']['captcha'])) {
+            if (!$captcha->checkCaptcha($this->request->post->get('data.user.captcha'))) {
                 $this->Session->setFlash("The entered captcha security characters wrong", 'failure');
                 return;
             }
 
             // Make sure password and repeat are not empty and that they are the same
-            if (empty($this->request->data['user']['password1']) || empty($this->request->data['user']['password2'])) {
+            if (!$this->request->post->get('data.user.password1') || $this->request->post->get('data.user.password2')) {
                 $this->Session->setFlash("Password cannot be left empty", 'failure');
                 return;
             }
-            else if ($this->request->data['user']['password1'] !== $this->request->data['user']['password2']) {
+            else if ($this->request->post->get('data.user.password1') !== $this->request->post->get('data.user.password2')) {
                 $this->Session->setFlash("Passwords do not match", 'failure');
                 return;
             }
 
             // Set password field
-            $this->request->data['user']['password'] = $this->request->data['user']['password1'];
+            $this->request->post->set('data.user.password', $this->request->post->get('data.user.password1'));
 
             // generate random hash for email verification (40 char string)
-            $this->request->data['user']['activation_hash'] = sha1(uniqid(mt_rand(), true));
+            $this->request->post->set('data.user.activation_hash', sha1(uniqid(mt_rand(), true)));
 
-            $this->User = new User($this->request->data['user']);
+            $this->User = new User($this->request->post->get('data.user'));
 
             if ($this->User->save()) {
                 // send a verification email
@@ -346,7 +349,7 @@ class UsersController extends AppController
     {
         $this->view->title = 'Request Password Reset';
         if ($this->request->is('post')) {
-            $username = htmlentities($this->request->data['user']['username'], ENT_QUOTES, 'utf-8');
+            $username = htmlentities($this->request->post->get('data.user.username'), ENT_QUOTES, 'utf-8');
             $users = $this->User->find(array(
                 'conditions' => array(
                     'username' => $username
@@ -411,14 +414,14 @@ class UsersController extends AppController
         if ($this->request->is('post')) {
             $users = $this->User->find(array(
                 'conditions' => array(
-                    'username' => $this->request->data['user']['username']
+                    'username' => $this->request->post->get('data.user.username')
                 )
             ));
             if (!empty($users)) {
                 $this->User = $users[0];
-                if ($this->User->password_reset_hash == $this->request->data['user']['password_reset_hash']) {
-                    if ($this->request->data['user']['newpass1'] == $this->request->data['user']['newpass2']) {
-                        $this->User->password = $this->request->data['user']['newpass1'];
+                if ($this->User->password_reset_hash == $this->request->post->get('data.user.password_reset_hash')) {
+                    if ($this->request->post->get('data.user.newpass1') === $this->request->post->get('data.user.newpass2')) {
+                        $this->User->password = $this->request->post->get('data.user.newpass1');
                         $this->User->password_reset_hash = null;
                         $this->User->password_reset_timestamp = null;
                         $this->User->save();
