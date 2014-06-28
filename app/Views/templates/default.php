@@ -1,6 +1,6 @@
 <?php
 require_once('Views/templates/partial/common/doc_head.php');
-Primer::requireFile('Views/templates/partial/common/navigationRenderer.php');
+require_once('Views/templates/partial/common/navigationRenderer.php');
 ?>
 
 <nav id="mobile-nav" hidden>
