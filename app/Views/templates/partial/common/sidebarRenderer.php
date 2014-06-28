@@ -6,7 +6,7 @@
  * Time: 9:52 AM
  */
 
-class sidebar_renderer
+class sidebarRenderer
 {
     public static function render()
     {
@@ -34,7 +34,7 @@ class sidebar_renderer
                     <h3 class="panel-title">Featured</h3>
                 </div>
                 <div class="panel-body">
-                    <p>Pork drumstick turkey fugiat. Tri-tip elit turducken pork chop in. Swine short ribs meatball irure bacon nulla pork belly cupidatat meatloaf cow.</p>
+                    <p></p>
                     <a href="#">Read More →</a>
                 </div>
             </div>
