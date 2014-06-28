@@ -36,7 +36,7 @@ class Model
 
     /*
      * Name of the current instance's model. Used for automatically creating
-     * new instances when returning objects.
+     * new instances when returning objects. Ex: user, post
      */
     protected $_className;
 
@@ -82,6 +82,12 @@ class Model
         }
     }
 
+    /**
+     * Function to initialize the parent model class that all models
+     * inherit from. Anything that should be executed for all models
+     * shbould be added here whether or not a model will be automatically
+     * loaded or not.
+     */
     public static function init()
     {
         if (!self::$_db) {
@@ -93,16 +99,37 @@ class Model
         }
     }
 
+    /**
+     * Returns the default database ID field for the Model
+     *
+     * @return string
+     */
     public static function getIdField()
     {
         return 'id';
     }
 
+    /**
+     * Returns the default foreign key for a class
+     * Ex: user's ID in post table = id_user
+     *
+     * @param $class
+     *
+     * @return string
+     */
     public static function getForeignIdField($class)
     {
         return 'id_' . self::getClassName($class);
     }
 
+    /**
+     * Getter function for retrieving a model's name
+     * Ex: User model returns 'user'
+     *
+     * @param null $class
+     *
+     * @return string
+     */
     public static function getClassName($class = null)
     {
         if (!$class) {
@@ -111,6 +138,12 @@ class Model
         return strtolower(Inflector::singularize($class));
     }
 
+    /**
+     * Returns the default table name for a model
+     * Ex: User model returns 'users'
+     *
+     * @return string
+     */
     public static function getTableName()
     {
         return Inflector::pluralize(strtolower(get_called_class()));
@@ -139,6 +172,12 @@ class Model
         return static::$_schema[$className];
     }
 
+    /**
+     * Getter function for retrieving the models validation
+     * data structure.
+     *
+     * @return array
+     */
     public static function getValidationArray()
     {
         return static::$_validate;
@@ -159,6 +198,16 @@ class Model
          */
         if (preg_match('#\Afind.*By(.+)$#', $name, $matches)) {
             return static::__callStatic($name, $arguments);
+        }
+
+        /*
+         * Build magic 'get' functions to get another set of models
+         * from the database by foreign ID.
+         * Ex:  $user->getPosts() - returns posts with id_user set to
+         *      the ID of the user object making the call
+         */
+        if (preg_match('#\Aget(.+)$#', $name, $matches)) {
+            return $this->getRelatedModels($matches[1]);
         }
     }
 
@@ -306,6 +355,22 @@ class Model
         $params['count'] = true;
         $results = static::find($params);
         return $results[0]->{"COUNT(*)"};
+    }
+
+    public function getRelatedModels($relatedModel)
+    {
+        $retval = array();
+        $relatedModel = Primer::getModelName($relatedModel);
+
+        if (array_key_exists($this->getForeignIdField($this->_className), $relatedModel::getSchema())) {
+            $retval = call_user_func(array($relatedModel, 'find'), array(
+                'conditions' => array(
+                    $this->getForeignIdField($this->_className) => $this->id
+                )
+            ));
+        }
+
+        return $retval;
     }
 
     /**
@@ -491,9 +556,13 @@ class Model
     }
 
     // @TODO: move validating to its own class
-    private function validate()
+    private function validate($rules = null)
     {
-        foreach (static::$_validate as $field => $rules) {
+        if (!$rules) {
+            $rules = static::$_validate;
+        }
+
+        foreach ($rules as $field => $rules) {
             // FIRST, test if field is required
             if ($this->$field == '') {
                 // If not required and
@@ -605,6 +674,12 @@ class Model
         return $success;
     }
 
+    /**
+     * Return a JSON serialized instance of the model as it would exists
+     * in the database.
+     *
+     * @return string
+     */
     public function JSONSerialize()
     {
         $retval = new stdClass();
