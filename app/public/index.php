@@ -8,8 +8,9 @@
 
 define('ROOT', dirname(dirname(dirname(__FILE__))));
 
-if (file_exists(ROOT . '/app/Config/' . $_SERVER['SERVER_NAME'] . '.php')) {
-    require_once(ROOT . '/app/Config/' . $_SERVER['SERVER_NAME'] . '.php');
+$domain = str_replace('www.', '', $_SERVER['SERVER_NAME']);
+if (file_exists(ROOT . '/app/Config/' . $domain . '.php')) {
+    require_once(ROOT . '/app/Config/' . $domain . '.php');
 }
 else {
     require_once(ROOT . '/app/Config/config.php');
