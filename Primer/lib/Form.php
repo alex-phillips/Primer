@@ -97,8 +97,14 @@ __TEXT__;
         }
 
         $value = '';
-        if (isset($this->request->data[$this->_objectName][$name])) {
-            $value = $this->request->data[$this->_objectName][$name];
+        if (isset($params['type']) && $params['type'] === 'password') {
+            $value = '';
+        }
+        else if ($this->request->post->get('data.' . $this->_objectName . '.' . $name)) {
+            $value = $this->request->post->get('data.' . $this->_objectName . '.' . $name);
+        }
+        else if ($this->request->query->get('data.' . $this->_objectName . '.' . $name)) {
+            $value = $this->request->query->get('data.' . $this->_objectName . '.' . $name);
         }
         else if (isset($params['value'])) {
             $value = $params['value'];
