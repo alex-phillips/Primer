@@ -3,7 +3,7 @@
 $this->Form->create('users');
 $this->Form->add('id', array(
     'type' => 'hidden',
-    'value' => $this->Session->read('id'),
+    'value' => $this->Session->read('Auth.id'),
 ));
 $this->Form->add('email', array(
     'label' => 'Email Address',

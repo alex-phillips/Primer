@@ -5,7 +5,7 @@ $markup = '';
 if ($this->posts) {
     foreach ($this->posts as $post) {
         $edit_link = '';
-        if ($this->Session->read('role') === 'admin') {
+        if ($this->Session->read('Auth.role') === 'admin') {
             $edit_link = '<a href="/posts/edit/' . $post->id . '">Edit</a>';
         }
         $date = date('F d, Y', strtotime($post->created));
@@ -15,7 +15,7 @@ if ($this->posts) {
         }
 
         $admin_links = '';
-        if ($this->Session->read('role') === 'admin' || $this->Session->read('id') == $post->id_user) {
+        if ($this->Session->read('Auth.role') === 'admin' || $this->Session->read('Auth.id') == $post->id_user) {
             $admin_links = <<<__TEXT__
                 <br/><br/>
                 <a href="/posts/edit/$post->id">Edit</a> |
