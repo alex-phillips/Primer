@@ -53,14 +53,23 @@ __TEXT__;
 
     public static function buildMobileNav()
     {
-        $links = self::buildLinks(self::$_config['left_nav'], false);
-        $links .= self::buildLinks(self::$_config['right_nav'], false);
+        $links = self::buildLinks(self::$_config['left_nav'], false, true);
+        $links .= self::buildLinks(self::$_config['right_nav'], false, true);
         return '<ul>' . $links . '</ul>';
     }
 
-    protected static function buildLinks($config, $addDividers = true)
+    protected static function buildLinks($config, $addDividers = true, $mobile = false)
     {
         $divider = $addDividers ? '<li class="divider hidden-xs"></li>' : '';
+
+        $dropdownElement = 'a';
+        $dropdownHref = 'href="#"';
+        if ($mobile === true) {
+            $dropdownElement = 'span';
+            $dropdownHref = '';
+        }
+
+        $dropdownElement = $mobile ? 'span' : 'a';
         $markup = $divider;
         foreach ($config as $label => $info) {
             $label = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigationRenderer', 'handleSpecialCases'), $label);
@@ -82,7 +91,7 @@ __TEXT__;
                 else {
                     $markup .= <<<__TEXT__
                    <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">$label <b class="caret hidden-xs"></b></a>
+                        <$dropdownElement class="dropdown-toggle" data-toggle="dropdown" $dropdownHref>$label <b class="caret hidden-xs"></b></$dropdownElement>
                         <ul class="dropdown-menu">
 __TEXT__;
 
