@@ -460,12 +460,12 @@ class Model
      */
     public function save()
     {
-        if ($this->beforeSave() == false) {
+        $this->validate();
+        if (!empty($this->errors)) {
             return false;
         }
 
-        $this->validate();
-        if (!empty($this->errors)) {
+        if ($this->beforeSave() == false) {
             return false;
         }
 
@@ -675,12 +675,13 @@ class Model
     }
 
     /**
-     * Return a JSON serialized instance of the model as it would exists
-     * in the database.
+     * Retrieve a representation of the object as it would exist in the database.
+     * The returned object is a standard class of only the fields that are in
+     * the database schema.
      *
-     * @return string
+     * @return stdClass
      */
-    public function JSONSerialize()
+    public function getDBObject()
     {
         $retval = new stdClass();
         foreach ($this as $key => $value) {
@@ -688,6 +689,17 @@ class Model
                 $retval->$key = $value;
             }
         }
-        return json_encode($retval);
+        return $retval;
+    }
+
+    /**
+     * Return a JSON serialized instance of the model as it would exists
+     * in the database.
+     *
+     * @return string
+     */
+    public function JSONSerialize()
+    {
+        return json_encode($this->getDBObject());
     }
 }
