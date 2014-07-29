@@ -15,6 +15,12 @@ class AuthComponent extends Component
      */
     public $Session;
 
+    /////////////////////////////////////////////////
+    // PROPERTIES, PRIVATE
+    /////////////////////////////////////////////////
+
+    private $_allowedActions = array();
+
     /**
      * Initialize Component
      */
@@ -34,6 +40,13 @@ class AuthComponent extends Component
      */
     public function allow($actions = array())
     {
+        if (is_string($actions)) {
+            $this->_allowedActions[] = $actions;
+        }
+        else if (is_array($actions)) {
+            array_merge($this->_allowedActions, $actions);
+        }
+
         if (in_array(Primer::getValue('action'), $actions)) {
             return true;
         }
@@ -112,8 +125,8 @@ class AuthComponent extends Component
         return password_hash($string, PASSWORD_DEFAULT, array('cost' => HASH_COST_FACTOR));
     }
 
-    public function verifyHash($string1, $string2)
+    public function verifyHash($string, $hash)
     {
-        return password_verify($string1, $string2);
+        return password_verify($string, $hash);
     }
 }
