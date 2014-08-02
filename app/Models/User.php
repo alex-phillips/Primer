@@ -6,6 +6,11 @@
  */
 class User extends Model
 {
+    private $_roles = array(
+        1 => 'User',
+        9 => 'Administrator',
+    );
+
     protected static $_validate = array(
         'email' => array(
             'required' => array(
@@ -44,13 +49,49 @@ class User extends Model
     protected function beforeSave()
     {
         $authComponent = AuthComponent::getInstance();
-        $this->password = $authComponent->hash($this->password);
+
+        /*
+         * Make sure that we NEED to save the password and the currently set one
+         * isn't already the hash that's stored in the DB.
+         */
+        $dbUser = User::findById($this->id);
+        if ($dbUser) {
+            if ($this->password !== $dbUser->password) {
+                $this->password = $authComponent->hash($this->password);
+            }
+        }
+        else {
+            $this->password = $authComponent->hash($this->password);
+        }
 
         if (!isset($this->avatar) || !$this->avatar) {
             $this->avatar = $this->_getGravatarImageUrl($this->email);
         }
 
         return true;
+    }
+
+    public function getRoleName()
+    {
+        return $this->_roles[$this->role];
+    }
+
+    public function setRole($role)
+    {
+        if (is_numeric($role)) {
+            if (isset($this->_roles[$role])) {
+                $this->role = $role;
+                return;
+            }
+        }
+        else {
+            foreach ($this->_roles as $id => $name) {
+                if ($name === $role) {
+                    $this->role = $id;
+                    return;
+                }
+            }
+        }
     }
 
     /**
@@ -64,9 +105,7 @@ class User extends Model
      */
     private function _getGravatarImageUrl($email, $s = 250, $d = 'mm', $r = 'pg', $atts = array())
     {
-        $url = 'http://www.gravatar.com/avatar/';
-        $url .= md5( strtolower( trim( $email ) ) );
-        $url .= "?s=$s&d=$d&r=$r";
+        $url = 'http://www.gravatar.com/avatar/' . md5(strtolower(trim($email))) . "?s=$s&d=$d&r=$r";
         return $url;
     }
 }
