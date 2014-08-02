@@ -47,6 +47,10 @@ class Bootstrap
         else {
             Router::error404();
         }
+
+        if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
+            require_once(APP_ROOT . DS . 'vendor/autoload.php');
+        }
     }
 
     /**
