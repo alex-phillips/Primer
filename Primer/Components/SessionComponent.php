@@ -114,7 +114,7 @@ class SessionComponent extends Component
      */
     public function isAdmin()
     {
-        if ($this->read('Auth.role') == 'admin') {
+        if ($this->read('Auth.role') >= 9) {
             return true;
         }
 
