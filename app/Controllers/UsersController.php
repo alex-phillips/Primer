@@ -231,7 +231,7 @@ class UsersController extends AppController
             }
 
             // Make sure password and repeat are not empty and that they are the same
-            if (!$this->request->post->get('data.user.password1') || $this->request->post->get('data.user.password2')) {
+            if (!$this->request->post->get('data.user.password1') || !$this->request->post->get('data.user.password2')) {
                 $this->Session->setFlash("Password cannot be left empty", 'failure');
                 return;
             }
@@ -281,14 +281,14 @@ class UsersController extends AppController
 
         // use SMTP or use mail()
         if (EMAIL_USE_SMTP) {
-            $mail->IsSMTP();                                      // Set mailer to use SMTP
-            $mail->Host = EMAIL_SMTP_HOST;  // Specify main and backup server
-            $mail->SMTPAuth = EMAIL_SMTP_AUTH;                               // Enable SMTP authentication
-            $mail->Username = EMAIL_SMTP_USERNAME;                            // SMTP username
-            $mail->Password = EMAIL_SMTP_PASSWORD;                           // SMTP password
+            $mail->IsSMTP(); // Set mailer to use SMTP
+            $mail->Host = EMAIL_SMTP_HOST; // Specify main and backup server
+            $mail->SMTPAuth = EMAIL_SMTP_AUTH; // Enable SMTP authentication
+            $mail->Username = EMAIL_SMTP_USERNAME; // SMTP username
+            $mail->Password = EMAIL_SMTP_PASSWORD; // SMTP password
 
             if (EMAIL_SMTP_ENCRYPTION) {
-                $mail->SMTPSecure = EMAIL_SMTP_ENCRYPTION;                  // Enable encryption, 'ssl' also accepted
+                $mail->SMTPSecure = EMAIL_SMTP_ENCRYPTION; // Enable encryption, 'ssl' also accepted
             }
 
         }
@@ -302,7 +302,7 @@ class UsersController extends AppController
         $mail->Subject = EMAIL_VERIFICATION_SUBJECT;
         $mail->Body = EMAIL_VERIFICATION_CONTENT . EMAIL_VERIFICATION_URL . '/' . urlencode($this->User->email) . '/' . urlencode($this->User->activation_hash);
 
-        if(!$mail->Send()) {
+        if (!$mail->Send()) {
             return false;
         }
 
