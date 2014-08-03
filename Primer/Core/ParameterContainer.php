@@ -5,6 +5,9 @@
  * @time 2:22 PM
  */
 
+/**
+ * Class ParameterContainer
+ */
 class ParameterContainer
 {
     /*
@@ -33,13 +36,12 @@ class ParameterContainer
     public function get($key)
     {
         $path = explode('.', $key);
-        $ary = &$this->_parameters;
+        $ary = & $this->_parameters;
         foreach ($path as $p) {
-            if (!isset ($ary[$p]))
-            {
+            if (!isset ($ary[$p])) {
                 return null;
             }
-            $ary = &$ary[$p];
+            $ary = & $ary[$p];
         }
 
         return $ary;
@@ -55,13 +57,12 @@ class ParameterContainer
     public function set($key, $value)
     {
         $path = explode('.', $key);
-        $ary = &$this->_parameters;
+        $ary = & $this->_parameters;
         foreach ($path as $p) {
-            if (!isset ($ary[$p]))
-            {
+            if (!isset ($ary[$p])) {
                 $ary[$p] = array();
             }
-            $ary = &$ary[$p];
+            $ary = & $ary[$p];
         }
 
         $ary = $value;
@@ -76,14 +77,13 @@ class ParameterContainer
     public function delete($key)
     {
         $path = explode('.', $key);
-        $ary = &$this->_parameters;
+        $ary = & $this->_parameters;
         foreach ($path as $p) {
-            if (!isset ($ary[$p]))
-            {
+            if (!isset ($ary[$p])) {
                 $ary[$p] = array();
             }
-            $key = &$ary;
-            $ary = &$ary[$p];
+            $key = & $ary;
+            $ary = & $ary[$p];
         }
 
         unset($key[$p]);
