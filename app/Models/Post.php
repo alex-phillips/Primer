@@ -23,22 +23,4 @@ class Post extends Model
             ),
         ),
     );
-
-    public function set($params)
-    {
-        parent::set($params);
-        if (is_array($this->custom_properties) || is_object($this->custom_properties)) {
-            $this->custom_properties = serialize($this->custom_properties);
-        }
-    }
-
-    public function getCustomProperties()
-    {
-        return unserialize($this->custom_properties);
-    }
-
-    public function setCustomProperties($properties)
-    {
-        $this->custom_properties = serialize($properties);
-    }
 }
