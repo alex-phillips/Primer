@@ -107,7 +107,7 @@ class SessionComponent extends Component
     }
 
     /**
-     * Return true if the user's 'role' is 'admin'
+     * Return true if the user's 'role' is 9 or more
      *
      * @return bool
      * @depricated
