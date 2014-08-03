@@ -179,9 +179,6 @@ class PostsController extends AppController
         }
 
         if ($this->request->is('post')) {
-            if ($cp = $this->request->post->get('data.post.custom_properties')) {
-                $this->request->post->set('data.post.custom_properties', json_decode($cp));
-            }
             $this->Post->set($this->request->post->get('data.post'));
             if ($this->Post->save()) {
                 $this->Session->setFlash('Post was updated successfully', 'success');
