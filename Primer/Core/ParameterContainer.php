@@ -102,6 +102,7 @@ class ParameterContainer
         if ($this->get($key)) {
             return true;
         }
+
         return false;
     }
 }
