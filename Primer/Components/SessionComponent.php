@@ -126,6 +126,13 @@ class SessionComponent extends Component
     }
 }
 
+/**
+ * Class SessionContainer
+ *
+ * Modified ParameterContainer that passes the parameters by reference. This allows
+ * the $_SESSION global to be modified as the class modifies the parameters inside
+ * of the class.
+ */
 class SessionContainer extends ParameterContainer
 {
     public function __construct(&$parameters)
