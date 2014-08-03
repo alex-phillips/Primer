@@ -6,7 +6,7 @@
  * Time: 9:23 PM
  */
 
-class navigationRenderer
+class NavigationRenderer
 {
     protected static $_config = array(
         'left_nav' => array(

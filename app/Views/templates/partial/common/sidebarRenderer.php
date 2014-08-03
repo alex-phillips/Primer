@@ -6,7 +6,7 @@
  * Time: 9:52 AM
  */
 
-class sidebarRenderer
+class SidebarRenderer
 {
     public static function render()
     {
