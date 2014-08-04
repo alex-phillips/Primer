@@ -25,13 +25,15 @@ __TEXT__;
         }
 
         $markdownParser = new Parsedown();
-        $body = $markdownParser->text(htmlspecialchars($post->body, ENT_QUOTES, 'utf-8'));
+        $body = preg_match('#\A(.+)#', $post->body, $matches);
+        $body = $markdownParser->text(htmlspecialchars($matches[1], ENT_QUOTES, 'utf-8'));
 
         $markup .= <<<___HTML___
             <article>
-                <h3><a href="/posts/view/$post->id">$post->title</a></h3>
+                <h3><a href="/posts/view/$post->slug">$post->title</a></h3>
                 <h6>$date</h6>
                 <p>$body</p>
+                <a href="/posts/view/"$post->slug">Read More</a>
                 $admin_links
             </article>
             <hr/>
