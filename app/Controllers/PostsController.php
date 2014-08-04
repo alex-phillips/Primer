@@ -84,31 +84,6 @@ class PostsController extends AppController
 
             $this->request->post->set('data.post.id_user', $this->Session->read('Auth.id'));
 
-            // Only create slug on creation so bookmarks always work in title is edited/changed
-            $slug = Inflector::slug($this->request->post->get('data.post.title'), '-');
-            // Check to make sure slug doesn't exist, if it does, add timestamp
-            $posts = $this->Post->find(array(
-                'conditions' => array(
-                    'OR' => array(
-                        'slug' => $slug,
-                        'slug' => $slug . '-' . date('Y-m-d', time()),
-                    )
-                )
-            ));
-
-            // Check if slugs exist, set accordingly
-            switch(sizeof($posts)) {
-                case 1:
-                    $this->request->post->set('data.post.slug', $slug . '-' . date('Y-m-d', time()));
-                    break;
-                case 2:
-                    $this->request->post->set('data.post.slug', $slug . '-' . date('Y-m-d_h-m-s', time()));
-                    break;
-                default:
-                    $this->request->post->set('data.post.slug', $slug);
-                    break;
-            }
-
             // Set currently signed-in user as creator
             $this->request->post->set('data.post.id_user', $this->Session->read('Auth.id'));
 
