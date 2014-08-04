@@ -14,6 +14,10 @@ class Bootstrap
      */
     public function __construct()
     {
+        if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
+            require_once(APP_ROOT . DS . 'vendor/autoload.php');
+        }
+
         Router::dispatch();
 
         if (defined('UNDER_CONSTRUCTION') && UNDER_CONSTRUCTION === true) {
@@ -46,10 +50,6 @@ class Bootstrap
         }
         else {
             Router::error404();
-        }
-
-        if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
-            require_once(APP_ROOT . DS . 'vendor/autoload.php');
         }
     }
 
