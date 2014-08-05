@@ -12,7 +12,6 @@ class Post extends Model
             'in_list' =>  array(
                 'list' => array(
                     'post',
-                    'quote',
                 ),
                 'message' => "Invalid option selected"
             )
