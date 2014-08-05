@@ -30,10 +30,10 @@ __TEXT__;
 
         $markup .= <<<___HTML___
             <article>
-                <h3><a href="/posts/view/$post->slug">$post->title</a></h3>
+                <h3><a href="/post/$post->slug">$post->title</a></h3>
                 <h6>$date</h6>
                 <p>$body</p>
-                <a href="/posts/view/"$post->slug">Read More</a>
+                <a href="/post/"$post->slug">Read More</a>
                 $admin_links
             </article>
             <hr/>
