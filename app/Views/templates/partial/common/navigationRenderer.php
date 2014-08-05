@@ -28,6 +28,7 @@ class NavigationRenderer
     {
         $leftNav = self::buildLinks(self::$_config['left_nav']);
         $rightNav = self::buildLinks(self::$_config['right_nav']);
+        $siteName = SITE_NAME;
         return <<<__TEXT__
             <div class="navbar navbar-default hidden-xs" role="navigation" style="margin-bottom: 0;">
                 <div class="navbar-header">
@@ -36,7 +37,7 @@ class NavigationRenderer
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="/">Alex Phillips</a>
+                    <a class="navbar-brand" href="/">$siteName</a>
                 </div>
                 <div class="navbar-collapse collapse navbar-responsive-collapse">
                     <ul class="nav navbar-nav">
