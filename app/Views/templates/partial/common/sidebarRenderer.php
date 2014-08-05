@@ -23,6 +23,21 @@ class SidebarRenderer
 
     public static function render_default()
     {
+        $posts = Post::find(array(
+            'order' => array(
+                'created DESC',
+            ),
+            'limit' => 5
+        ));
+
+        $markup = '<ul>';
+        foreach ($posts as $post) {
+            if ($post->no_publish) {
+                continue;
+            }
+            $markup .= '<li><a href="/posts/view/' . $post->id . '">' . $post->title . '</a></li>';
+        }
+
         return <<<__TEXT__
             <h5>Links</h5>
             <ul class="side-nav">
@@ -31,11 +46,10 @@ class SidebarRenderer
 
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Featured</h3>
+                    <h3 class="panel-title">Recent</h3>
                 </div>
                 <div class="panel-body">
-                    <p></p>
-                    <a href="#">Read More →</a>
+                    $markup
                 </div>
             </div>
 __TEXT__;
