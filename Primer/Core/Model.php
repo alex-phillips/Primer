@@ -466,10 +466,12 @@ class Model
         }
 
         if ($this->beforeSave() == false) {
+            $this->errors[] = "beforeSave function returned false";
             return false;
         }
 
         if (!$this->verifyRelationships()) {
+            $this->errors[] = "Unable to verify relationships";
             return false;
         }
 
@@ -497,19 +499,23 @@ class Model
         // If ID is not null, then UPDATE row in the database, else INSERT new row
         if ($this->{"{$this->_idField}"} !== null) {
             // Update query
-            $set[] = "modified = :modified";
+            if (array_key_exists('modified', static::getSchema())) {
+                $set[] = "modified = :modified";
+                self::$_bindings[':modified'] = date("Y-m-d H:i:s");
+            }
 
             $query = "UPDATE {$this->_tableName} SET " . implode(', ', $set) . " WHERE {$this->_idField} = :id_val";
             self::$_bindings[':id_val'] = $this->{"{$this->_idField}"};
-            self::$_bindings[':modified'] = date("Y-m-d H:i:s");
 
             $sth = self::$_db->prepare($query);
             $success = $sth->execute(self::$_bindings);
         }
         else {
             // Insert query
-            $columns[] = 'created';
-            self::$_bindings[':created'] = date("Y-m-d H:i:s");
+            if (array_key_exists('created', static::getSchema())) {
+                $columns[] = 'created';
+                self::$_bindings[':created'] = date("Y-m-d H:i:s");
+            }
 
             $query = "INSERT INTO {$this->_tableName} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', array_keys(self::$_bindings)) . ")";
 
