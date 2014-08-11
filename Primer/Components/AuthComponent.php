@@ -13,7 +13,7 @@ class AuthComponent extends Component
     /*
      * Session instance
      */
-    public $Session;
+    public $session;
 
     /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE
@@ -26,7 +26,7 @@ class AuthComponent extends Component
      */
     protected function __construct()
     {
-        $this->Session = SessionComponent::getInstance();
+        $this->session = SessionComponent::getInstance();
         $this->loginWithCookie();
     }
 
@@ -51,10 +51,10 @@ class AuthComponent extends Component
             return true;
         }
 
-        if ($this->Session->isUserLoggedIn()) {
+        if ($this->session->isUserLoggedIn()) {
             return true;
         }
-        $this->Session->setFlash('You must be logged in to do that', 'notice');
+        $this->session->setFlash('You must be logged in to do that', 'notice');
         $referrer = $_SERVER['REQUEST_URI'];
         Router::redirect('/login/?forward_to=' . htmlspecialchars($referrer, ENT_QUOTES, 'utf-8'));
     }
@@ -63,14 +63,14 @@ class AuthComponent extends Component
     {
         foreach ($model as $key => $val) {
             if (array_key_exists($key, $model->getSchema())) {
-                $this->Session->write('Auth.' . $key, $val);
+                $this->session->write('Auth.' . $key, $val);
             }
         }
     }
 
     public function logout()
     {
-        $this->Session->delete('Auth');
+        $this->session->delete('Auth');
     }
 
     /**
