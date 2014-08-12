@@ -8,12 +8,24 @@ class Bootstrap
     public $request;
 
     private $_controller = null;
+    private $_ioc;
 
     /**
      * Starts the bootstrap
      */
     public function __construct()
     {
+        // Set up dependency injections
+        DI::init();
+        DI::singleton('Session', function() {
+            return new SessionComponent();
+        });
+        DI::singleton('Auth', function() {
+            return new AuthComponent(DI::make('Session'));
+        });
+
+        $session = DI::make('Session');
+
         if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
             require_once(APP_ROOT . DS . 'vendor/autoload.php');
         }
@@ -21,7 +33,6 @@ class Bootstrap
         Router::dispatch();
 
         if (defined('UNDER_CONSTRUCTION') && UNDER_CONSTRUCTION === true) {
-            $session = SessionComponent::getInstance();
             if (!$session->isUserLoggedIn()) {
                 if (Router::$controller !== 'users') {
                     echo '<h1>Under Construction</h1>';
@@ -61,7 +72,7 @@ class Bootstrap
     private function _loadController($controller)
     {
         $controllerName = Primer::getControllerName($controller);
-        $this->_controller = new $controllerName;
+        $this->_controller = DI::make($controllerName);
     }
     
     /**
