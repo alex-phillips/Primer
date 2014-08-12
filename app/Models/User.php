@@ -48,7 +48,7 @@ class User extends Model
 
     protected function beforeSave()
     {
-        $authComponent = AuthComponent::getInstance();
+        $authComponent = DI::make('Auth');
 
         /*
          * Make sure that we NEED to save the password and the currently set one
