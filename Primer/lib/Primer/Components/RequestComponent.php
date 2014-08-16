@@ -7,8 +7,7 @@
 
 namespace Primer\Components;
 
-use Primer\Core\Component;
-use Primer\Core\ParameterContainer;
+use Primer\Utility\ParameterContainer;
 
 class RequestComponent extends Component
 {

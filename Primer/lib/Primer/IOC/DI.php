@@ -6,9 +6,7 @@
  * Time: 10:38 AM
  */
 
-namespace Primer\Core;
-
-use Primer\Core\IOC;
+namespace Primer\IOC;
 
 class DI
 {

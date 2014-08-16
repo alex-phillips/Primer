@@ -5,7 +5,9 @@
  * Time: 2:38 PM
  */
 
-namespace Primer\Core;
+namespace Primer\Routing;
+
+use Primer\IOC\DI;
 
 class Router
 {

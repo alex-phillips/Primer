@@ -6,8 +6,6 @@
  * Time: 9:52 AM
  */
 
-use Primer\Core\Router;
-
 class SidebarRenderer
 {
     public static function render()

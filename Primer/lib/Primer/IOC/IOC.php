@@ -6,7 +6,7 @@
  * Time: 9:01 AM
  */
 
-namespace Primer\Core;
+namespace Primer\IOC;
 
 class IOC
 {

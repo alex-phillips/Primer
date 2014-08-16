@@ -5,7 +5,7 @@
  * Time: 10:56 PM
  */
 
-class AppController extends \Primer\Core\Controller
+class AppController extends \Primer\Controller\Controller
 {
     protected $_components = array(
         'Session',

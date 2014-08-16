@@ -6,8 +6,6 @@
  * Time: 9:23 PM
  */
 
-use Primer\Core\DI;
-
 class NavigationRenderer
 {
     protected static $_config = array(

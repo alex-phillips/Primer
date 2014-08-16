@@ -1,6 +1,6 @@
 <?php
 
-namespace Primer\lib;
+namespace Primer\Utility;
 
 /**
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)

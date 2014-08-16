@@ -7,8 +7,8 @@
 
 namespace Primer\Core;
 
-use Primer\lib\Inflector;
-use Primer\Components\RequestComponent;
+use Primer\Utility\Inflector;
+use stdClass;
 
 // dev error reporting
 error_reporting(E_ALL);
@@ -21,7 +21,7 @@ if (!defined('PRIMER_CORE')) {
 define('MODELS_PATH', APP_ROOT . DS . 'Models' . DS);
 define('CONTROLLERS_PATH', APP_ROOT . DS . 'Controllers' . DS);
 
-Primer::requireFile(PRIMER_CORE . DS . 'lib' . DS . 'PasswordCompatibilityLibrary.php');
+Primer::requireFile(PRIMER_CORE . DS . 'lib/Primer/Utility' .DS . 'PasswordCompatibilityLibrary.php');
 spl_autoload_register(__NAMESPACE__ . '\\Primer::autoload');
 
 /**
@@ -53,10 +53,11 @@ class Primer
      */
     private static $_loadedFiles = array();
 
-    private static $_aliases= array();
+    private static $_aliases = array();
 
     public static function createAlias($class, $alias)
     {
+        self::$_aliases[$alias] = $class;
         return class_alias($class, $alias);
     }
 
@@ -71,56 +72,23 @@ class Primer
             $fileName  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
         }
         $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
-        $fileName = PRIMER_CORE . '/../' . $fileName;
+        $path = PRIMER_CORE . '/../' . $fileName;
 
-        if (file_exists($fileName)) {
-            require $fileName;
+        if (file_exists($path)) {
+            require $path;
             return;
         }
 
-        // Load components
-        if (preg_match('#.+Component$#', $class)) {
-            try {
-                Primer::requireFile($class);
-//                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $class . '.php');
-                return;
-            }
-            catch (Exception $e) {
-                echo $e->getMessage();
-                exit;
-            }
+        $path = PRIMER_CORE . '/lib/' . $fileName;
+        if (file_exists($path)) {
+            require $path;
+            return;
         }
 
         // Load controllers
         if (preg_match('#.+Controller$#', $class)) {
             try {
                 Primer::requireFile(CONTROLLERS_PATH . DS . $class . '.php');
-                return;
-            }
-            catch (Exception $e) {
-                echo $e->getMessage();
-                exit;
-            }
-        }
-
-        // First attempt libs directory, then attempt Objects in libs
-        $dir = scandir(PRIMER_CORE . '/lib');
-        if (in_array($class . '.php', $dir)) {
-            try {
-                Primer::requireFile(PRIMER_CORE . DS . "lib" . DS . $class . '.php');
-                return;
-            }
-            catch (Exception $e) {
-                echo $e->getMessage();
-                exit;
-            }
-        }
-
-        // Attempt to load in Core files
-        $dir = scandir(PRIMER_CORE . '/Core');
-        if (in_array($class . '.php', $dir)) {
-            try {
-                Primer::requireFile(PRIMER_CORE . DS . "Core" . DS . $class . '.php');
                 return;
             }
             catch (Exception $e) {

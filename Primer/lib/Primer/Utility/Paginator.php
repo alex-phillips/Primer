@@ -8,7 +8,7 @@
  * @date October 20, 2012
  */
 
-namespace Primer\lib;
+namespace Primer\Utility;
 
 class Paginator {
 

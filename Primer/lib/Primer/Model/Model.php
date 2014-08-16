@@ -1,8 +1,9 @@
 <?php
 
-namespace Primer\Core;
+namespace Primer\Model;
 
-use Primer\lib\Inflector;
+use Primer\Utility\Inflector;
+use Primer\Datasource\Database;
 
 /**
  * Class Model
@@ -84,11 +85,6 @@ class Model
         if (!empty($params)) {
             $this->set($params);
         }
-    }
-
-    public function test (SessionComponent $session)
-    {
-
     }
 
     /**

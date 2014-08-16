@@ -5,7 +5,7 @@
  * @time 2:22 PM
  */
 
-namespace Primer\Core;
+namespace Primer\Utility;
 
 /**
  * Class ParameterContainer

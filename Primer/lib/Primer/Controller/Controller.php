@@ -1,9 +1,12 @@
 <?php
 
-namespace Primer\Core;
+namespace Primer\Controller;
 
-use Primer\lib\Inflector;
-use Primer\lib\Paginator;
+use Primer\Model\Model;
+use Primer\Utility\Inflector;
+use Primer\Utility\Paginator;
+use Primer\View\View;
+use Primer\IOC\DI;
 
 /**
  * This is the "base controller class". All other "real" controllers extend this class.
@@ -44,12 +47,8 @@ class Controller
 
         // @TODO need a better way to give View the same components as Controller. Helpers?
         foreach ($this->_components as $component) {
-            if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php')) {
-//                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php');
-                $this->$component = DI::make($component . 'Component');
-//                $this->$component = call_user_func(array($component . 'Component', 'getInstance'));
-                $this->view->$component = $this->$component;
-            }
+            $this->$component = DI::make($component . 'Component');
+            $this->view->$component = $this->$component;
         }
         $this->request = DI::make('RequestComponent');
         $this->view->request = $this->request;
@@ -62,10 +61,7 @@ class Controller
      */
     public function loadModel()
     {
-        $path = MODELS_PATH . $this->_modelName . '.php';
-        // @TODO: Find better way to handle in model doesn't exist
-        if (file_exists($path)) {
-            Primer::requireFile($path);
+        if (class_exists($this->_modelName)) {
             $this->{$this->_modelName} = new $this->_modelName();
         }
         else {

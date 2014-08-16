@@ -5,7 +5,7 @@
  * Time: 5:28 PM
  */
 
-namespace Primer\lib;
+namespace Primer\View;
 
 use Primer\Core\Primer;
 use Primer\Components\RequestComponent;

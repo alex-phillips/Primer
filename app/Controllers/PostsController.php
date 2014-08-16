@@ -1,5 +1,7 @@
 <?php
 
+use Primer\Core\Primer;
+
 class PostsController extends AppController
 {
     /* @var $model Post */
@@ -78,7 +80,7 @@ class PostsController extends AppController
     public function add()
     {
         $this->view->set('title', 'New Post');
-        View::addJS('posts/add');
+        $this->view->addJS('posts/add');
 
         if ($this->request->is('post')) {
 
@@ -132,7 +134,7 @@ class PostsController extends AppController
     {
         $this->view->title = 'Edit Post';
 
-        View::addJS('posts/edit');
+        $this->view->addJS('posts/edit');
         $this->Post->set($this->Post->findById($id));
 
         if ($this->Post->id == '') {

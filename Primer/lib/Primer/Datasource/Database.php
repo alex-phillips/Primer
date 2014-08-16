@@ -1,6 +1,6 @@
 <?php
 
-namespace Primer\Core;
+namespace Primer\Datasource;
 
 class Database extends \PDO
 {
@@ -18,7 +18,11 @@ class Database extends \PDO
 
             // generate a database connection, using the PDO connector
             // @see http://net.tutsplus.com/tutorials/php/why-you-should-be-using-phps-pdo-for-database-access/
-            parent::__construct($config['db_type'] . ':host=' . $config['host'] . ';dbname=' . $config['database'], $config['login'], $config['password'], $options);
+            try {
+                parent::__construct($config['db_type'] . ':host=' . $config['host'] . ';dbname=' . $config['database'], $config['login'], $config['password'], $options);
+            } catch (\PDOException $e) {
+                die('Database connection could not be established.');
+            }
             $this->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         }
     }

@@ -1,8 +1,9 @@
 <?php
 
-namespace Primer\Core;
+namespace Primer\View;
 
-use Primer\lib\Form;
+use Primer\Routing\Router;
+use Primer\Core\Primer;
 
 /**
  * Class View

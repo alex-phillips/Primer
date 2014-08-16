@@ -5,19 +5,26 @@
 
 namespace Primer\Core;
 
-class Bootstrap
+use Primer\Routing\Router;
+
+use Primer\IOC\DI;
+
+class App
 {
     public $request;
 
     private $_controller = null;
-    private $_ioc;
 
     /**
      * Starts the bootstrap
      */
     public function __construct()
     {
-        Primer::createAlias('\\Primer\\Core\\Router', 'Router');
+        // @TODO: handle these differently (for global access) - maybe create a facade class or helper?
+        Primer::createAlias('\\Primer\\Routing\\Router', 'Router');
+        Primer::createAlias('\\Primer\\IOC\\DI', 'DI');
+        Primer::createAlias('\\Primer\\Utility\\Inflector', 'Inflector');
+        Primer::createAlias('\\Primer\\Core\\Primer', 'Primer');
 
         // Set up dependency injections
         DI::init();

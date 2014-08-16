@@ -1,7 +1,5 @@
 <?php
 
-use Primer\Core\View;
-
 class PagesController extends AppController
 {
     public function index()
@@ -53,7 +51,7 @@ __TEXT__;
             echo $markup;
             exit;
         }
-        View::addJS('pages/movies');
+        $this->view->addJS('pages/movies');
         $this->view->title = 'Movies';
         $this->view->render('pages/movies');
     }
