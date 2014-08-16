@@ -12,7 +12,7 @@
 
         <link href='http://fonts.googleapis.com/css?family=Raleway:400,300,500,200,100,600,700' rel='stylesheet' type='text/css'>
         <?php
-        foreach (View::getCSS() as $css_file) {
+        foreach ($this->getCSS() as $css_file) {
             echo '<link rel="stylesheet" href="/css/' . $css_file . '.css" />';
         }
         ?>

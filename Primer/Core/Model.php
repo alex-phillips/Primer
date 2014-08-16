@@ -1,5 +1,9 @@
 <?php
 
+namespace Primer\Core;
+
+use Primer\lib\Inflector;
+
 /**
  * Class Model
  * @author Alex Phillips
@@ -82,6 +86,11 @@ class Model
         }
     }
 
+    public function test (SessionComponent $session)
+    {
+
+    }
+
     /**
      * Function to initialize the parent model class that all models
      * inherit from. Anything that should be executed for all models
@@ -135,6 +144,7 @@ class Model
         if (!$class) {
             return strtolower(get_called_class());
         }
+
         return strtolower(Inflector::singularize($class));
     }
 
@@ -169,6 +179,7 @@ class Model
                 );
             }
         }
+
         return static::$_schema[$className];
     }
 
@@ -340,6 +351,7 @@ class Model
                 self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
             }
         }
+
         return implode(" $conjunction ", $retval);
     }
 
@@ -347,6 +359,7 @@ class Model
     {
         $params['limit'] = 1;
         $results = static::find($params);
+
         return (!empty($results)) ? $results[0] : null;
     }
 
@@ -354,6 +367,7 @@ class Model
     {
         $params['count'] = true;
         $results = static::find($params);
+
         return $results[0]->{"COUNT(*)"};
     }
 
@@ -390,9 +404,12 @@ class Model
             if (isset($params[$variable])) {
                 $this->$variable = $params[$variable];
             }
-            // Only set other variables to NULL if a that is accepted. Otherwise,
-            // a value should be provided before save.
+            else if ($info['default']) {
+                $this->$variable = $info['default'];
+            }
             else if ($info['default'] === null && $info['null'] === 'YES') {
+                // Only set other variables to NULL if a that is accepted. Otherwise,
+                // a value should be provided before save.
                 $this->$variable = null;
             }
         }
@@ -531,6 +548,7 @@ class Model
         }
 
         self::$_db->commit();
+
         return $success;
     }
 
@@ -665,6 +683,7 @@ class Model
         ));
 
         unset($this);
+
         return $success;
     }
 
@@ -695,6 +714,7 @@ class Model
                 $retval->$key = $value;
             }
         }
+
         return $retval;
     }
 

@@ -6,6 +6,8 @@
  * Time: 9:23 PM
  */
 
+use Primer\Core\DI;
+
 class NavigationRenderer
 {
     protected static $_config = array(
@@ -73,7 +75,7 @@ __TEXT__;
         $dropdownElement = $mobile ? 'span' : 'a';
         $markup = $divider;
         foreach ($config as $label => $info) {
-            $label = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigationRenderer', 'handleSpecialCases'), $label);
+            $label = preg_replace_callback('#\{\{(.+?)\}\}#', array('self', 'handleSpecialCases'), $label);
             if ($label) {
                 if (!is_array($info)) {
                     $info = preg_replace_callback('#\{\{(.+?)\}\}#', array('navigationRenderer', 'handleSpecialCases'), $info);
@@ -108,7 +110,7 @@ __TEXT__;
     {
         static $Session;
         if (!$Session) {
-            $Session = SessionComponent::getInstance();
+            $Session = DI::make('SessionComponent');
         }
 
         $string = $matches[1];

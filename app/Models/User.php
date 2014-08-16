@@ -4,7 +4,7 @@
  * class Login_Model
  * handles the user's users, logout, username editing, password changing...
  */
-class User extends Model
+class User extends App
 {
     private $_roles = array(
         1 => 'User',

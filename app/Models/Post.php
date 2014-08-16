@@ -1,6 +1,6 @@
 <?php
 
-class Post extends Model
+class Post extends App
 {
     protected static $_validate = array(
         'title' => array(

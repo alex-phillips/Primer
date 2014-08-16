@@ -5,6 +5,11 @@
  * Time: 5:53 PM
  */
 
+namespace Primer\Components;
+
+use Primer\Core\Component;
+use Primer\Core\ParameterContainer;
+
 class RequestComponent extends Component
 {
     private $_requestMethod;
@@ -13,7 +18,7 @@ class RequestComponent extends Component
     public $query = array();
     public $files = array();
 
-    protected function __construct()
+    public function __construct()
     {
         $this->post = new ParameterContainer($_POST);
         $this->query = new ParameterContainer($_GET);

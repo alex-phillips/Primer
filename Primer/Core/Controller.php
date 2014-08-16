@@ -1,5 +1,10 @@
 <?php
 
+namespace Primer\Core;
+
+use Primer\lib\Inflector;
+use Primer\lib\Paginator;
+
 /**
  * This is the "base controller class". All other "real" controllers extend this class.
  */
@@ -40,13 +45,13 @@ class Controller
         // @TODO need a better way to give View the same components as Controller. Helpers?
         foreach ($this->_components as $component) {
             if (file_exists(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php')) {
-                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php');
-                $this->$component = call_user_func(array($component . 'Component', 'getInstance'));
+//                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $component . 'Component.php');
+                $this->$component = DI::make($component . 'Component');
+//                $this->$component = call_user_func(array($component . 'Component', 'getInstance'));
                 $this->view->$component = $this->$component;
             }
         }
-        Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . 'RequestComponent.php');
-        $this->request = RequestComponent::getInstance();
+        $this->request = DI::make('RequestComponent');
         $this->view->request = $this->request;
 
         $this->view->paginator = new Paginator($this->_paginationConfig);

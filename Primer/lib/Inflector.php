@@ -1,4 +1,7 @@
 <?php
+
+namespace Primer\lib;
+
 /**
  * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
@@ -272,7 +275,7 @@ class Inflector {
      */
     public static function reset() {
         if (empty(self::$_initialState)) {
-            self::$_initialState = get_class_vars('Inflector');
+            self::$_initialState = get_class_vars(__CLASS__);
             return;
         }
         foreach (self::$_initialState as $key => $val) {

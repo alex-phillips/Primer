@@ -5,6 +5,11 @@
  * Time: 5:28 PM
  */
 
+namespace Primer\lib;
+
+use Primer\Core\Primer;
+use Primer\Components\RequestComponent;
+
 class Form
 {
     private $_controller;

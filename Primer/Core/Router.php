@@ -5,7 +5,7 @@
  * Time: 2:38 PM
  */
 
-require_once(APP_ROOT . '/Config/routes.php');
+namespace Primer\Core;
 
 class Router
 {
@@ -152,7 +152,7 @@ class Router
     public static function error404()
     {
         header("HTTP/1.0 404 Not Found");
-        $ec = new ErrorController();
+        $ec = DI::make('ErrorController');
         $ec->view->set('title', 'Page Not Found');
         $ec->error404();
     }

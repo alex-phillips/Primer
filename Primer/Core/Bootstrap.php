@@ -3,6 +3,8 @@
  * Class Bootstrap
  */
 
+namespace Primer\Core;
+
 class Bootstrap
 {
     public $request;
@@ -15,21 +17,27 @@ class Bootstrap
      */
     public function __construct()
     {
+        Primer::createAlias('\\Primer\\Core\\Router', 'Router');
+
         // Set up dependency injections
         DI::init();
-        DI::singleton('Session', function() {
-            return new SessionComponent();
+        DI::singleton('SessionComponent', function() {
+            return new \Primer\Components\SessionComponent();
         });
-        DI::singleton('Auth', function() {
-            return new AuthComponent(DI::make('Session'));
+        DI::singleton('AuthComponent', function() {
+            return new \Primer\Components\AuthComponent(DI::make('SessionComponent'));
+        });
+        DI::singleton('RequestComponent', function() {
+            return new \Primer\Components\RequestComponent();
         });
 
-        $session = DI::make('Session');
+        $session = DI::make('SessionComponent');
 
         if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
             require_once(APP_ROOT . DS . 'vendor/autoload.php');
         }
 
+        require_once(APP_ROOT . '/Config/routes.php');
         Router::dispatch();
 
         if (defined('UNDER_CONSTRUCTION') && UNDER_CONSTRUCTION === true) {

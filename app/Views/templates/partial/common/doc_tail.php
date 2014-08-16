@@ -13,7 +13,7 @@
         <?php
         // load up other js modules required for this page
         $markup = '';
-        foreach (View::getJS() as $file){
+        foreach ($this->getJS() as $file){
             $markup .= "    require(['$file']);\n";
         }
         echo $markup;

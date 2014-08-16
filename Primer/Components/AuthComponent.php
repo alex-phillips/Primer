@@ -4,6 +4,11 @@
  * and actions.
  */
 
+namespace Primer\Components;
+
+use Primer\Core\Component;
+use Primer\Core\Primer;
+
 class AuthComponent extends Component
 {
     /////////////////////////////////////////////////
@@ -24,9 +29,9 @@ class AuthComponent extends Component
     /**
      * Initialize Component
      */
-    protected function __construct()
+    public function __construct(SessionComponent $session)
     {
-        $this->session = SessionComponent::getInstance();
+        $this->session = $session;
         $this->loginWithCookie();
     }
 

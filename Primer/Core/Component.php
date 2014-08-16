@@ -6,6 +6,8 @@
  * Time: 11:55 AM
  */
 
+namespace Primer\Core;
+
 class Component
 {
     protected function __construct()

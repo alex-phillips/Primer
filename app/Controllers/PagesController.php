@@ -1,5 +1,7 @@
 <?php
 
+use Primer\Core\View;
+
 class PagesController extends AppController
 {
     public function index()
@@ -58,7 +60,7 @@ __TEXT__;
 
     public function movies_bootstrap()
     {
-        View::addJS('angular/bootstrap');
+        $this->view->addJS('angular/bootstrap');
         $this->view->title = 'Movies';
         $this->view->render('pages/movies_bootstrap');
     }

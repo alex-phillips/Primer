@@ -5,6 +5,11 @@
  * Time: 12:26 PM
  */
 
+namespace Primer\Core;
+
+use Primer\lib\Inflector;
+use Primer\Components\RequestComponent;
+
 // dev error reporting
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
@@ -17,7 +22,7 @@ define('MODELS_PATH', APP_ROOT . DS . 'Models' . DS);
 define('CONTROLLERS_PATH', APP_ROOT . DS . 'Controllers' . DS);
 
 Primer::requireFile(PRIMER_CORE . DS . 'lib' . DS . 'PasswordCompatibilityLibrary.php');
-spl_autoload_register('Primer::autoload');
+spl_autoload_register(__NAMESPACE__ . '\\Primer::autoload');
 
 /**
  * the autoloading function, which will be called every time a file "is missing"
@@ -48,12 +53,36 @@ class Primer
      */
     private static $_loadedFiles = array();
 
+    private static $_aliases= array();
+
+    public static function createAlias($class, $alias)
+    {
+        return class_alias($class, $alias);
+    }
+
     public static function autoload($class)
     {
+        $className = ltrim($class, '\\');
+        $fileName  = '';
+        $namespace = '';
+        if ($lastNsPos = strrpos($className, '\\')) {
+            $namespace = substr($className, 0, $lastNsPos);
+            $className = substr($className, $lastNsPos + 1);
+            $fileName  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
+        }
+        $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
+        $fileName = PRIMER_CORE . '/../' . $fileName;
+
+        if (file_exists($fileName)) {
+            require $fileName;
+            return;
+        }
+
         // Load components
         if (preg_match('#.+Component$#', $class)) {
             try {
-                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $class . '.php');
+                Primer::requireFile($class);
+//                Primer::requireFile(PRIMER_CORE . DS . 'Components' . DS . $class . '.php');
                 return;
             }
             catch (Exception $e) {

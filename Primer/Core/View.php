@@ -1,8 +1,12 @@
 <?php
+
+namespace Primer\Core;
+
+use Primer\lib\Form;
+
 /**
  * Class View
  */
-
 class View
 {
     /*

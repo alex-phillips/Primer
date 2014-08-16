@@ -7,6 +7,9 @@
  * @version 1.0
  * @date October 20, 2012
  */
+
+namespace Primer\lib;
+
 class Paginator {
 
     /**

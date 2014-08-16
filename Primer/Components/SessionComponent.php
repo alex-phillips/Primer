@@ -5,6 +5,11 @@
  * Time: 5:28 PM
  */
 
+namespace Primer\Components;
+
+use Primer\Core\Component;
+use Primer\Core\ParameterContainer;
+
 class SessionComponent extends Component
 {
     private $_sessionContainer;
@@ -16,7 +21,7 @@ class SessionComponent extends Component
     /**
      * Class constructor - initializes session of one is not currently active
      */
-    protected function __construct()
+    public function __construct()
     {
         // If no session exist, start the session
         if (session_id() === '') {
