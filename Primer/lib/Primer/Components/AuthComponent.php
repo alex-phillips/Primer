@@ -121,7 +121,8 @@ class AuthComponent extends Component
                 return false;
             }
 
-            $user = new User();
+            // @TODO: need to find a better way to tie this in without using global User
+            $user = new \User();
             $user = $user->findById($user_id);
 
             if ($user->rememberme_token == $token) {
