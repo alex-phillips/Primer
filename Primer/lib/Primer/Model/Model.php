@@ -2,6 +2,7 @@
 
 namespace Primer\Model;
 
+use Primer\Core\Primer;
 use Primer\Utility\Inflector;
 use Primer\Datasource\Database;
 
