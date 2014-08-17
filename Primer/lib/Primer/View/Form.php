@@ -8,7 +8,7 @@
 namespace Primer\View;
 
 use Primer\Core\Primer;
-use Primer\Components\RequestComponent;
+use Primer\Component\RequestComponent;
 
 class Form
 {

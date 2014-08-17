@@ -4,7 +4,7 @@
  * and actions.
  */
 
-namespace Primer\Components;
+namespace Primer\Component;
 
 use Primer\Core\Primer;
 

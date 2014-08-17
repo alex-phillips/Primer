@@ -29,13 +29,13 @@ class App
         // Set up dependency injections
         DI::init();
         DI::singleton('SessionComponent', function() {
-            return new \Primer\Components\SessionComponent();
+            return new \Primer\Component\SessionComponent();
         });
         DI::singleton('AuthComponent', function() {
-            return new \Primer\Components\AuthComponent(DI::make('SessionComponent'));
+            return new \Primer\Component\AuthComponent(DI::make('SessionComponent'));
         });
         DI::singleton('RequestComponent', function() {
-            return new \Primer\Components\RequestComponent();
+            return new \Primer\Component\RequestComponent();
         });
 
         $session = DI::make('SessionComponent');

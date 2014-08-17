@@ -6,7 +6,7 @@
  * Time: 11:55 AM
  */
 
-namespace Primer\Components;
+namespace Primer\Component;
 
 class Component
 {

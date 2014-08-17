@@ -5,7 +5,7 @@
  * Time: 5:53 PM
  */
 
-namespace Primer\Components;
+namespace Primer\Component;
 
 use Primer\Utility\ParameterContainer;
 
