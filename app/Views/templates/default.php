@@ -1,6 +1,6 @@
 <?php
 require_once('Views/templates/partial/common/doc_head.php');
-require_once('Views/templates/partial/common/navigationRenderer.php');
+require_once('Views/templates/partial/common/NavigationRenderer.php');
 ?>
 
 <nav id="mobile-nav" hidden>
@@ -66,7 +66,7 @@ require_once('Views/templates/partial/common/navigationRenderer.php');
             <!-- Sidebar -->
             <div class="col-sm-3">
                 <?php
-                require_once('Views/templates/partial/common/sidebarRenderer.php');
+                require_once('Views/templates/partial/common/SidebarRenderer.php');
                 echo sidebarRenderer::render();
                 ?>
             </div>
