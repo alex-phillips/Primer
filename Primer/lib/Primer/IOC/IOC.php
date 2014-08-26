@@ -8,14 +8,17 @@
 
 namespace Primer\IOC;
 
-class IOC
+use Primer\Core\Primer;
+use Primer\Utility\ParameterContainer;
+
+class IOC implements \ArrayAccess
 {
     private $_bindings = array();
     private $_aliases = array();
 
     public function __construct()
     {
-
+        $this->_bindings = new ParameterContainer();
     }
 
     public function bind($key, $o)
@@ -24,7 +27,7 @@ class IOC
             throw new \RuntimeException(sprintf('Cannot override service "%s"', $key));
         }
 
-        if (!($o instanceof Closure)) {
+        if (!is_callable($o)) {
             throw new \RuntimeException(sprintf('Binding is not a valid callable for "%s"', $key));
         }
 
@@ -57,6 +60,7 @@ class IOC
     {
         if (array_key_exists($key, $this->_aliases)) {
             $key = $this->_aliases[$key];
+            return $this->make($key);
         }
 
         if (!array_key_exists($key, $this->_bindings)) {
@@ -70,8 +74,8 @@ class IOC
                 try {
                     $parameters[] = $this->make($param->getClass()->getName());
                 } catch (\ReflectionException $e) {
-                    echo "Class $key does not exist";
-                    return null;
+//                    echo "Class $key does not exist";
+//                    return null;
                 }
             }
 
@@ -81,14 +85,35 @@ class IOC
         }
 
         if ($this->_bindings[$key] instanceof Closure) {
-            return call_user_func($this->_bindings[$key], $this, $parameters);
+            return call_user_func($this->_bindings->get($key), $this, $parameters);
         }
 
-        return $this->_bindings[$key];
+        return $this->_bindings->get($key);
     }
 
     public function alias($alias, $binding)
     {
+        Primer::createAlias($binding, $alias);
         $this->_aliases[$alias] = $binding;
+    }
+
+    public function offsetExists($key)
+    {
+        return $this->_bindings->get($key);
+    }
+
+    public function offsetGet($key)
+    {
+        return $this->make($key);
+    }
+
+    public function offsetSet($key, $value)
+    {
+        $this->_bindings->set($key, $value);
+    }
+
+    public function offsetUnset($key)
+    {
+        $this->_bindings->delete($key);
     }
 }

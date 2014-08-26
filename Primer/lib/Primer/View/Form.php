@@ -23,10 +23,11 @@ class Form
 
     private $request;
 
-    public function __construct($controller, $action)
+    public function __construct($controller, $action, RequestComponent $request)
     {
         $this->_controller = $controller;
         $this->_action = $action;
+        $this->request = $request;
 
         $this->request = RequestComponent::getInstance();
     }

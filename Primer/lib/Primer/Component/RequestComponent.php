@@ -12,7 +12,6 @@ use Primer\Utility\ParameterContainer;
 class RequestComponent extends Component
 {
     private $_requestMethod;
-
     public $post = array();
     public $query = array();
     public $files = array();
@@ -38,5 +37,20 @@ class RequestComponent extends Component
         }
 
         return false;
+    }
+
+    public function post()
+    {
+        return $this->post;
+    }
+
+    public function query()
+    {
+        return $this->query;
+    }
+
+    public function files()
+    {
+        return $this->files;
     }
 }

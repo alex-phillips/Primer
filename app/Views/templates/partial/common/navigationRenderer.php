@@ -106,26 +106,22 @@ __TEXT__;
 
     protected static function handleSpecialCases($matches)
     {
-        static $Session;
-        if (!$Session) {
-            $Session = DI::make('SessionComponent');
-        }
-
         $string = $matches[1];
         $retval = '';
         switch($string) {
             case 'username':
-                if ($Session->isUserLoggedIn()) {
-                    $retval = $Session->read('Auth.username');
+                if (Session::isUserLoggedIn()) {
+//                if ($Session->isUserLoggedIn()) {
+                    $retval = Session::read('Auth.username');
                 }
                 break;
             case 'Login':
-                if (!$Session->isUserLoggedIn()) {
+                if (!Session::isUserLoggedIn()) {
                     $retval = $string;
                 }
                 break;
             case 'Log Out':
-                if ($Session->isUserLoggedIn()) {
+                if (Session::isUserLoggedIn()) {
                     $retval = $string;
                 }
                 break;

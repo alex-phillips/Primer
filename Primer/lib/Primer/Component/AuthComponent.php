@@ -1,12 +1,10 @@
 <?php
 /**
- * Class Auth to handle login with cookies and authorization to conotrollers
+ * Class Auth to handle login with cookies and authorization to controllers
  * and actions.
  */
 
 namespace Primer\Component;
-
-use Primer\Core\Primer;
 
 class AuthComponent extends Component
 {
@@ -47,6 +45,7 @@ class AuthComponent extends Component
     private $_hashCostFactor = 10;
 
     private $_allowedActions = array();
+    private $_initialized = false;
 
     /**
      * Initialize Component
@@ -55,6 +54,23 @@ class AuthComponent extends Component
     {
         $this->session = $session;
         $this->loginWithCookie();
+    }
+
+    public function run($action)
+    {
+        if (!$this->_initialized) {
+            return true;
+        }
+
+        if (in_array($action, $this->_allowedActions)) {
+            return true;
+        }
+
+        if ($this->session->isUserLoggedIn()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -67,23 +83,14 @@ class AuthComponent extends Component
      */
     public function allow($actions = array())
     {
-        if (is_string($actions)) {
+        $this->_initialized = true;
+
+        if (is_array($actions)) {
+            $this->_allowedActions = array_merge($this->_allowedActions, $actions);
+        }
+        else {
             $this->_allowedActions[] = $actions;
         }
-        else if (is_array($actions)) {
-            array_merge($this->_allowedActions, $actions);
-        }
-
-        if (in_array(Primer::getValue('action'), $actions)) {
-            return true;
-        }
-
-        if ($this->session->isUserLoggedIn()) {
-            return true;
-        }
-        $this->session->setFlash('You must be logged in to do that', 'notice');
-        $referrer = $_SERVER['REQUEST_URI'];
-        Router::redirect('/login/?forward_to=' . htmlspecialchars($referrer, ENT_QUOTES, 'utf-8'));
     }
 
     public function login($model)

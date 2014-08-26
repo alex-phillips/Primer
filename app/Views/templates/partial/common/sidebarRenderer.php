@@ -11,7 +11,7 @@ class SidebarRenderer
     public static function render()
     {
         // If viewing a user's page, attempt to render user's music feed
-        if (Router::$controller === 'users' && Router::$action === 'view') {
+        if (Router::getController() === 'users' && Router::getAction() === 'view') {
             if ($user = Primer::getValue('rendering_object')) {
                 return self::render_music_feed($user->username);
             }

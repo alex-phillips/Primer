@@ -7,36 +7,34 @@
 
 namespace Primer\Routing;
 
-use Primer\IOC\DI;
-
 class Router
 {
-    /////////////////////////////////////////////////
-    // PROPERTIES, PUBLIC
-    /////////////////////////////////////////////////
-
-    public static $controller = 'pages';
-    public static $action = 'index';
-    public static $args = array();
-
     /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE AND PROTECTED
     /////////////////////////////////////////////////
 
-    private static $_url = array();
-    private static $_routes = array();
+    private $_url = array();
+    private $_routes = array();
 
-    public static function dispatch()
+    private $_controller = 'pages';
+    private $_action = 'index';
+    private $_args = array();
+
+    public function __construct()
     {
-        self::$_url = self::_parseURL();
-        foreach (self::$_routes as $path => $route) {
-            $path = self::_parseURL($path);
+        $this->_url = $this->parseUrl();
+    }
 
-            if ($path === self::$_url && empty($path)) {
-                self::$controller = $route['controller'];
-                self::$action = $route['action'];
-                if (sizeof(self::$_url) > 2) {
-                    self::$args = array_slice(self::$_url, 2);
+    public function dispatch()
+    {
+        foreach ($this->_routes as $path => $route) {
+            $path = $this->parseUrl($path);
+
+            if ($path === $this->_url && empty($path)) {
+                $this->_controller = $route['controller'];
+                $this->_action = $route['action'];
+                if (sizeof($this->_url) > 2) {
+                    $this->_args = array_slice($this->_url, 2);
                 }
                 return;
             }
@@ -44,31 +42,31 @@ class Router
             $tmp = array();
 
             if (isset($path[0])) {
-                if (!isset(self::$_url[0])) {
+                if (!isset($this->_url[0])) {
                     continue;
                 }
                 if (preg_match('#:.*#', $path[0], $matches)) {
-                    $tmp[str_replace(':', '', $matches[0])] = self::$_url[0];
+                    $tmp[str_replace(':', '', $matches[0])] = $this->_url[0];
                 }
-                else if ($path[0] !== self::$_url[0]) {
+                else if ($path[0] !== $this->_url[0]) {
                     continue;
                 }
             }
-            else if (isset(self::$_url[0])) {
+            else if (isset($this->_url[0])) {
                 continue;
             }
             if (isset($path[1])) {
-                if (!isset(self::$_url[1])) {
+                if (!isset($this->_url[1])) {
                     continue;
                 }
                 if (preg_match('#:.*#', $path[1], $matches)) {
-                    $tmp[str_replace(':', '', $matches[0])] = self::$_url[1];
+                    $tmp[str_replace(':', '', $matches[0])] = $this->_url[1];
                 }
-                else if ($path[1] !== self::$_url[1]) {
+                else if ($path[1] !== $this->_url[1]) {
                     continue;
                 }
             }
-            else if (isset(self::$_url[1])) {
+            else if (isset($this->_url[1])) {
                 continue;
             }
 
@@ -84,21 +82,21 @@ class Router
                 }
             }
 
-            self::$controller = $route['controller'];
-            self::$action = $route['action'];
-            self::$args = $args;
+            $this->_controller = $route['controller'];
+            $this->_action = $route['action'];
+            $this->_args = $args;
             return;
         }
 
-        if (self::$_url) {
-            self::$controller = self::$_url[0];
-            if (sizeof(self::$_url) === 1 || preg_match('#\?.+#', self::$_url[1]) ||  preg_match('#.+:.+#', self::$_url[1])) {
-                self::$action = 'index';
-                $args = array_slice(self::$_url, 1);
+        if ($this->_url) {
+            $this->_controller = $this->_url[0];
+            if (sizeof($this->_url) === 1 || preg_match('#\?.+#', $this->_url[1]) ||  preg_match('#.+:.+#', $this->_url[1])) {
+                $this->_action = 'index';
+                $args = array_slice($this->_url, 1);
             }
             else {
-                self::$action = self::$_url[1];
-                $args = array_slice(self::$_url, 2);
+                $this->_action = $this->_url[1];
+                $args = array_slice($this->_url, 2);
             }
             /*
              * Check for arguments. If an argument is passed with a colon,
@@ -111,19 +109,19 @@ class Router
                     list($key, $value) = explode(':', $arg);
                 }
                 else {
-                    self::$args[] = $arg;
+                    $this->_args[] = $arg;
                 }
             }
         }
         return;
     }
 
-    public static function route($path, $params)
+    public function route($path, $params)
     {
-        self::$_routes[$path] = $params;
+        $this->_routes[$path] = $params;
     }
 
-    private static function _parseURL($url = null)
+    private function parseUrl($url = null)
     {
         if (!$url) {
             $url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
@@ -142,20 +140,27 @@ class Router
      *
      * @param $location
      */
-    public static function redirect($location)
+    public function redirect($location)
     {
         if ($location === 'referrer') {
-            $location = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
+            $location = isset($_SERVER['HTTP_REFERRER']) ? $_SERVER['HTTP_REFERRER'] : '/';
         }
         header("Location: " . $location);
         exit;
     }
 
-    public static function error404()
+    public function getController()
     {
-        header("HTTP/1.0 404 Not Found");
-        $ec = DI::make('ErrorController');
-        $ec->view->set('title', 'Page Not Found');
-        $ec->error404();
+        return $this->_controller;
+    }
+
+    public function getAction()
+    {
+        return $this->_action;
+    }
+
+    public function getArgs()
+    {
+        return $this->_args;
     }
 }

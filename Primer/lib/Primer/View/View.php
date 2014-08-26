@@ -2,8 +2,9 @@
 
 namespace Primer\View;
 
+use Primer\Component\SessionComponent;
 use Primer\Routing\Router;
-use Primer\Core\Primer;
+use Primer\Proxy\Primer;
 
 /**
  * Class View
@@ -50,10 +51,10 @@ class View
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(SessionComponent $session, Form $form)
     {
-        $this->title = Primer::getValue('action');
-        $this->Form = new Form(Router::$controller, Primer::getValue('action'));
+        $this->Session = $session;
+        $this->Form = $form;
     }
 
     /**

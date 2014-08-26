@@ -2,10 +2,9 @@
 
 namespace Primer\Model;
 
-use Primer\Core\Primer;
+use PDOException;
 use Primer\Utility\Inflector;
 use Primer\Datasource\Database;
-use PDOException;
 
 /**
  * Class Model
@@ -56,7 +55,7 @@ class Model
 
     /*
      * Validation array contains rules to check on each model field.
-     * This is not validation for forms or clientside validation, but
+     * This is not validation for forms or client-side validation, but
      * validation before a model is created or updated in the database.
      */
     protected static $_validate = array();

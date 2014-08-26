@@ -10,7 +10,7 @@ namespace Primer\Utility;
 /**
  * Class ParameterContainer
  */
-class ParameterContainer
+class ParameterContainer implements \ArrayAccess
 {
     /*
      * Parameters array that contains all accessible values
@@ -25,6 +25,23 @@ class ParameterContainer
     public function __construct($parameters = array())
     {
         $this->_parameters = $parameters;
+    }
+
+    /**
+     * Returns true if the class's parameters contains a value
+     * for a given key. The key can be a '.' delimited array path.
+     *
+     * @param $key
+     *
+     * @return bool
+     */
+    public function has($key)
+    {
+        if ($this->get($key)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -49,6 +66,21 @@ class ParameterContainer
         return $ary;
     }
 
+    public function offsetExists($key)
+    {
+        return $this->get($key);
+    }
+
+    public function offsetGet($key)
+    {
+        return $this->get($key);
+    }
+
+    public function offsetSet($key, $value)
+    {
+        $this->set($key, $value);
+    }
+
     /**
      * Set a value in the class's parameters given a key.
      * The key can be a '.' delimited array path.
@@ -70,6 +102,11 @@ class ParameterContainer
         $ary = $value;
     }
 
+    public function offsetUnset($key)
+    {
+        $this->delete($key);
+    }
+
     /**
      * Unset a value in the class's parameters given a '.'
      * delimited array path.
@@ -89,22 +126,5 @@ class ParameterContainer
         }
 
         unset($key[$p]);
-    }
-
-    /**
-     * Returns true if the class's parameters contains a value
-     * for a given key. The key can be a '.' delimited array path.
-     *
-     * @param $key
-     *
-     * @return bool
-     */
-    public function has($key)
-    {
-        if ($this->get($key)) {
-            return true;
-        }
-
-        return false;
     }
 }

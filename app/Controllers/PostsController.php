@@ -1,7 +1,5 @@
 <?php
 
-use Primer\Core\Primer;
-
 class PostsController extends AppController
 {
     /* @var $model Post */
@@ -15,7 +13,7 @@ class PostsController extends AppController
 
     public function beforeFilter()
     {
-        $this->Auth->allow(array(
+        Auth::allow(array(
             'index',
             'view',
             'quotes',
@@ -30,7 +28,7 @@ class PostsController extends AppController
         );
 
         // If not admin, only view publishable posts
-        if (!$this->Session->isAdmin()) {
+        if (!Session::isAdmin()) {
             $params['no_publish'] = 0;
         }
 
@@ -57,8 +55,8 @@ class PostsController extends AppController
         );
 
         // If not admin, only view publishable posts
-        if (!$this->Session->isAdmin()) {
-            $params['id_user'] = $this->Session->read('Auth.id');
+        if (!Session::isAdmin()) {
+            $params['id_user'] = Session::read('Auth.id');
         }
 
         //get number of total records
@@ -69,7 +67,7 @@ class PostsController extends AppController
 
         $this->view->set('posts', $this->Post->find(array(
             'conditions' => array(
-                'id_user' => $this->Session->read('Auth.id')
+                'id_user' => Session::read('Auth.id')
             ),
             'order' => array('created DESC'),
             'limit' => $this->view->paginator->get_limit(),
@@ -84,14 +82,14 @@ class PostsController extends AppController
 
         if ($this->request->is('post')) {
 
-            $this->request->post->set('data.post.id_user', $this->Session->read('Auth.id'));
+            $this->request->post->set('data.post.id_user', Session::read('Auth.id'));
 
             // Set currently signed-in user as creator
-            $this->request->post->set('data.post.id_user', $this->Session->read('Auth.id'));
+            $this->request->post->set('data.post.id_user', Session::read('Auth.id'));
 
             $post = new Post($this->request->post->get('data.post'));
             if ($post->save()) {
-                $this->Session->setFlash('Post created successfully', 'success');
+                Session::setFlash('Post created successfully', 'success');
                 Router::redirect('/posts/');
                 return;
             }
@@ -114,11 +112,11 @@ class PostsController extends AppController
         }
 
         if ($this->Post->id == '') {
-            $this->Session->setFlash('That post does not exist', 'failure');
+            Session::setFlash('That post does not exist', 'failure');
             Router::redirect('/posts/');
         }
-        if (($this->Post->no_publish && !$this->Session->isAdmin()) && $this->Post->id_user !== $this->Session->read('Auth.id')) {
-            $this->Session->setFlash('That post does not exist', 'failure');
+        if (($this->Post->no_publish && !Session::isAdmin()) && $this->Post->id_user !== Session::read('Auth.id')) {
+            Session::setFlash('That post does not exist', 'failure');
             Router::redirect('/posts/');
         }
 
@@ -138,12 +136,12 @@ class PostsController extends AppController
         $this->Post->set($this->Post->findById($id));
 
         if ($this->Post->id == '') {
-            $this->Session->setFlash('That post does not exist', 'failure');
+            Session::setFlash('That post does not exist', 'failure');
             Router::redirect('/posts/');
         }
 
-        if ($this->Post->id_user != $this->Session->read('Auth.id') && !$this->Session->isAdmin()) {
-            $this->Session->setFlash('You are not authorized to edit that post', 'warning');
+        if ($this->Post->id_user != Session::read('Auth.id') && !Session::isAdmin()) {
+            Session::setFlash('You are not authorized to edit that post', 'warning');
             Router::redirect('/posts/');
         }
 
@@ -151,17 +149,17 @@ class PostsController extends AppController
         // We are already checking ownership on one of the ID's, but which is best, and they
         // either BOTH need to equal, or make the SQL query on the one we check...
         if ($this->request->post->get('data.post.id') && $id != $this->request->post->get('data.post.id')) {
-            $this->Session->setFlash('Post IDs do not match. Please try again.', 'failure');
+            Session::setFlash('Post IDs do not match. Please try again.', 'failure');
             Router::redirect('/posts/edit/' . $id);
         }
 
         if ($this->request->is('post')) {
             $this->Post->set($this->request->post->get('data.post'));
             if ($this->Post->save()) {
-                $this->Session->setFlash('Post was updated successfully', 'success');
+                Session::setFlash('Post was updated successfully', 'success');
                 Router::redirect('/posts/view/' . $id);
             }
-            $this->Session->setFlash('There was a problem updating the post', 'failure');
+            Session::setFlash('There was a problem updating the post', 'failure');
             Router::redirect('/posts/edit/' . $id);
         }
 
@@ -172,22 +170,22 @@ class PostsController extends AppController
 
     public function delete($id = null)
     {
-        if ($this->request->is('post') && $this->Session->isAdmin()) {
+        if ($this->request->is('post') && Session::isAdmin()) {
             if ($this->Post->deleteById($id)) {
-                $this->Session->setFlash('Post has been successfully deleted', 'success');
+                Session::setFlash('Post has been successfully deleted', 'success');
                 Router::redirect('/');
             }
             else {
-                $this->Session->setFlash('There was a problem deleting that post', 'failure');
+                Session::setFlash('There was a problem deleting that post', 'failure');
                 Router::redirect('/');
             }
         }
-        else if ($this->Session->isAdmin()) {
+        else if (Session::isAdmin()) {
             $this->view->set('post', $this->Post->findById($id));
             $this->view->render('posts/delete');
         }
         else {
-            $this->Session->setFlash('You are not authorized to delete posts', 'warning');
+            Session::setFlash('You are not authorized to delete posts', 'warning');
             Router::redirect('/');
         }
     }
