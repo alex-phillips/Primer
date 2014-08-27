@@ -48,8 +48,6 @@ class User extends App
 
     protected function beforeSave()
     {
-        $authComponent = DI::make('Auth');
-
         /*
          * Make sure that we NEED to save the password and the currently set one
          * isn't already the hash that's stored in the DB.
@@ -57,11 +55,11 @@ class User extends App
         $dbUser = User::findById($this->id);
         if ($dbUser) {
             if ($this->password !== $dbUser->password) {
-                $this->password = $authComponent->hash($this->password);
+                $this->password = Auth::hash($this->password);
             }
         }
         else {
-            $this->password = $authComponent->hash($this->password);
+            $this->password = Auth::hash($this->password);
         }
 
         if (!isset($this->avatar) || !$this->avatar) {
@@ -106,6 +104,7 @@ class User extends App
     private function _getGravatarImageUrl($email, $s = 250, $d = 'mm', $r = 'pg', $atts = array())
     {
         $url = 'http://www.gravatar.com/avatar/' . md5(strtolower(trim($email))) . "?s=$s&d=$d&r=$r";
+
         return $url;
     }
 }
