@@ -8,3 +8,6 @@ app/public/Config/httpd
 
 # DS_Store
 .DS_Store
+
+# Composer
+app/vendor
