@@ -19,7 +19,12 @@ class Database extends \PDO
             // generate a database connection, using the PDO connector
             // @see http://net.tutsplus.com/tutorials/php/why-you-should-be-using-phps-pdo-for-database-access/
             try {
-                parent::__construct($config['db_type'] . ':host=' . $config['host'] . ';dbname=' . $config['database'], $config['login'], $config['password'], $options);
+                parent::__construct(
+                    $config['db_type'] . ':host=' . $config['host'] . ';dbname=' . $config['database'],
+                    $config['login'],
+                    $config['password'],
+                    $options
+                );
             } catch (\PDOException $e) {
                 die('Database connection could not be established.');
             }

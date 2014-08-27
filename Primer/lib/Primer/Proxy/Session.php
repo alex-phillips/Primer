@@ -10,5 +10,8 @@ namespace Primer\Proxy;
 
 class Session extends Proxy
 {
-    protected static function getProxyAccessor() { return 'session'; }
+    protected static function getProxyAccessor()
+    {
+        return 'session';
+    }
 }

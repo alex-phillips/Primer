@@ -10,10 +10,13 @@ namespace Primer\Proxy;
 
 class Router extends Proxy
 {
-    protected static function getProxyAccessor() { return 'router'; }
-
     public static function abort($code = 404, $message = '')
     {
         static::$_ioc->abort($code, $message);
+    }
+
+    protected static function getProxyAccessor()
+    {
+        return 'router';
     }
 }

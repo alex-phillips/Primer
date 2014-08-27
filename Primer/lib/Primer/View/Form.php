@@ -12,6 +12,7 @@ use Primer\Component\RequestComponent;
 
 class Form
 {
+    private static $_fileCounter = 0;
     private $_controller;
     private $_action;
     private $_model;
@@ -19,8 +20,6 @@ class Form
     private $_schema = array();
     private $_validate = array();
     private $_markup;
-    private static $_fileCounter = 0;
-
     private $request;
 
     public function __construct($controller, $action, RequestComponent $request)
@@ -39,9 +38,13 @@ class Form
         $class = "";
 
         // TODO: there's gotta be a better way to do this...
-        $this->_objectName = call_user_func(array($this->_model, 'getClassName'));
+        $this->_objectName = call_user_func(
+            array($this->_model, 'getClassName')
+        );
         $this->_schema = call_user_func(array($this->_model, 'getSchema'));
-        $this->_validate = call_user_func(array($this->_model, 'getValidationArray'));
+        $this->_validate = call_user_func(
+            array($this->_model, 'getValidationArray')
+        );
 
         $action = '';
         if (isset($params['action'])) {
@@ -80,14 +83,20 @@ __TEXT__;
             if (isset($this->_model->belongsTo)) {
                 if (is_array($this->_model->belongsTo)) {
 
-                }
-                else if (is_string($this->_model->belongsTo)) {
-                    if (Primer::getModelName($matches[1]) === $this->_model->belongsTo) {
-                        $owners = call_user_func(array(Primer::getModelName($matches[1]), 'find'));
-                        $params['options'] = array();
-                        $params['use_option_keys'] = true;
-                        foreach ($owners as $owner) {
-                            $params['options'][$owner->id] = $owner->name;
+                } else {
+                    if (is_string($this->_model->belongsTo)) {
+                        if (Primer::getModelName(
+                                $matches[1]
+                            ) === $this->_model->belongsTo
+                        ) {
+                            $owners = call_user_func(
+                                array(Primer::getModelName($matches[1]), 'find')
+                            );
+                            $params['options'] = array();
+                            $params['use_option_keys'] = true;
+                            foreach ($owners as $owner) {
+                                $params['options'][$owner->id] = $owner->name;
+                            }
                         }
                     }
                 }
@@ -105,61 +114,78 @@ __TEXT__;
         $value = '';
         if (isset($params['type']) && $params['type'] === 'password') {
             $value = '';
-        }
-        else if ($this->request->post->get('data.' . $this->_objectName . '.' . $name)) {
-            $value = $this->request->post->get('data.' . $this->_objectName . '.' . $name);
-        }
-        else if ($this->request->query->get('data.' . $this->_objectName . '.' . $name)) {
-            $value = $this->request->query->get('data.' . $this->_objectName . '.' . $name);
-        }
-        else if (isset($params['value'])) {
-            $value = $params['value'];
+        } else {
+            if ($this->request->post->get(
+                'data.' . $this->_objectName . '.' . $name
+            )
+            ) {
+                $value = $this->request->post->get(
+                    'data.' . $this->_objectName . '.' . $name
+                );
+            } else {
+                if ($this->request->query->get(
+                    'data.' . $this->_objectName . '.' . $name
+                )
+                ) {
+                    $value = $this->request->query->get(
+                        'data.' . $this->_objectName . '.' . $name
+                    );
+                } else {
+                    if (isset($params['value'])) {
+                        $value = $params['value'];
+                    }
+                }
+            }
         }
 
         $type = 'text';
         if (isset($params['type'])) {
             $type = $params['type'];
-        }
-        else if (array_key_exists($name, $this->_schema)) {
-            if (array_key_exists($name, $this->_validate) && array_key_exists('in_list', $this->_validate[$name]) && !isset($params['options'])) {
-                $params['options'] = $this->_validate[$name]['in_list']['list'];
-            }
-            if (isset($params['options'])) {
-                $type = 'select';
-                $options_markup = '';
-                foreach ($params['options'] as $index => $option) {
-                    if (isset($params['use_option_keys']) && $params['use_option_keys'] === true) {
-                        $optionValue = $index;
-                    }
-                    else {
-                        $optionValue = $option;
-                    }
-                    if ($value == $option) {
-                        $options_markup .= "<option value=\"{$optionValue}\" selected=\"selected\">$option</option>";
-                    }
-                    else {
-                        $options_markup .= "<option value=\"{$optionValue}\">$option</option>";
-                    }
+        } else {
+            if (array_key_exists($name, $this->_schema)) {
+                if (array_key_exists(
+                        $name,
+                        $this->_validate
+                    ) && array_key_exists(
+                        'in_list',
+                        $this->_validate[$name]
+                    ) && !isset($params['options'])
+                ) {
+                    $params['options'] = $this->_validate[$name]['in_list']['list'];
+                }
+                if (isset($params['options'])) {
+                    $type = 'select';
+                    $options_markup = '';
+                    foreach ($params['options'] as $index => $option) {
+                        if (isset($params['use_option_keys']) && $params['use_option_keys'] === true) {
+                            $optionValue = $index;
+                        } else {
+                            $optionValue = $option;
+                        }
+                        if ($value == $option) {
+                            $options_markup .= "<option value=\"{$optionValue}\" selected=\"selected\">$option</option>";
+                        } else {
+                            $options_markup .= "<option value=\"{$optionValue}\">$option</option>";
+                        }
 
+                    }
+                } else {
+                    switch ($this->_schema[$name]['type']) {
+                        case 'text':
+                            $type = 'textarea';
+                            break;
+                        case 'varchar':
+                        case 'char':
+                            $type = 'text';
+                            break;
+                        case 'tinyint(1)':
+                            $type = 'checkbox';
+                            break;
+                    }
                 }
+            } else {
+                $type = 'text';
             }
-            else {
-                switch ($this->_schema[$name]['type']) {
-                    case 'text':
-                        $type = 'textarea';
-                        break;
-                    case 'varchar':
-                    case 'char':
-                        $type = 'text';
-                        break;
-                    case 'tinyint(1)':
-                        $type = 'checkbox';
-                        break;
-                }
-            }
-        }
-        else {
-            $type = 'text';
         }
 
         $form_name = "data[{$this->_objectName}][$name]";
@@ -169,7 +195,12 @@ __TEXT__;
         }
 
         $required = isset($params['required']) ? $params['required'] : false;
-        $label_markup = $this->build_label($form_name, $label, $type, $required);
+        $label_markup = $this->build_label(
+            $form_name,
+            $label,
+            $type,
+            $required
+        );
 
         $additionalAttrs = array();
         if (isset($params['additional_attrs'])) {
@@ -223,8 +254,12 @@ __TEXT__;
 
     }
 
-    private function build_label($field, $label = null, $type, $required = false)
-    {
+    private function build_label(
+        $field,
+        $label = null,
+        $type,
+        $required = false
+    ) {
         if ($label == null) {
             $label = $field;
         }

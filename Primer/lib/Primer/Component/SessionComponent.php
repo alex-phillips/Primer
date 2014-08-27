@@ -44,28 +44,6 @@ class SessionComponent extends Component
     }
 
     /**
-     * Used to write a value to a session key
-     *
-     * @param $key
-     * @param null $value
-     */
-    public function write($key, $value = null)
-    {
-        $this->_sessionContainer->set($key, $value);
-    }
-
-    /**
-     * Used to reada  value from a given session key
-     *
-     * @param mixed $key Usually a string, right ?
-     * @return mixed
-     */
-    public function read($key)
-    {
-        return $this->_sessionContainer->get($key);
-    }
-
-    /**
      * Delete a session key
      *
      * @param $key
@@ -89,11 +67,21 @@ class SessionComponent extends Component
                 $this->_flashMessages[$message] = $class;
                 $this->write('flash_messages', $this->_flashMessages);
             }
-        }
-        else {
+        } else {
             $this->_flashMessages[$messages] = $class;
         }
         $this->write('flash_messages', $this->_flashMessages);
+    }
+
+    /**
+     * Used to write a value to a session key
+     *
+     * @param $key
+     * @param null $value
+     */
+    public function write($key, $value = null)
+    {
+        $this->_sessionContainer->set($key, $value);
     }
 
     /**
@@ -108,6 +96,18 @@ class SessionComponent extends Component
             return true;
         }
         return false;
+    }
+
+    /**
+     * Used to reada  value from a given session key
+     *
+     * @param mixed $key Usually a string, right ?
+     *
+     * @return mixed
+     */
+    public function read($key)
+    {
+        return $this->_sessionContainer->get($key);
     }
 
     /**
@@ -141,6 +141,6 @@ class SessionContainer extends ParameterContainer
 {
     public function __construct(&$parameters)
     {
-        $this->_parameters = &$parameters;
+        $this->_parameters = & $parameters;
     }
 }

@@ -53,7 +53,9 @@ class Application implements ArrayAccess
      */
     public function __construct()
     {
-        spl_autoload_register(array(__NAMESPACE__ . '\\Application', 'loadClass'));
+        spl_autoload_register(
+            array(__NAMESPACE__ . '\\Application', 'loadClass')
+        );
         $this->_bootstrap();
     }
 
@@ -68,14 +70,20 @@ class Application implements ArrayAccess
         $this->_auth = new AuthComponent($this->_session);
         $this->_router = new Router();
         $this->instance('\\Primer\\Core\\Application', $this);
-        $this->instance('\\Primer\\Components\\SessionComponent', $this->_session);
+        $this->instance(
+            '\\Primer\\Components\\SessionComponent',
+            $this->_session
+        );
         $this->instance('\\Primer\\Components\\AuthComponent', $this->_auth);
         $this->instance('\\Primer\\Routing\\Router', $this->_router);
 
         // Set up dependency injections
-        $this->singleton('\\Primer\\Component\\RequestComponent', function () {
-            return new \Primer\Component\RequestComponent();
-        });
+        $this->singleton(
+            '\\Primer\\Component\\RequestComponent',
+            function () {
+                return new \Primer\Component\RequestComponent();
+            }
+        );
 
         $aliases = array(
             'app'       => '\\Primer\\Core\\Application',
@@ -91,6 +99,42 @@ class Application implements ArrayAccess
             $this->alias($alias, $class);
         }
         $this->_registerProxies();
+    }
+
+    public function instance($key, $o)
+    {
+        if (array_key_exists($key, $this->_bindings)) {
+            throw new \RuntimeException(sprintf(
+                'Cannot override service "%s"',
+                $key
+            ));
+        }
+
+        $this->_bindings[$key] = $o;
+    }
+
+    public function singleton($key, $o)
+    {
+        if (array_key_exists($key, $this->_bindings)) {
+            throw new \RuntimeException(sprintf(
+                'Cannot override service "%s"',
+                $key
+            ));
+        }
+
+        if (!is_callable($o)) {
+            throw new \RuntimeException(sprintf(
+                'Binding is not a valid callable for "%s"',
+                $key
+            ));
+        }
+
+        $this->_bindings[$key] = call_user_func($o, $this);
+    }
+
+    public function alias($alias, $binding)
+    {
+        $this->_aliases[$alias] = $binding;
     }
 
     private function _registerProxies()
@@ -122,7 +166,9 @@ class Application implements ArrayAccess
         $this->setValue('action', $this->_router->getAction());
 
         Model::init();
-        $this->_view = new View($this->_session, new Form($this->_controller, $this->_action, $this->make('\\Primer\\Component\\RequestComponent')));
+        $this->_view = new View($this->_session, new Form($this->_controller, $this->_action, $this->make(
+            '\\Primer\\Component\\RequestComponent'
+        )));
 
         /*
          * Check if chosen controller exists, otherwise, 404
@@ -131,85 +177,20 @@ class Application implements ArrayAccess
          * want /pages/index and /page/index to both work. That function will
          * properly pluralize and format regardless if that controller exists.
          */
-        if (file_exists(CONTROLLERS_PATH . ucfirst(strtolower($this->_router->getController())) . 'Controller.php')) {
-            $controllerName = Primer::getControllerName($this->_router->getController());
+        if (file_exists(
+            CONTROLLERS_PATH . ucfirst(
+                strtolower($this->_router->getController())
+            ) . 'Controller.php'
+        )
+        ) {
+            $controllerName = Primer::getControllerName(
+                $this->_router->getController()
+            );
             $this->_controller = new $controllerName($this->_view);
             $this->_callControllerMethod();
-        }
-        else {
+        } else {
             $this->abort();
         }
-    }
-
-    public function loadClass($class)
-    {
-        if (isset($this->_aliases[$class])) {
-            return class_alias($this->_aliases[$class], $class);
-        }
-
-        if (isset($this->_bindings[$class])) {
-            return $this->make($class);
-        }
-
-        $className = ltrim($class, '\\');
-        $fileName = '';
-        $namespace = '';
-        if ($lastNsPos = strrpos($className, '\\')) {
-            $namespace = substr($className, 0, $lastNsPos);
-            $className = substr($className, $lastNsPos + 1);
-            $fileName = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
-        }
-        $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
-        $path = PRIMER_CORE . '/lib/' . $fileName;
-
-        if (file_exists($path)) {
-            require $path;
-            return;
-        }
-
-        // Load controllers
-        if (preg_match('#.+Controller$#', $class)) {
-            require_once(CONTROLLERS_PATH . DS . $class . '.php');
-            return;
-        }
-
-        // Attempt to load in Model files
-        $dir = scandir(MODELS_PATH);
-        if (in_array($class . '.php', $dir)) {
-            require_once(MODELS_PATH . $class . '.php');
-            return;
-        }
-    }
-
-    /**
-     * If a method is passed in the GET url parameter
-     *
-     * http://localhost/controller/method/(param)/(param)/(param)
-     * url[0] = Controller
-     * url[1] = Method
-     * url[...] = Params
-     */
-    private function _callControllerMethod()
-    {
-        if (!method_exists($this->_controller, $this->_router->getAction())) {
-            $this->abort(404);
-        }
-        else if ($this->_router->getAction()[0] === '_') {
-            $this->_router->error404();
-        }
-
-        call_user_func_array(array($this->_controller, 'beforeFilter'), $this->_router->getArgs());
-
-        $authorized = $this->_auth->run($this->_action);
-        if (!$authorized) {
-            $this->_session->setFlash('You are not authorized to do that', 'notice');
-            $referrer = $_SERVER['REQUEST_URI'];
-            $this->_router->redirect('/login/?forward_to=' . htmlspecialchars($referrer, ENT_QUOTES, 'utf-8'));
-        }
-
-        call_user_func_array(array($this->_controller, $this->_router->getAction()), $this->_router->getArgs());
-        call_user_func_array(array($this->_controller, 'afterFilter'), $this->_router->getArgs());
-        $this->_controller->view->render($this->_router->getController() . DS . $this->_router->getAction());
     }
 
     /**
@@ -235,6 +216,150 @@ class Application implements ArrayAccess
         }
 
         $o->$key = $value;
+    }
+
+    public function make($key, $parameters = array())
+    {
+        if (array_key_exists($key, $this->_aliases)) {
+            $key = $this->_aliases[$key];
+            return $this->make($key);
+        }
+
+        if (!array_key_exists($key, $this->_bindings)) {
+            $parameters = array();
+
+            $class = new \ReflectionClass($key);
+            $method = $class->getMethod('__construct');
+            $classParams = $method->getParameters();
+
+            foreach ($classParams as $param) {
+                try {
+                    $parameters[] = $this->make($param->getClass()->getName());
+                } catch (\ReflectionException $e) {
+                    echo "Class $key does not exist";
+                    return null;
+                }
+            }
+
+            $newInstance = new \ReflectionClass($key);
+            $newInstance = $newInstance->newInstanceArgs($parameters);
+            return $newInstance;
+        }
+
+        if (is_callable($this->_bindings[$key])) {
+            return call_user_func(
+                $this->_bindings->get($key),
+                $this,
+                $parameters
+            );
+        }
+
+        return $this->_bindings[$key];
+    }
+
+    /**
+     * If a method is passed in the GET url parameter
+     *
+     * http://localhost/controller/method/(param)/(param)/(param)
+     * url[0] = Controller
+     * url[1] = Method
+     * url[...] = Params
+     */
+    private function _callControllerMethod()
+    {
+        if (!method_exists($this->_controller, $this->_router->getAction())) {
+            $this->abort(404);
+        } else {
+            if ($this->_router->getAction()[0] === '_') {
+                $this->_router->error404();
+            }
+        }
+
+        call_user_func_array(
+            array($this->_controller, 'beforeFilter'),
+            $this->_router->getArgs()
+        );
+
+        $authorized = $this->_auth->run($this->_action);
+        if (!$authorized) {
+            $this->_session->setFlash(
+                'You are not authorized to do that',
+                'notice'
+            );
+            $referrer = $_SERVER['REQUEST_URI'];
+            $this->_router->redirect(
+                '/login/?forward_to=' . htmlspecialchars(
+                    $referrer,
+                    ENT_QUOTES,
+                    'utf-8'
+                )
+            );
+        }
+
+        call_user_func_array(
+            array($this->_controller, $this->_router->getAction()),
+            $this->_router->getArgs()
+        );
+        call_user_func_array(
+            array($this->_controller, 'afterFilter'),
+            $this->_router->getArgs()
+        );
+        $this->_controller->view->render(
+            $this->_router->getController() . DS . $this->_router->getAction()
+        );
+    }
+
+    public function abort($code = 404)
+    {
+        if ($code == 404) {
+            header("HTTP/1.0 404 Not Found");
+            $this->_view->set('title', 'Page Not Found');
+            $this->_view->render('error/404');
+        }
+    }
+
+    public function loadClass($class)
+    {
+        if (isset($this->_aliases[$class])) {
+            return class_alias($this->_aliases[$class], $class);
+        }
+
+        if (isset($this->_bindings[$class])) {
+            return $this->make($class);
+        }
+
+        $className = ltrim($class, '\\');
+        $fileName = '';
+        $namespace = '';
+        if ($lastNsPos = strrpos($className, '\\')) {
+            $namespace = substr($className, 0, $lastNsPos);
+            $className = substr($className, $lastNsPos + 1);
+            $fileName = str_replace(
+                    '\\',
+                    DIRECTORY_SEPARATOR,
+                    $namespace
+                ) . DIRECTORY_SEPARATOR;
+        }
+        $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
+        $path = PRIMER_CORE . '/lib/' . $fileName;
+
+        if (file_exists($path)) {
+            require $path;
+            return;
+        }
+
+        // Load controllers
+        if (preg_match('#.+Controller$#', $class)) {
+            require_once(CONTROLLERS_PATH . DS . $class . '.php');
+            return;
+        }
+
+        // Attempt to load in Model files
+        $dir = scandir(MODELS_PATH);
+        if (in_array($class . '.php', $dir)) {
+            require_once(MODELS_PATH . $class . '.php');
+            return;
+        }
     }
 
     /**
@@ -306,7 +431,8 @@ class Application implements ArrayAccess
      * @param $value
      * @param string $category
      */
-    public function setJSValue($key, $value, $category = "default") {
+    public function setJSValue($key, $value, $category = "default")
+    {
         if ($this->_jsValues == null) {
             $this->_jsValues = new \stdClass();
         }
@@ -336,76 +462,20 @@ class Application implements ArrayAccess
     public function bind($key, $o)
     {
         if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf('Cannot override service "%s"', $key));
+            throw new \RuntimeException(sprintf(
+                'Cannot override service "%s"',
+                $key
+            ));
         }
 
         if (!is_callable($o)) {
-            throw new \RuntimeException(sprintf('Binding is not a valid callable for "%s"', $key));
+            throw new \RuntimeException(sprintf(
+                'Binding is not a valid callable for "%s"',
+                $key
+            ));
         }
 
         $this->_bindings[$key] = $o;
-    }
-
-    public function singleton($key, $o)
-    {
-        if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf('Cannot override service "%s"', $key));
-        }
-
-        if (!is_callable($o)) {
-            throw new \RuntimeException(sprintf('Binding is not a valid callable for "%s"', $key));
-        }
-
-        $this->_bindings[$key] = call_user_func($o, $this);
-    }
-
-    public function instance($key, $o)
-    {
-        if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf('Cannot override service "%s"', $key));
-        }
-
-        $this->_bindings[$key] = $o;
-    }
-
-    public function make($key, $parameters = array())
-    {
-        if (array_key_exists($key, $this->_aliases)) {
-            $key = $this->_aliases[$key];
-            return $this->make($key);
-        }
-
-        if (!array_key_exists($key, $this->_bindings)) {
-            $parameters = array();
-
-            $class = new \ReflectionClass($key);
-            $method = $class->getMethod('__construct');
-            $classParams = $method->getParameters();
-
-            foreach ($classParams as $param) {
-                try {
-                    $parameters[] = $this->make($param->getClass()->getName());
-                } catch (\ReflectionException $e) {
-                    echo "Class $key does not exist";
-                    return null;
-                }
-            }
-
-            $newInstance = new \ReflectionClass($key);
-            $newInstance = $newInstance->newInstanceArgs($parameters);
-            return $newInstance;
-        }
-
-        if (is_callable($this->_bindings[$key])) {
-            return call_user_func($this->_bindings->get($key), $this, $parameters);
-        }
-
-        return $this->_bindings[$key];
-    }
-
-    public function alias($alias, $binding)
-    {
-        $this->_aliases[$alias] = $binding;
     }
 
     public function offsetExists($key)
@@ -426,12 +496,5 @@ class Application implements ArrayAccess
     public function offsetUnset($key)
     {
         unset($this->_aliases[$key]);
-    }
-
-    public function abort($code = 404)
-    {
-        header("HTTP/1.0 404 Not Found");
-        $this->_view->set('title', 'Page Not Found');
-        $this->_view->render('error/404');
     }
 }

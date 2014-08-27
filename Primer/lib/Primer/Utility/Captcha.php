@@ -10,6 +10,7 @@
  * This class is also inspired by https://github.com/dgmike/captcha
  * 
  */
+
 class Captcha
 {
     /**
@@ -70,9 +71,23 @@ class Captcha
         // TODO: put the font path into the config
         $i = 0;
         foreach ($letters as $letter) {
-            $text_color = imagecolorallocate($im, rand(0,100), rand(10,100), rand(0,100));
+            $text_color = imagecolorallocate(
+                $im,
+                rand(0, 100),
+                rand(10, 100),
+                rand(0, 100)
+            );
             // font-path relative to the index.php of the entire app
-            imagefttext($im, 35, rand(-10, 10), 20+($i*30) + rand(-5, +5), 35 + rand(10, 30),  $text_color, APP_ROOT . '/public/fonts/times_new_yorker.ttf', $letter);
+            imagefttext(
+                $im,
+                35,
+                rand(-10, 10),
+                20 + ($i * 30) + rand(-5, +5),
+                35 + rand(10, 30),
+                $text_color,
+                APP_ROOT . '/public/fonts/times_new_yorker.ttf',
+                $letter
+            );
             $i++;
         }
 
@@ -94,18 +109,18 @@ class Captcha
         // a little bit simple, but it will work for a basic captcha system
         // TODO: write stuff like that simpler with ternary operators
         if ($check === null) {
-            if (strtolower($_POST["captcha"]) == strtolower($_SESSION['captcha'])) {
+            if (strtolower($_POST["captcha"]) == strtolower(
+                    $_SESSION['captcha']
+                )
+            ) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
-        }
-        else {
+        } else {
             if (strtolower($check) == strtolower($_SESSION['captcha'])) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }

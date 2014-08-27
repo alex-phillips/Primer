@@ -39,7 +39,13 @@ class Controller
     {
         $this->view = $view;
         $this->view->paginator = new Paginator($this->_paginationConfig);
-        $this->_modelName = ucfirst(strtolower(Inflector::singularize(str_replace('Controller', '', get_class($this)))));
+        $this->_modelName = ucfirst(
+            strtolower(
+                Inflector::singularize(
+                    str_replace('Controller', '', get_class($this))
+                )
+            )
+        );
 
         // Load Model (if controller's model exists)
         $this->loadModel();

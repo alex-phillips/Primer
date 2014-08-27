@@ -11,10 +11,10 @@ use Primer\Utility\ParameterContainer;
 
 class RequestComponent extends Component
 {
-    private $_requestMethod;
     public $post = array();
     public $query = array();
     public $files = array();
+    private $_requestMethod;
 
     public function __construct()
     {

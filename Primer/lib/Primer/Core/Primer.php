@@ -93,7 +93,7 @@ class Primer
      * @param $msg
      * @param string $filename
      */
-    public static function logMessage ($msg, $filename = 'default')
+    public static function logMessage($msg, $filename = 'default')
     {
         $pid = getmypid();
         $dt = date("Y-m-d H:i:s (T)");

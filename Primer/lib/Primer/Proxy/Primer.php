@@ -10,5 +10,8 @@ namespace Primer\Proxy;
 
 class Primer extends Proxy
 {
-    protected static function getProxyAccessor() { return 'app'; }
+    protected static function getProxyAccessor()
+    {
+        return 'app';
+    }
 }

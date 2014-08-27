@@ -25,6 +25,20 @@ class Router
         $this->_url = $this->parseUrl();
     }
 
+    private function parseUrl($url = null)
+    {
+        if (!$url) {
+            $url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
+        }
+        $components = parse_url($url);
+        $url = trim($components['path'], '/');
+        $url = filter_var($url, FILTER_SANITIZE_URL);
+        if ($url) {
+            return explode('/', $url);
+        }
+        return array();
+    }
+
     public function dispatch()
     {
         foreach ($this->_routes as $path => $route) {
@@ -47,13 +61,15 @@ class Router
                 }
                 if (preg_match('#:.*#', $path[0], $matches)) {
                     $tmp[str_replace(':', '', $matches[0])] = $this->_url[0];
+                } else {
+                    if ($path[0] !== $this->_url[0]) {
+                        continue;
+                    }
                 }
-                else if ($path[0] !== $this->_url[0]) {
+            } else {
+                if (isset($this->_url[0])) {
                     continue;
                 }
-            }
-            else if (isset($this->_url[0])) {
-                continue;
             }
             if (isset($path[1])) {
                 if (!isset($this->_url[1])) {
@@ -61,22 +77,23 @@ class Router
                 }
                 if (preg_match('#:.*#', $path[1], $matches)) {
                     $tmp[str_replace(':', '', $matches[0])] = $this->_url[1];
+                } else {
+                    if ($path[1] !== $this->_url[1]) {
+                        continue;
+                    }
                 }
-                else if ($path[1] !== $this->_url[1]) {
+            } else {
+                if (isset($this->_url[1])) {
                     continue;
                 }
-            }
-            else if (isset($this->_url[1])) {
-                continue;
             }
 
             $args = array();
             foreach (array_keys($route) as $key) {
-                if(is_int($key)) {
+                if (is_int($key)) {
                     if (array_key_exists($route[$key], $tmp)) {
                         $args[] = $tmp[$route[$key]];
-                    }
-                    else {
+                    } else {
                         $args[] = $route[$key];
                     }
                 }
@@ -90,11 +107,14 @@ class Router
 
         if ($this->_url) {
             $this->_controller = $this->_url[0];
-            if (sizeof($this->_url) === 1 || preg_match('#\?.+#', $this->_url[1]) ||  preg_match('#.+:.+#', $this->_url[1])) {
+            if (sizeof($this->_url) === 1 || preg_match(
+                    '#\?.+#',
+                    $this->_url[1]
+                ) || preg_match('#.+:.+#', $this->_url[1])
+            ) {
                 $this->_action = 'index';
                 $args = array_slice($this->_url, 1);
-            }
-            else {
+            } else {
                 $this->_action = $this->_url[1];
                 $args = array_slice($this->_url, 2);
             }
@@ -107,8 +127,7 @@ class Router
                 if (preg_match('#.+:.+#', $arg)) {
                     // @TODO: why isn't this setting any significant varialbes? Check this out.
                     list($key, $value) = explode(':', $arg);
-                }
-                else {
+                } else {
                     $this->_args[] = $arg;
                 }
             }
@@ -119,20 +138,6 @@ class Router
     public function route($path, $params)
     {
         $this->_routes[$path] = $params;
-    }
-
-    private function parseUrl($url = null)
-    {
-        if (!$url) {
-            $url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
-        }
-        $components = parse_url($url);
-        $url = trim($components['path'], '/');
-        $url = filter_var($url, FILTER_SANITIZE_URL);
-        if ($url) {
-            return explode('/', $url);
-        }
-        return array();
     }
 
     /**
