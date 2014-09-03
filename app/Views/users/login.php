@@ -1,18 +1,17 @@
 <?php
 
-$this->Form->create('users');
-$this->Form->add('username', array(
-    'label' => 'Username',
-));
-$this->Form->add('password', array(
-    'label' => 'Password',
-    'type' => 'password',
-));
-$this->Form->add('rememberme', array(
-    'label' => 'Remember Me',
-    'type' => 'checkbox'
-));
-$this->Form->end();
+Form::create('users');
+Form::add('username', array(
+        'label' => 'Username',
+    ));
+Form::add('password', array(
+        'label' => 'Password',
+    ));
+Form::add('rememberme', array(
+        'label' => 'Remember Me',
+        'type' => 'checkbox',
+    ));
+Form::end();
 
 ?>
 

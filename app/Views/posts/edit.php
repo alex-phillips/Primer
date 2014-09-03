@@ -1,30 +1,30 @@
 <?php
 
-$this->Form->create('posts');
-$this->Form->add('id_post', array(
+Form::create('posts');
+Form::add('id_post', array(
     'type' => 'hidden',
     'value' => $this->post->id,
 ));
-$this->Form->add('type', array(
+Form::add('type', array(
     'value' => $this->post->type,
     'label' => 'Type',
 ));
-$this->Form->add('no_publish', array(
+Form::add('no_publish', array(
     'value' => $this->post->no_publish,
     'label' => 'No Publish',
 ));
-$this->Form->add('title', array(
+Form::add('title', array(
     'value' => $this->post->title,
     'label' => 'Title',
 ));
-$this->Form->add('body', array(
+Form::add('body', array(
     'value' => $this->post->body,
     'label' => 'Body',
     'additional_attrs' => array(
         'rows' => 10,
     ),
 ));
-$this->Form->end();
+Form::end();
 
 ?>
 

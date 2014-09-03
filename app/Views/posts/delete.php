@@ -7,13 +7,11 @@
 echo $this->post->title;
 echo $this->post->body;
 
-$this->Form->create('users');
-$this->Form->add('id', array(
+Form::create('users');
+Form::add('id', array(
     'type' => 'hidden',
     'value' => $this->post->id,
 ));
-$this->Form->end(array(
+Form::end(array(
     'value' => 'Delete Post',
 ));
-
-?>

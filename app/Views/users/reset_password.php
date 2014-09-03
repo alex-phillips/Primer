@@ -1,21 +1,21 @@
 <h1>Change Password</h1>
 <?php
 
-$this->Form->create('users');
-$this->Form->add('username', array(
+Form::create('users');
+Form::add('username', array(
     'type' => 'hidden',
     'value' => $this->username
 ));
-$this->Form->add('password_reset_hash', array(
+Form::add('password_reset_hash', array(
     'type' => 'hidden',
     'value' => $this->password_reset_hash,
 ));
-$this->Form->add('newpass1', array(
+Form::add('newpass1', array(
     'type' => 'password',
     'label' => 'New Password',
 ));
-$this->Form->add('newpass2', array(
+Form::add('newpass2', array(
     'type' => 'password',
     'label' => 'Repeat New Password',
 ));
-$this->Form->end();
+Form::end();

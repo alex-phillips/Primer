@@ -40,11 +40,6 @@ class View extends Object
     public $paginator;
 
     /*
-     * Variable that holds the Form object to build forms inside of views
-     */
-    public $Form;
-
-    /*
      * This determines the template file that is to be used
      */
     public $template = 'default';
@@ -52,10 +47,9 @@ class View extends Object
     /**
      * Constructor
      */
-    public function __construct(SessionComponent $session, Form $form)
+    public function __construct(SessionComponent $session)
     {
         $this->Session = $session;
-        $this->Form = $form;
     }
 
     /**

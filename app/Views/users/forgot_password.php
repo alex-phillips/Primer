@@ -3,6 +3,6 @@ Enter your username and you'll get an email with instructions
 <!-- request password reset form box -->
 <?php
 
-$this->Form->create('users');
-$this->Form->add('username');
-$this->Form->end();
+Form::create('users');
+Form::add('username');
+Form::end();

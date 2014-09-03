@@ -18,23 +18,23 @@ if (isset($_REQUEST['data']['post']['body'])) {
     <div class="box-body">
         <?php
 
-        $this->Form->create('posts');
-        $this->Form->add('type', array(
+        Form::create('posts');
+        Form::add('type', array(
             'label' => 'Type',
         ));
-        $this->Form->add('no_publish', array(
+        Form::add('no_publish', array(
             'label' => 'No Publish',
         ));
-        $this->Form->add('title', array(
+        Form::add('title', array(
             'label' => 'Title',
         ));
-        $this->Form->add('body', array(
+        Form::add('body', array(
             'label' => 'Body',
             'additional_attrs' => array(
                 'rows' => 10,
             ),
         ));
-        $this->Form->end();
+        Form::end();
 
         ?>
     </div>

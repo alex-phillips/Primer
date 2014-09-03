@@ -81,21 +81,23 @@ class Application extends Object implements ArrayAccess
         $this->_session = new SessionComponent();
         $this->_auth = new AuthComponent($this->_session);
         $this->_router = new Router();
-        $this->instance('\\Primer\\Core\\Application', $this);
+        $this->instance('Primer\\Core\\Application', $this);
         $this->instance(
-            '\\Primer\\Components\\SessionComponent',
+            'Primer\\Components\\SessionComponent',
             $this->_session
         );
-        $this->instance('\\Primer\\Components\\AuthComponent', $this->_auth);
-        $this->instance('\\Primer\\Routing\\Router', $this->_router);
+        $this->instance('Primer\\Components\\AuthComponent', $this->_auth);
+        $this->instance('Primer\\Routing\\Router', $this->_router);
 
         // Set up dependency injections
         $this->singleton(
-            '\\Primer\\Component\\RequestComponent',
+            'Primer\\Component\\RequestComponent',
             function () {
                 return new \Primer\Component\RequestComponent();
             }
         );
+
+        $this->instance('Primer\\View\\Form', new Form($this->_router, $this->make('Primer\\Component\\RequestComponent')));
 
         $this->bind(
             '\\Primer\\Mail\\Mail',
@@ -105,16 +107,17 @@ class Application extends Object implements ArrayAccess
         );
 
         $aliases = array(
-            'app'       => '\\Primer\\Core\\Application',
-            'primer'    => '\\Primer\\Core\\Application',
-            'router'    => '\\Primer\\Routing\\Router',
-            'ioc'       => '\\Primer\\IOC\\IOC',
-            'Inflector' => '\\Primer\\Utility\\Inflector',
-            'session'   => '\\Primer\\Component\\SessionComponent',
-            'auth'      => '\\Primer\\Component\\AuthComponent',
-            'request'   => '\\Primer\\Component\\RequestComponent',
-            'mail'      => '\\Primer\\Mail\\Mail',
-            'security'  => '\\Primer\\Utility\\Security',
+            'app'       => 'Primer\\Core\\Application',
+            'primer'    => 'Primer\\Core\\Application',
+            'router'    => 'Primer\\Routing\\Router',
+            'ioc'       => 'Primer\\IOC\\IOC',
+            'Inflector' => 'Primer\\Utility\\Inflector',
+            'session'   => 'Primer\\Component\\SessionComponent',
+            'auth'      => 'Primer\\Component\\AuthComponent',
+            'request'   => 'Primer\\Component\\RequestComponent',
+            'mail'      => 'Primer\\Mail\\Mail',
+            'security'  => 'Primer\\Utility\\Security',
+            'form'      => 'Primer\\View\\Form',
         );
         foreach ($aliases as $alias => $class) {
             $this->alias($alias, $class);
@@ -190,6 +193,7 @@ class Application extends Object implements ArrayAccess
             'IOC'      => '\\Primer\\Proxy\\IOC',
             'Mail'     => '\\Primer\\Proxy\\Mail',
             'Security' => '\\Primer\\Proxy\\Security',
+            'Form'     => '\\Primer\\Proxy\\Form',
         );
 
         foreach ($aliases as $alias => $class) {
@@ -208,9 +212,7 @@ class Application extends Object implements ArrayAccess
         $this->setValue('action', $this->_router->getAction());
 
         Model::init();
-        $this->_view = new View($this->_session, new Form($this->_controller, $this->_action, $this->make(
-            '\\Primer\\Component\\RequestComponent'
-        )));
+        $this->_view = new View($this->_session);
 
         /*
          * Check if chosen controller exists, otherwise, 404

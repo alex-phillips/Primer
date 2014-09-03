@@ -1,3 +1,3 @@
 <h1>Verification</h1>
 
-<a href="/users/index">Go to login</a>
+<a href="/login/">Go to login</a>

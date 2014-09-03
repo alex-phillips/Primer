@@ -9,6 +9,7 @@ namespace Primer\View;
 
 use Primer\Core\Object;
 use Primer\Component\RequestComponent;
+use Primer\Routing\Router;
 
 class Form extends Object
 {
@@ -19,16 +20,14 @@ class Form extends Object
     private $_objectName = 'default';
     private $_schema = array();
     private $_validate = array();
-    private $_markup;
+    private $_markup = '';
     private $request;
 
-    public function __construct($controller, $action, RequestComponent $request)
+    public function __construct(Router $router, RequestComponent $request)
     {
-        $this->_controller = $controller;
-        $this->_action = $action;
+        $this->_controller = $router->getController();
+        $this->_action = $router->getAction();
         $this->request = $request;
-
-        $this->request = RequestComponent::getInstance();
     }
 
     public function create($object, $method = 'post', $params = null)
@@ -253,7 +252,6 @@ __TEXT__;
 
                 break;
         }
-
     }
 
     private function build_label($field, $label = null, $type, $required = false)
