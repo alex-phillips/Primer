@@ -16,11 +16,6 @@ class UsersController extends AppController
         ));
     }
 
-    public function test()
-    {
-        Router::abort(404);
-    }
-
     public function login()
     {
         $this->view->title = 'Login';
@@ -55,7 +50,7 @@ class UsersController extends AppController
                 Router::redirect('/users/login/');
             }
 
-            if (Auth::verifyHash(Request::post()->get('data.user.password'), $this->User->password) === false) {
+            if (Security::verifyHash(Request::post()->get('data.user.password'), $this->User->password) === false) {
                 Session::setFlash('Username or password is incorrect', 'failure');
                 Router::redirect('/users/login/');
             }
@@ -228,9 +223,7 @@ class UsersController extends AppController
 
         if (Request::is('post')) {
             // Check Captcha
-            $captcha = new Captcha();
-
-            if (!$captcha->checkCaptcha(Request::post()->get('data.user.captcha'))) {
+            if (!Security::checkCaptcha(Request::post()->get('data.user.captcha'))) {
                 Session::setFlash("The entered captcha security characters wrong", 'failure');
                 return;
             }
@@ -254,64 +247,14 @@ class UsersController extends AppController
             $this->User = new User(Request::post()->get('data.user'));
 
             if ($this->User->save()) {
-                // send a verification email
-                if ($this->_sendVerificationEmail()) {
-                    Session::setFlash('An activation e-mail has been sent', 'success');
-                    Router::redirect('/posts/');
-                }
-                else {
-
-                    // delete this users account immediately, as we could not send a verification email
-                    $this->User->delete();
-
-                    Session::setFlash("Sorry, we could not send you an verification mail. Your account has NOT been created.", 'failure');
-                    Router::redirect('/users/add');
-                }
+                Session::setFlash('An activation e-mail has been sent', 'success');
+                Router::redirect('/posts/');
             }
             else {
                 Session::setFlash('There was a problem creating the user. Please try again.', 'failure');
                 Router::redirect('/users/add');
             }
         }
-    }
-
-    /**
-     * sendVerificationEmail()
-     * sends an email to the provided email address
-     * @return boolean gives back true if mail has been sent, gives back false if no mail could been sent
-     */
-    private function _sendVerificationEmail()
-    {
-        $mail = new PHPMailer();
-
-        // use SMTP or use mail()
-        if (EMAIL_USE_SMTP) {
-            $mail->IsSMTP(); // Set mailer to use SMTP
-            $mail->Host = EMAIL_SMTP_HOST; // Specify main and backup server
-            $mail->SMTPAuth = EMAIL_SMTP_AUTH; // Enable SMTP authentication
-            $mail->Username = EMAIL_SMTP_USERNAME; // SMTP username
-            $mail->Password = EMAIL_SMTP_PASSWORD; // SMTP password
-
-            if (EMAIL_SMTP_ENCRYPTION) {
-                $mail->SMTPSecure = EMAIL_SMTP_ENCRYPTION; // Enable encryption, 'ssl' also accepted
-            }
-
-        }
-        else {
-            $mail->IsMail();
-        }
-
-        $mail->From = EMAIL_VERIFICATION_FROM_EMAIL;
-        $mail->FromName = EMAIL_VERIFICATION_FROM_NAME;
-        $mail->AddAddress($this->User->email);
-        $mail->Subject = EMAIL_VERIFICATION_SUBJECT;
-        $mail->Body = EMAIL_VERIFICATION_CONTENT . EMAIL_VERIFICATION_URL . '/' . urlencode($this->User->email) . '/' . urlencode($this->User->activation_hash);
-
-        if (!$mail->Send()) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -398,13 +341,13 @@ class UsersController extends AppController
             $mail->IsMail();
         }
 
-        $mail->From = EMAIL_PASSWORDRESET_FROM_EMAIL;
-        $mail->FromName = EMAIL_PASSWORDRESET_FROM_NAME;
+        $mail->From = 'noreply@wootables.com';
+        $mail->FromName = 'noreply@wootables.com';
         $mail->AddAddress($this->User->email);
-        $mail->Subject = EMAIL_PASSWORDRESET_SUBJECT;
+        $mail->Subject = 'Password Reset for wootables.com';
 
-        $link = EMAIL_PASSWORDRESET_URL . '/' . urlencode($this->User->username) . '/' . urlencode($this->User->password_reset_hash);
-        $mail->Body = EMAIL_PASSWORDRESET_CONTENT . ' <a href="' . $link . '">' . $link . '</a>';
+        $link = 'http://www.wootables.com/users/verifypasswordrequest/' . urlencode($this->User->username) . '/' . urlencode($this->User->password_reset_hash);
+        $mail->Body = 'Please click on this link to reset your password: <a href="' . $link . '">' . $link . '</a>';
 
         if (!$mail->Send()) {
             return false;
@@ -475,10 +418,7 @@ class UsersController extends AppController
      */
     public function showCaptcha()
     {
-        $captcha = new Captcha();
-        // generate new string with captcha characters and write them into $_SESSION['captcha']
-        $captcha->generateCaptcha();
-        // render a img showing the characters (=the captcha)
-        $captcha->showCaptcha();
+        Security::generateCaptcha();
+        Security::showCaptcha();
     }
 }
