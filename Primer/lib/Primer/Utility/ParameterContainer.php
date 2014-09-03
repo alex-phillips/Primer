@@ -7,10 +7,12 @@
 
 namespace Primer\Utility;
 
+use Primer\Core\Object;
+
 /**
  * Class ParameterContainer
  */
-class ParameterContainer implements \ArrayAccess
+class ParameterContainer extends Object implements \ArrayAccess
 {
     /*
      * Parameters array that contains all accessible values

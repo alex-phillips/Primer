@@ -10,6 +10,7 @@ namespace Primer\Utility;
 
 use Primer\Component\RequestComponent;
 use Primer\Component\SessionComponent;
+use Primer\Core\Object;
 
 /*
  * Creates, renders and checks the captcha.
@@ -20,7 +21,7 @@ use Primer\Component\SessionComponent;
  *
  */
 
-class Security
+class Security extends Object
 {
     private $_session;
     private $_request;
