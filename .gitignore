@@ -11,3 +11,4 @@ app/public/Config/httpd
 
 # Composer
 app/vendor
+Primer/vendor
