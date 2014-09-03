@@ -80,14 +80,14 @@ class PostsController extends AppController
         $this->view->set('title', 'New Post');
         $this->view->addJS('posts/add');
 
-        if ($this->request->is('post')) {
+        if (Request::is('post')) {
 
-            $this->request->post->set('data.post.id_user', Session::read('Auth.id'));
+            Request::post()->set('data.post.id_user', Session::read('Auth.id'));
 
             // Set currently signed-in user as creator
-            $this->request->post->set('data.post.id_user', Session::read('Auth.id'));
+            Request::post()->set('data.post.id_user', Session::read('Auth.id'));
 
-            $post = new Post($this->request->post->get('data.post'));
+            $post = new Post(Request::post()->get('data.post'));
             if ($post->save()) {
                 Session::setFlash('Post created successfully', 'success');
                 Router::redirect('/posts/');
@@ -148,13 +148,13 @@ class PostsController extends AppController
         // TODO: better way to go about doing this, for security reasons. For ALL models...
         // We are already checking ownership on one of the ID's, but which is best, and they
         // either BOTH need to equal, or make the SQL query on the one we check...
-        if ($this->request->post->get('data.post.id') && $id != $this->request->post->get('data.post.id')) {
+        if (Request::post()->get('data.post.id') && $id != Request::post()->get('data.post.id')) {
             Session::setFlash('Post IDs do not match. Please try again.', 'failure');
             Router::redirect('/posts/edit/' . $id);
         }
 
-        if ($this->request->is('post')) {
-            $this->Post->set($this->request->post->get('data.post'));
+        if (Request::is('post')) {
+            $this->Post->set(Request::post()->get('data.post'));
             if ($this->Post->save()) {
                 Session::setFlash('Post was updated successfully', 'success');
                 Router::redirect('/posts/view/' . $id);
@@ -170,7 +170,7 @@ class PostsController extends AppController
 
     public function delete($id = null)
     {
-        if ($this->request->is('post') && Session::isAdmin()) {
+        if (Request::is('post') && Session::isAdmin()) {
             if ($this->Post->deleteById($id)) {
                 Session::setFlash('Post has been successfully deleted', 'success');
                 Router::redirect('/');
