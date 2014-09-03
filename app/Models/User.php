@@ -55,15 +55,32 @@ class User extends App
         $dbUser = User::findById($this->id);
         if ($dbUser) {
             if ($this->password !== $dbUser->password) {
-                $this->password = Auth::hash($this->password);
+                $this->password = Security::hash($this->password);
             }
         }
         else {
-            $this->password = Auth::hash($this->password);
+            $this->password = Security::hash($this->password);
         }
 
         if (!isset($this->avatar) || !$this->avatar) {
             $this->avatar = $this->_getGravatarImageUrl($this->email);
+        }
+
+        return true;
+    }
+
+    protected function afterSave()
+    {
+        if (Router::getAction() === 'add') {
+            return Mail::send(array(
+                    'from' => 'noreply@wootables.com',
+                    'fromName' => 'noreply@wootables.com',
+                    'recipients' => array(
+                        $this->email,
+                    ),
+                    'subject' => 'Account Activation at Wootables.com',
+                    'body' => 'Welcome to wootables.com! Please click on this link to activate your account: http://www.wootables.com/users/verify/' . urlencode($this->email) . '/' . urlencode($this->activation_hash),
+                ));
         }
 
         return true;
