@@ -154,6 +154,25 @@ class Application implements ArrayAccess
         $this->_bindings[$key] = call_user_func($o, $this);
     }
 
+    public function bind($key, $o)
+    {
+        if (array_key_exists($key, $this->_bindings)) {
+            throw new \RuntimeException(sprintf(
+                'Cannot override service "%s"',
+                $key
+            ));
+        }
+
+        if (!is_callable($o)) {
+            throw new \RuntimeException(sprintf(
+                'Binding is not a valid callable for "%s"',
+                $key
+            ));
+        }
+
+        $this->_bindings[$key] = $o;
+    }
+
     public function alias($alias, $binding)
     {
         $this->_aliases[$alias] = $binding;
@@ -481,25 +500,6 @@ class Application implements ArrayAccess
     public function getJSValues()
     {
         return $this->_jsValues;
-    }
-
-    public function bind($key, $o)
-    {
-        if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
-        }
-
-        if (!is_callable($o)) {
-            throw new \RuntimeException(sprintf(
-                'Binding is not a valid callable for "%s"',
-                $key
-            ));
-        }
-
-        $this->_bindings[$key] = $o;
     }
 
     public function offsetExists($key)
