@@ -98,16 +98,19 @@ class Application implements ArrayAccess
             }
         );
 
-        $this->bind('\\Primer\\Mail\\Mail', function($this){
+        $this->bind(
+            '\\Primer\\Mail\\Mail',
+            function ($this) {
                 return new Mail($this->_config->get('email'));
-            });
+            }
+        );
 
         $aliases = array(
             'app'       => '\\Primer\\Core\\Application',
             'primer'    => '\\Primer\\Core\\Application',
             'router'    => '\\Primer\\Routing\\Router',
             'ioc'       => '\\Primer\\IOC\\IOC',
-            'inflector' => '\\Primer\\Utility\\Inflector',
+            'Inflector' => '\\Primer\\Utility\\Inflector',
             'session'   => '\\Primer\\Component\\SessionComponent',
             'auth'      => '\\Primer\\Component\\AuthComponent',
             'request'   => '\\Primer\\Component\\RequestComponent',
