@@ -8,20 +8,9 @@
 
 namespace Primer\Component;
 
-class Component
+use Primer\Core\Object;
+
+class Component extends Object
 {
-    protected function __construct()
-    {
 
-    }
-
-    public static function getInstance()
-    {
-        static $instance = null;
-        if (null === $instance) {
-            $instance = new static();
-        }
-
-        return $instance;
-    }
 }

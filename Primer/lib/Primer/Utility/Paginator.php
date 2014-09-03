@@ -10,7 +10,9 @@
 
 namespace Primer\Utility;
 
-class Paginator
+use Primer\Core\Object;
+
+class Paginator extends Object
 {
 
     /**

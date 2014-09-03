@@ -7,7 +7,9 @@
 
 namespace Primer\Routing;
 
-class Router
+use Primer\Core\Object;
+
+class Router extends Object
 {
     /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE AND PROTECTED

@@ -47,7 +47,7 @@ class Primer
 
     public static function createAlias($class, $alias)
     {
-        self::$_aliases[$alias] = $class;
+//        self::$_aliases[$alias] = $class;
 //        return class_alias($class, $alias);
     }
 
@@ -101,15 +101,15 @@ class Primer
         error_log("$dt\t$pid\t$msg\n", 3, $fullpath);
     }
 
-    public static function getControllerName($string)
-    {
-        return ucfirst(Inflector::pluralize($string) . 'Controller');
-    }
-
-    public static function getModelName($string)
-    {
-        return ucfirst(Inflector::singularize($string));
-    }
+//    public static function getControllerName($string)
+//    {
+//        return ucfirst(Inflector::pluralize($string) . 'Controller');
+//    }
+//
+//    public static function getModelName($string)
+//    {
+//        return ucfirst(Inflector::singularize($string));
+//    }
 
     public static function isHashedArray(array $array)
     {

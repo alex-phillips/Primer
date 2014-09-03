@@ -7,10 +7,10 @@
 
 namespace Primer\View;
 
-use Primer\Core\Primer;
+use Primer\Core\Object;
 use Primer\Component\RequestComponent;
 
-class Form
+class Form extends Object
 {
     private static $_fileCounter = 0;
     private $_controller;
@@ -33,7 +33,7 @@ class Form
 
     public function create($object, $method = 'post', $params = null)
     {
-        $modelName = Primer::getModelName($object);
+        $modelName = $this->getModelName($object);
         $this->_model = new $modelName;
         $class = "";
 
@@ -83,14 +83,12 @@ __TEXT__;
             if (isset($this->_model->belongsTo)) {
                 if (is_array($this->_model->belongsTo)) {
 
-                } else {
+                }
+                else {
                     if (is_string($this->_model->belongsTo)) {
-                        if (Primer::getModelName(
-                                $matches[1]
-                            ) === $this->_model->belongsTo
-                        ) {
+                        if ($this->getModelName($matches[1]) === $this->_model->belongsTo) {
                             $owners = call_user_func(
-                                array(Primer::getModelName($matches[1]), 'find')
+                                array($this->getModelName($matches[1]), 'find')
                             );
                             $params['options'] = array();
                             $params['use_option_keys'] = true;
@@ -114,23 +112,20 @@ __TEXT__;
         $value = '';
         if (isset($params['type']) && $params['type'] === 'password') {
             $value = '';
-        } else {
-            if ($this->request->post->get(
-                'data.' . $this->_objectName . '.' . $name
-            )
-            ) {
+        }
+        else {
+            if ($this->request->post->get('data.' . $this->_objectName . '.' . $name)) {
                 $value = $this->request->post->get(
                     'data.' . $this->_objectName . '.' . $name
                 );
-            } else {
-                if ($this->request->query->get(
-                    'data.' . $this->_objectName . '.' . $name
-                )
-                ) {
+            }
+            else {
+                if ($this->request->query->get('data.' . $this->_objectName . '.' . $name)) {
                     $value = $this->request->query->get(
                         'data.' . $this->_objectName . '.' . $name
                     );
-                } else {
+                }
+                else {
                     if (isset($params['value'])) {
                         $value = $params['value'];
                     }
@@ -141,7 +136,8 @@ __TEXT__;
         $type = 'text';
         if (isset($params['type'])) {
             $type = $params['type'];
-        } else {
+        }
+        else {
             if (array_key_exists($name, $this->_schema)) {
                 if (array_key_exists(
                         $name,
@@ -169,7 +165,8 @@ __TEXT__;
                         }
 
                     }
-                } else {
+                }
+                else {
                     switch ($this->_schema[$name]['type']) {
                         case 'text':
                             $type = 'textarea';
@@ -183,7 +180,8 @@ __TEXT__;
                             break;
                     }
                 }
-            } else {
+            }
+            else {
                 $type = 'text';
             }
         }
@@ -218,6 +216,7 @@ __TEXT__;
                         <textarea id="$name" name="$form_name" class="$class" $additionalAttrs>$value</textarea>
                     </div>
 __TEXT__;
+
                 break;
             case 'select':
                 $this->_markup .= <<<__TEXT__
@@ -228,6 +227,7 @@ __TEXT__;
                         </select>
                     </div>
 __TEXT__;
+
                 break;
             case 'checkbox':
                 $checked = '';
@@ -241,6 +241,7 @@ __TEXT__;
                         </label>
                     </div>
 __TEXT__;
+
                 break;
             default:
                 $this->_markup .= <<<__TEXT__
@@ -249,17 +250,14 @@ __TEXT__;
                         <input type="$type" name="$form_name" value="$value" class="$class" $additionalAttrs/>
                     </div>
 __TEXT__;
+
                 break;
         }
 
     }
 
-    private function build_label(
-        $field,
-        $label = null,
-        $type,
-        $required = false
-    ) {
+    private function build_label($field, $label = null, $type, $required = false)
+    {
         if ($label == null) {
             $label = $field;
         }
@@ -270,6 +268,7 @@ __TEXT__;
         if ($type == 'hidden') {
             $hide = 'hidden';
         }
+
         return '<label for="' . $field . '" ' . $hide . ' class="' . $required . '">' . $label . '</label>';
     }
 
@@ -290,6 +289,7 @@ __TEXT__;
         if ($return == true) {
             return $this->_markup;
         }
+
         echo $this->_markup;
     }
 }

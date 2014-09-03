@@ -8,7 +8,9 @@
 
 namespace Primer\Proxy;
 
-abstract class Proxy
+use Primer\Core\Object;
+
+abstract class Proxy extends Object
 {
     protected static $_ioc;
 

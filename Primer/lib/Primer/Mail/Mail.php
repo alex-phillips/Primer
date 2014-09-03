@@ -10,7 +10,7 @@ namespace Primer\Mail;
 use PHPMailer;
 use EMAIL_CONFIG;
 
-class Mail
+class Mail extends Object
 {
     private $_config;
     private $_mailer;

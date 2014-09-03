@@ -3,6 +3,7 @@
 namespace Primer\Model;
 
 use PDOException;
+use Primer\Core\Object;
 use Primer\Utility\Inflector;
 use Primer\Datasource\Database;
 
@@ -13,7 +14,7 @@ use Primer\Datasource\Database;
  * Class in which all models are inherited from. Contains all 'generic' database
  * interactions and validation for models.
  */
-class Model
+class Model extends Object
 {
     /////////////////////////////////////////////////
     // PROPERTIES, PUBLIC
@@ -730,11 +731,6 @@ class Model
         unset($this);
 
         return $success;
-    }
-
-    private function getModelName($string)
-    {
-        return ucfirst(Inflector::singularize($string));
     }
 
     /**

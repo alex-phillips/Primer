@@ -3,13 +3,14 @@
 namespace Primer\View;
 
 use Primer\Component\SessionComponent;
+use Primer\Core\Object;
 use Primer\Routing\Router;
 use Primer\Proxy\Primer;
 
 /**
  * Class View
  */
-class View
+class View extends Object
 {
     /*
      * Additional CSS files to be included at render

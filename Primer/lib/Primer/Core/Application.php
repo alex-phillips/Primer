@@ -27,15 +27,14 @@ define('MODELS_PATH', APP_ROOT . DS . 'Models' . DS);
 define('CONTROLLERS_PATH', APP_ROOT . DS . 'Controllers' . DS);
 
 require_once(PRIMER_CORE . DS . 'lib/Primer/Utility' . DS . 'PasswordCompatibilityLibrary.php');
+require_once(PRIMER_CORE . DS . 'lib/Primer/Core' . DS . 'Object.php');
 
-class Application implements ArrayAccess
+class Application extends Object implements ArrayAccess
 {
-    public $request;
-
     private $_router;
     private $_controller = null;
-    private $_view = null;
     private $_action = null;
+    private $_view = null;
 
     private $_bindings = array();
     private $_aliases = array();
@@ -226,7 +225,7 @@ class Application implements ArrayAccess
             ) . 'Controller.php'
         )
         ) {
-            $controllerName = Primer::getControllerName(
+            $controllerName = $this->getControllerName(
                 $this->_router->getController()
             );
             $this->_controller = new $controllerName($this->_view);
