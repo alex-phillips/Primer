@@ -8,11 +8,13 @@ namespace Primer\Core;
 use ArrayAccess;
 use Primer\Component\AuthComponent;
 use Primer\Component\SessionComponent;
-use Primer\Routing\Router;
+use Primer\Mail\Mail;
+use Primer\Model\Model;
 use Primer\Proxy\Proxy;
+use Primer\Routing\Router;
+use Primer\Utility\ParameterContainer;
 use Primer\View\Form;
 use Primer\View\View;
-use Primer\Model\Model;
 
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
@@ -38,6 +40,8 @@ class Application implements ArrayAccess
     private $_bindings = array();
     private $_aliases = array();
 
+    private $_config;
+
     /*
      * Contains values that may be accessible throughout the framework
      */
@@ -56,14 +60,23 @@ class Application implements ArrayAccess
         spl_autoload_register(
             array(__NAMESPACE__ . '\\Application', 'loadClass')
         );
+        $this->_config = new ParameterContainer();
         $this->_bootstrap();
     }
 
     private function _bootstrap()
     {
+        $this->_config['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
+        $this->_config['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
+
         // Composer autoloader
         if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
             require_once(APP_ROOT . DS . 'vendor/autoload.php');
+        }
+
+        // Composer autoloader for Primer framework
+        if (file_exists(PRIMER_CORE . DS . 'vendor/autoload.php')) {
+            require_once(PRIMER_CORE . DS . 'vendor/autoload.php');
         }
 
         $this->_session = new SessionComponent();
@@ -85,6 +98,10 @@ class Application implements ArrayAccess
             }
         );
 
+        $this->bind('\\Primer\\Mail\\Mail', function($this){
+                return new Mail($this->_config->get('email'));
+            });
+
         $aliases = array(
             'app'       => '\\Primer\\Core\\Application',
             'primer'    => '\\Primer\\Core\\Application',
@@ -94,6 +111,8 @@ class Application implements ArrayAccess
             'session'   => '\\Primer\\Component\\SessionComponent',
             'auth'      => '\\Primer\\Component\\AuthComponent',
             'request'   => '\\Primer\\Component\\RequestComponent',
+            'mail'      => '\\Primer\\Mail\\Mail',
+            'security'  => '\\Primer\\Utility\\Security',
         );
         foreach ($aliases as $alias => $class) {
             $this->alias($alias, $class);
@@ -142,12 +161,14 @@ class Application implements ArrayAccess
         Proxy::setIOC($this);
 
         $aliases = array(
-            'Primer'  => '\\Primer\\Proxy\\Primer',
-            'Session' => '\\Primer\\Proxy\\Session',
-            'Auth'    => '\\Primer\\Proxy\\Auth',
-            'Request' => '\\Primer\\Proxy\\Request',
-            'Router'  => '\\Primer\\Proxy\\Router',
-            'IOC'     => '\\Primer\\Proxy\\IOC',
+            'Primer'   => '\\Primer\\Proxy\\Primer',
+            'Session'  => '\\Primer\\Proxy\\Session',
+            'Auth'     => '\\Primer\\Proxy\\Auth',
+            'Request'  => '\\Primer\\Proxy\\Request',
+            'Router'   => '\\Primer\\Proxy\\Router',
+            'IOC'      => '\\Primer\\Proxy\\IOC',
+            'Mail'     => '\\Primer\\Proxy\\Mail',
+            'Security' => '\\Primer\\Proxy\\Security',
         );
 
         foreach ($aliases as $alias => $class) {
@@ -248,7 +269,7 @@ class Application implements ArrayAccess
 
         if (is_callable($this->_bindings[$key])) {
             return call_user_func(
-                $this->_bindings->get($key),
+                $this->_bindings[$key],
                 $this,
                 $parameters
             );
