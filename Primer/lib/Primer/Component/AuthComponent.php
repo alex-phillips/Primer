@@ -154,28 +154,4 @@ class AuthComponent extends Component
             $this->_allowedActions[] = $actions;
         }
     }
-
-    /**
-     * crypt the user's password with the PHP 5.5's password_hash() function, results in a 60 character hash string
-     * the PASSWORD_DEFAULT constant is defined by the PHP 5.5, or if you are using PHP 5.3/5.4, by the password hashing
-     * compatibility library. the third parameter looks a little bit shitty, but that's how those PHP 5.5 functions
-     * want the parameter: as an array with, currently only used with 'cost' => XX.
-     *
-     * @param $string
-     *
-     * @return bool|false|string
-     */
-    public function hash($string)
-    {
-        return password_hash(
-            $string,
-            PASSWORD_DEFAULT,
-            array('cost' => $this->_hashCostFactor)
-        );
-    }
-
-    public function verifyHash($string, $hash)
-    {
-        return password_verify($string, $hash);
-    }
 }

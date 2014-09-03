@@ -1,18 +1,62 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: exonintrendo
+ * Date: 9/3/14
+ * Time: 12:21 PM
+ */
+
+namespace Primer\Utility;
+
+use Primer\Component\RequestComponent;
+use Primer\Component\SessionComponent;
 
 /*
- * The Captcha class
- * 
  * Creates, renders and checks the captcha.
  * This class uses the free, "dirty" Times New Yorker font
  * @see http://www.dafont.com/times-new-yorker.font
- * 
- * This class is also inspired by https://github.com/dgmike/captcha
- * 
+ *
+ * This captcha implementation is also inspired by https://github.com/dgmike/captcha
+ *
  */
 
-class Captcha
+class Security
 {
+    private $_session;
+    private $_request;
+
+    public function __construct(
+        SessionComponent $session,
+        RequestComponent $request
+    ) {
+        $this->_session = $session;
+        $this->_request = $request;
+    }
+
+    /**
+     * crypt the user's password with the PHP 5.5's password_hash() function, results in a 60 character hash string
+     * the PASSWORD_DEFAULT constant is defined by the PHP 5.5, or if you are using PHP 5.3/5.4, by the password hashing
+     * compatibility library. the third parameter looks a little bit shitty, but that's how those PHP 5.5 functions
+     * want the parameter: as an array with, currently only used with 'cost' => XX.
+     *
+     * @param $string
+     *
+     * @return bool|false|string
+     */
+    public function hash($string)
+    {
+        return password_hash(
+            $string,
+            PASSWORD_DEFAULT,
+            array('cost' => $this->_hashCostFactor)
+        );
+    }
+
+    public function verifyHash($string, $hash)
+    {
+        return password_verify($string, $hash);
+    }
+
     /**
      * generates the captcha string
      */
@@ -30,7 +74,7 @@ class Captcha
         $secure_text = implode('', $selected_letters);
 
         // write the 4 selected letters into a SESSION variable
-        $_SESSION['captcha'] = $secure_text;
+        $this->_session->write('captcha', $secure_text);
     }
 
     /**
@@ -44,7 +88,7 @@ class Captcha
     public function showCaptcha()
     {
         // get letters from SESSION, split them, create array of letters
-        $letters = str_split($_SESSION['captcha']);
+        $letters = str_split($this->_session->read('captcha'));
 
         // begin to create the image with PHP's GD tools
         $im = imagecreatetruecolor(150, 70);
@@ -109,8 +153,10 @@ class Captcha
         // a little bit simple, but it will work for a basic captcha system
         // TODO: write stuff like that simpler with ternary operators
         if ($check === null) {
-            if (strtolower($_POST["captcha"]) == strtolower(
-                    $_SESSION['captcha']
+            if (strtolower(
+                    $this->_request->post()->get('captcha')
+                ) == strtolower(
+                    $this->_session->read('captcha')
                 )
             ) {
                 return true;
@@ -118,7 +164,10 @@ class Captcha
                 return false;
             }
         } else {
-            if (strtolower($check) == strtolower($_SESSION['captcha'])) {
+            if (strtolower($check) == strtolower(
+                    $this->_session->read('captcha')
+                )
+            ) {
                 return true;
             } else {
                 return false;
