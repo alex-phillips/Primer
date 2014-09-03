@@ -412,7 +412,7 @@ class Model
     public function getRelatedModels($relatedModel)
     {
         $retval = array();
-        $relatedModel = Primer::getModelName($relatedModel);
+        $relatedModel = $this->getModelName($relatedModel);
 
         if (array_key_exists(
             $this->getForeignIdField($this->_className),
@@ -684,7 +684,7 @@ class Model
             if (is_array($this->belongsTo)) {
 
             } else if (is_string($this->belongsTo)) {
-                $ownerModel = Primer::getModelName($this->belongsTo);
+                $ownerModel = $this->getModelName($this->belongsTo);
                 try {
                     $ownerId = $this->{$this->getForeignIdField(
                         $this->belongsTo
@@ -730,6 +730,11 @@ class Model
         unset($this);
 
         return $success;
+    }
+
+    private function getModelName($string)
+    {
+        return ucfirst(Inflector::singularize($string));
     }
 
     /**
