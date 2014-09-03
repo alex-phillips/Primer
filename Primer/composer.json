@@ -1,0 +1,15 @@
+{
+    "name": "exonintrendo/primer",
+    "require": {
+        "phpmailer/phpmailer": "dev-master"
+    },
+    "require-dev": {
+        "phpmailer/phpmailer": "dev-master"
+    },
+    "authors": [
+        {
+            "name": "Alex Phillips",
+            "email": "exonintrendo@gmail.com"
+        }
+    ]
+}
