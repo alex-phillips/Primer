@@ -1,6 +1,7 @@
 {
     "name": "exonintrendo/primer",
-    "description": "PHP MVC Framework",
+    "description": "The Primer PHP Framework",
+    "license": "MIT",
     "require": {
         "ircmaxell/password-compat": "1.0.3",
         "phpmailer/phpmailer": "2.1.1",
