@@ -1,24 +1,15 @@
 {
     "name": "exonintrendo/primer",
+    "description": "PHP MVC Framework",
+    "require": {
+        "ircmaxell/password-compat": "1.0.3",
+        "phpmailer/phpmailer": "2.1.1",
+        "nesbot/carbon": "1.11.0"
+    },
     "authors": [
         {
             "name": "Alex Phillips",
             "email": "exonintrendo@gmail.com"
         }
-    ],
-    "require": {
-        "phpmailer/phpmailer": "dev-master",
-        "ircmaxell/password-compat": "dev-master",
-        "nesbot/carbon": "dev-master"
-    },
-    "require-dev": {
-        "phpmailer/phpmailer": "dev-master",
-        "ircmaxell/password-compat": "dev-master",
-        "nesbot/carbon": "dev-master"
-    },
-    "autoload": {
-        "psr-0": {
-            "Primer": "lib/"
-        }
-    }
+    ]
 }
