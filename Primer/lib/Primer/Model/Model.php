@@ -81,8 +81,6 @@ class Model extends Object
         $this->_tableName = static::getTableName();
         $this->_className = static::getClassName();
 
-        self::init();
-
         static::getSchema();
         if (!empty($params)) {
             $this->set($params);
@@ -133,14 +131,10 @@ class Model extends Object
      * shbould be added here whether or not a model will be automatically
      * loaded or not.
      */
-    public static function init()
+    public static function init(Database $db)
     {
         if (!self::$_db) {
-            try {
-                self::$_db = new Database();
-            } catch (PDOException $e) {
-                die('Database connection could not be established.');
-            }
+            self::$_db = $db;
         }
     }
 
