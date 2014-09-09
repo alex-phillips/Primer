@@ -1,5 +1,5 @@
 /*	
- * jQuery mmenu v4.3.2
+ * jQuery mmenu v4.3.6
  * @requires jQuery 1.7.0 or later
  *
  * mmenu.frebsite.nl
@@ -15,7 +15,7 @@
 (function( $ ) {
 
 	var _PLUGIN_	= 'mmenu',
-		_VERSION_	= '4.3.2';
+		_VERSION_	= '4.3.6';
 
 
 	//	Plugin already excists
@@ -94,7 +94,7 @@
 					.on( _e.open,
 						function( e )
 						{
-							return openSubmenuHorizontal( $(this), that.$menu );
+							return that._openSubmenuHorizontal( $(this) );
 						}
 					);
 			}
@@ -369,7 +369,7 @@
 					function( e )
 					{
 						var $t = $(this),
-							href = $t.attr( 'href' );
+							href = $t.attr( 'href' ) || '';
 
 						//	Set selected item
 						if ( that.__valueOrFn( that.opts.onClick.setSelected, $t ) )
@@ -397,6 +397,56 @@
 						}
 					}
 				);
+		},
+
+		_openSubmenuHorizontal: function( $opening )
+		{
+			if ( $opening.hasClass( _c.current ) )
+			{
+				return false;
+			}
+
+			var $panels = $('.' + _c.panel, this.$menu),
+				$current = $panels.filter( '.' + _c.current );
+	
+			$panels
+				.removeClass( _c.highest )
+				.removeClass( _c.current )
+				.not( $opening )
+				.not( $current )
+				.addClass( _c.hidden );
+	
+			if ( $opening.hasClass( _c.opened ) )
+			{
+				$current
+					.addClass( _c.highest )
+					.removeClass( _c.opened )
+					.removeClass( _c.subopened );
+			}
+			else
+			{
+				$opening
+					.addClass( _c.highest );
+
+				$current
+					.addClass( _c.subopened );
+			}
+	
+			$opening
+				.removeClass( _c.hidden )
+				.addClass( _c.current );
+	
+			//	Without the timeout, the animation won't work because the element had display: none;
+			setTimeout(
+				function()
+				{
+					$opening
+						.removeClass( _c.subopened )
+						.addClass( _c.opened );
+				}, this.conf.openingInterval
+			);
+
+			return 'open';
 		},
 
 		_update: function( fn )
@@ -502,6 +552,7 @@
 	$[ _PLUGIN_ ].configuration = {
 		panelNodetype		: 'ul, ol, div',
 		transitionDuration	: 400,
+		openingInterval		: 25,
 		classNames	: {
 			panel		: 'Panle',
 			list		: 'List',
@@ -714,54 +765,5 @@
 		$[ _PLUGIN_ ].glbl = glbl;
 	}
 
-	function openSubmenuHorizontal( $opening, $m )
-	{
-		if ( $opening.hasClass( _c.current ) )
-		{
-			return false;
-		}
-
-		var $panels = $('.' + _c.panel, $m),
-			$current = $panels.filter( '.' + _c.current );
-
-		$panels
-			.removeClass( _c.highest )
-			.removeClass( _c.current )
-			.not( $opening )
-			.not( $current )
-			.addClass( _c.hidden );
-
-		if ( $opening.hasClass( _c.opened ) )
-		{
-			$current
-				.addClass( _c.highest )
-				.removeClass( _c.opened )
-				.removeClass( _c.subopened );
-		}
-		else
-		{
-			$opening
-				.addClass( _c.highest );
-
-			$current
-				.addClass( _c.subopened );
-		}
-
-		$opening
-			.removeClass( _c.hidden )
-			.addClass( _c.current );
-
-		//	Without the timeout, the animation won't work because the element had display: none;
-		setTimeout(
-			function()
-			{
-				$opening
-					.removeClass( _c.subopened )
-					.addClass( _c.opened );
-			}, 25
-		);
-
-		return 'open';
-	}
 
 })( jQuery );
