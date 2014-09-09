@@ -136,6 +136,9 @@ __TEXT__;
         if (isset($params['type'])) {
             $type = $params['type'];
         }
+        else if ($name == 'password') {
+            $type = 'password';
+        }
         else {
             if (array_key_exists($name, $this->_schema)) {
                 if (array_key_exists(
