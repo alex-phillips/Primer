@@ -12,5 +12,10 @@
             "name": "Alex Phillips",
             "email": "exonintrendo@gmail.com"
         }
-    ]
+    ],
+    "autoload": {
+        "psr-0": {
+            "Primer": "lib/"
+        }
+    }
 }
