@@ -19,34 +19,6 @@ use Primer\View\View;
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
-if (!defined('PRIMER_CORE')) {
-    define('PRIMER_CORE', dirname(dirname(__FILE__)));
-}
-
-spl_autoload_register(
-    function ($class) {
-        $className = ltrim($class, '\\');
-        $fileName = '';
-        $namespace = '';
-        if ($lastNsPos = strrpos($className, '\\')) {
-            $namespace = substr($className, 0, $lastNsPos);
-            $className = substr($className, $lastNsPos + 1);
-            $fileName = str_replace(
-                    '\\',
-                    DIRECTORY_SEPARATOR,
-                    $namespace
-                ) . DIRECTORY_SEPARATOR;
-        }
-        $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
-        $path = PRIMER_CORE . '/lib/' . $fileName;
-
-        if (file_exists($path)) {
-            require $path;
-            return;
-        }
-    }
-);
-
 class Application extends Object implements ArrayAccess
 {
     private $_router;
@@ -92,11 +64,6 @@ class Application extends Object implements ArrayAccess
         // Composer autoloader
         if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
             require_once(APP_ROOT . DS . 'vendor/autoload.php');
-        }
-
-        // Composer autoloader for Primer framework
-        if (file_exists(PRIMER_CORE . DS . 'vendor/autoload.php')) {
-            require_once(PRIMER_CORE . DS . 'vendor/autoload.php');
         }
 
         $this->_session = new SessionComponent();
