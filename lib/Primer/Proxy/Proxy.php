@@ -12,18 +12,11 @@ use Primer\Core\Object;
 
 abstract class Proxy extends Object
 {
-    protected static $_ioc;
+    protected static $_app;
 
-    protected static $_aliases = array();
-
-    public static function setIOC($ioc)
+    public static function setApp($app)
     {
-        static::$_ioc = $ioc;
-    }
-
-    public static function register($class, $proxy)
-    {
-        static::$_aliases[$class] = $proxy;
+        static::$_app = $app;
     }
 
     public static function __callStatic($method, $args = array())
@@ -35,7 +28,7 @@ abstract class Proxy extends Object
 
     protected static function getProxy()
     {
-        return static::$_ioc[static::getProxyAccessor()];
+        return static::$_app[static::getProxyAccessor()];
     }
 
     protected static function getAccessor()
