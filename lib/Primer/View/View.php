@@ -2,10 +2,9 @@
 
 namespace Primer\View;
 
-use Primer\Component\SessionComponent;
+use Primer\Session\Session;
 use Primer\Core\Object;
 use Primer\Routing\Router;
-use Primer\Proxy\Primer;
 
 /**
  * Class View
@@ -47,7 +46,7 @@ class View extends Object
     /**
      * Constructor
      */
-    public function __construct(SessionComponent $session)
+    public function __construct(Session $session)
     {
         $this->Session = $session;
     }
@@ -113,23 +112,25 @@ class View extends Object
      * Render the view given a template (or using the default template)
      * and using the passed in file to render the contents of the page.
      *
-     * @param $filename
+     * @param $view
      */
-    public function render($filename)
+    public function render($view)
     {
-        $this->filename = 'Views/' . $filename . '.php';
+        $view = str_replace('.', '/', $view);
+        $this->filename = 'Views/' . $view . '.php';
 
         if (isset($this->request->format)) {
             switch ($this->request->format) {
                 case 'json':
-                    echo Primer::getValue('rendering_object')->JSONSerialize();
+                    echo app()->getValue('rendering_object')->JSONSerialize();
                     break;
                 default:
                     Router::error404();
                     break;
             }
             exit;
-        } else {
+        }
+        else {
             require_once("Views/templates/$this->template.php");
         }
 
@@ -163,9 +164,30 @@ class View extends Object
      * @param $key
      * @param $value
      */
-    public function set($key, $value)
+    public function set($key, $value = null)
     {
-        $this->$key = $value;
+        if (is_array($key)) {
+            foreach ($key as $k => $v) {
+                $this->$k = $v;
+            }
+        }
+        else {
+            $this->$key = $value;
+        }
+    }
+
+    public function paginate($modelName, $conditions = array())
+    {
+        $this->paginator->set_total(
+            call_user_func(
+                array($modelName, 'findCount'),
+                array('conditions' => $conditions)
+            )
+        );
+        return call_user_func(
+            array($modelName, 'find'),
+            array($conditions, 'limit' => $this->paginator->get_limit())
+        );
     }
 
     /**
