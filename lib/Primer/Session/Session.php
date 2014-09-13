@@ -5,11 +5,11 @@
  * Time: 5:28 PM
  */
 
-namespace Primer\Component;
+namespace Primer\Session;
 
-use Primer\Utility\ParameterContainer;
+use Primer\Core\Object;
 
-class SessionComponent extends Component
+class Session extends Object
 {
     private $_sessionContainer;
     /*
@@ -127,20 +127,5 @@ class SessionComponent extends Component
         }
 
         return false;
-    }
-}
-
-/**
- * Class SessionContainer
- *
- * Modified ParameterContainer that passes the parameters by reference. This allows
- * the $_SESSION global to be modified as the class modifies the parameters inside
- * of the class.
- */
-class SessionContainer extends ParameterContainer
-{
-    public function __construct(&$parameters)
-    {
-        $this->_parameters = & $parameters;
     }
 }
