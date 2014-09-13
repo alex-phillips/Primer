@@ -186,7 +186,7 @@ class View extends Object
         );
         return call_user_func(
             array($modelName, 'find'),
-            array($conditions, 'limit' => $this->paginator->get_limit())
+            array('conditions' => $conditions, 'limit' => $this->paginator->get_limit())
         );
     }
 
