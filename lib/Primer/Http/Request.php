@@ -5,11 +5,12 @@
  * Time: 5:53 PM
  */
 
-namespace Primer\Component;
+namespace Primer\Http;
 
+use Primer\Core\Object;
 use Primer\Utility\ParameterContainer;
 
-class RequestComponent extends Component
+class Request extends Object
 {
     public $post = array();
     public $query = array();
