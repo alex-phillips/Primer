@@ -6,8 +6,8 @@
 namespace Primer\Core;
 
 use ArrayAccess;
-use Primer\Component\AuthComponent;
-use Primer\Component\SessionComponent;
+use Primer\Security\Auth;
+use Primer\Session\Session;
 use Primer\Mail\Mail;
 use Primer\Model\Model;
 use Primer\Proxy\Proxy;
@@ -15,6 +15,7 @@ use Primer\Routing\Router;
 use Primer\Utility\ParameterContainer;
 use Primer\View\Form;
 use Primer\View\View;
+use Primer\Utility\Paginator;
 
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
@@ -57,29 +58,16 @@ class Application extends Container
         $this->_registerAliases();
         $this->_registerProxies();
 
-        $this->instance('Primer\\Config\\Config', new ParameterContainer());
+        $this->instance('Primer\\Core\\Application', $this);
+        $this->instance('config', new ParameterContainer());
         $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
         $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
-
-        $this->_session = new SessionComponent();
-        $this->_auth = new AuthComponent($this->_session);
-        $this->_router = new Router();
-        $this->instance('Primer\\Core\\Application', $this);
-        $this->instance(
-            'Primer\\Components\\SessionComponent',
-            $this->_session
-        );
-        $this->instance('Primer\\Components\\AuthComponent', $this->_auth);
-        $this->instance('Primer\\Routing\\Router', $this->_router);
-
-        // Set up dependency injections
-        $this->singleton(
-            'Primer\\Component\\RequestComponent',
-            function () {
-                return new \Primer\Component\RequestComponent();
-            }
-        );
-
+        $this->singleton('Primer\\Session\\Session');
+        $this->singleton('Primer\\Security\\Auth', function($app){
+                return new Auth($app->make('Primer\\Session\\Session'));
+            });
+        $this->singleton('Primer\\Routing\\Router');
+        $this->singleton('Primer\\Http\\Request');
         $this->singleton(
             'Primer\\Datasource\\Database',
             function () {
@@ -90,13 +78,19 @@ class Application extends Container
                 }
             }
         );
-
-        $this->instance(
+        $this->singleton(
             'Primer\\View\\Form',
-            new Form($this->_router, $this->make(
-                'Primer\\Component\\RequestComponent'
-            ))
+            function ($app) {
+                return new Form(
+                    $app->make('Primer\\Routing\\Router'),
+                    $app->make('Primer\\Http\\Request')
+                );
+            }
         );
+
+        $this->_session = $this->make('Primer\\Session\\Session');
+        $this->_auth = $this->make('Primer\\Security\\Auth');
+        $this->_router = $this->make('Primer\\Routing\\Router');
 
         $this->bind(
             'Primer\\Mail\\Mail',
@@ -106,21 +100,27 @@ class Application extends Container
         );
     }
 
+    /**
+     * Alias classes required for use outside of the Primer namespace or to
+     * match up with any available proxies.
+     */
     private function _registerAliases()
     {
         $aliases = array(
             'app'       => 'Primer\\Core\\Application',
-            'config'    => 'Primer\\Config\\Config',
             'primer'    => 'Primer\\Core\\Application',
             'router'    => 'Primer\\Routing\\Router',
+            'view'      => 'Primer\\View\\View',
             'ioc'       => 'Primer\\IOC\\IOC',
-            'Inflector' => 'Primer\\Utility\\Inflector',
-            'session'   => 'Primer\\Component\\SessionComponent',
-            'auth'      => 'Primer\\Component\\AuthComponent',
-            'request'   => 'Primer\\Component\\RequestComponent',
+            'session'   => 'Primer\\Session\\Session',
+            'auth'      => 'Primer\\Security\\Auth',
+            'request'   => 'Primer\\Http\\Request',
             'mail'      => 'Primer\\Mail\\Mail',
             'security'  => 'Primer\\Utility\\Security',
             'form'      => 'Primer\\View\\Form',
+
+            'Inflector' => 'Primer\\Utility\\Inflector',
+            'Carbon'   => 'Carbon\\Carbon',
         );
 
         foreach ($aliases as $alias => $class) {
@@ -128,26 +128,28 @@ class Application extends Container
         }
     }
 
+    /**
+     * Run through initial proxy setup and alias necessary classes
+     */
     private function _registerProxies()
     {
-        Proxy::setIOC($this);
+        Proxy::setApp($this);
 
         $aliases = array(
             'Config'   => 'Primer\\Proxy\\Config',
             'Primer'   => 'Primer\\Proxy\\Primer',
             'Session'  => 'Primer\\Proxy\\Session',
             'Auth'     => 'Primer\\Proxy\\Auth',
+            'View'     => 'Primer\\Proxy\\View',
             'Request'  => 'Primer\\Proxy\\Request',
             'Router'   => 'Primer\\Proxy\\Router',
             'IOC'      => 'Primer\\Proxy\\IOC',
             'Mail'     => 'Primer\\Proxy\\Mail',
             'Security' => 'Primer\\Proxy\\Security',
             'Form'     => 'Primer\\Proxy\\Form',
-            'Carbon'   => 'Carbon\\Carbon',
         );
 
         foreach ($aliases as $alias => $class) {
-            Proxy::register($class, $alias);
             $this->alias($alias, $class);
         }
     }
@@ -163,6 +165,7 @@ class Application extends Container
 
         Model::init($this->make('Primer\\Datasource\\Database'));
         $this->_view = new View($this->_session);
+        $this->instance('Primer\\View\\View', $this->_view);
 
         /*
          * Check if chosen controller exists, otherwise, 404
@@ -171,14 +174,12 @@ class Application extends Container
          * want /pages/index and /page/index to both work. That function will
          * properly pluralize and format regardless if that controller exists.
          */
-        if (class_exists(
-            $this->getControllerName($this->_router->getController())
-        )
-        ) {
+        if (class_exists($this->getControllerName($this->_router->getController()))) {
             $controllerName = $this->getControllerName(
                 $this->_router->getController()
             );
-            $this->_controller = new $controllerName($this->_view);
+            $this->_controller = new $controllerName();
+            $this->_view->paginator = new Paginator($this->_controller->paginationConfig);
             $this->_callControllerMethod();
         }
         else {
@@ -259,7 +260,7 @@ class Application extends Container
             array($this->_controller, 'afterFilter'),
             $this->_router->getArgs()
         );
-        $this->_controller->view->render(
+        $this->_view->render(
             $this->_router->getController() . DS . $this->_router->getAction()
         );
     }
