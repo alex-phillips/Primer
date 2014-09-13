@@ -8,8 +8,8 @@
 
 namespace Primer\Utility;
 
-use Primer\Component\RequestComponent;
-use Primer\Component\SessionComponent;
+use Primer\Http\Request;
+use Primer\Session\Session;
 use Primer\Core\Object;
 
 /*
@@ -49,10 +49,7 @@ class Security extends Object
      */
     private $_hashCostFactor = 10;
 
-    public function __construct(
-        SessionComponent $session,
-        RequestComponent $request
-    ) {
+    public function __construct(Session $session, Request $request) {
         $this->_session = $session;
         $this->_request = $request;
     }
