@@ -4,32 +4,35 @@
  * and actions.
  */
 
-namespace Primer\Component;
+namespace Primer\Security;
 
-class AuthComponent extends Component
+use Primer\Core\Object;
+use Primer\Session\Session;
+
+class Auth extends Object
 {
     /////////////////////////////////////////////////
-    // PROPERTIES, PUBLIC
+    // PROPERTIES, PRIVATE
     /////////////////////////////////////////////////
 
     /*
      * Session instance
      */
-    public $session;
+    private $_session;
 
-    /////////////////////////////////////////////////
-    // PROPERTIES, PRIVATE
-    /////////////////////////////////////////////////
-
+    /*
+     * Actions permitted in the current controller with having to authenticate
+     */
     private $_allowedActions = array();
+
     private $_initialized = false;
 
     /**
      * Initialize Component
      */
-    public function __construct(SessionComponent $session)
+    public function __construct(Session $session)
     {
-        $this->session = $session;
+        $this->_session = $session;
         $this->loginWithCookie();
     }
 
@@ -83,14 +86,15 @@ class AuthComponent extends Component
     {
         foreach ($model as $key => $val) {
             if (array_key_exists($key, $model->getSchema())) {
-                $this->session->write('Auth.' . $key, $val);
+                $this->_session->write('Auth.' . $key, $val);
             }
         }
     }
 
     public function logout()
     {
-        $this->session->delete('Auth');
+        setcookie('rememberme', false, time() - (3600 * 3650), '/', DOMAIN);
+        $this->_session->delete('Auth');
     }
 
     public function run($action)
@@ -103,7 +107,7 @@ class AuthComponent extends Component
             return true;
         }
 
-        if ($this->session->isUserLoggedIn()) {
+        if ($this->_session->isUserLoggedIn()) {
             return true;
         }
 
