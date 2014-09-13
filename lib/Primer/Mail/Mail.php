@@ -8,7 +8,7 @@
 namespace Primer\Mail;
 
 use PHPMailer;
-use EMAIL_CONFIG;
+use Primer\Core\Object;
 
 class Mail extends Object
 {
@@ -45,8 +45,13 @@ class Mail extends Object
         $this->_mailer->From = $from;
         $this->_mailer->FromName = $fromName;
 
-        foreach ($recipients as $recipient) {
-            $this->_mailer->AddAddress($recipient);
+        if (is_array($to)) {
+            foreach ($to as $recipient) {
+                $this->_mailer->AddAddress($recipient);
+            }
+        }
+        else {
+            $this->_mailer->AddAddress($to);
         }
 
         $this->_mailer->Subject = $subject;
