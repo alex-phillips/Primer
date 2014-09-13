@@ -2,16 +2,22 @@
 
 namespace Primer\Controller;
 
-use Primer\Model\Model;
 use Primer\Utility\Inflector;
 use Primer\Utility\Paginator;
-use Primer\View\View;
 
 /**
  * This is the "base controller class". All other "real" controllers extend this class.
  */
 class Controller
 {
+    /*
+     * Default pagination settings
+     */
+    public $paginationConfig = array(
+        'perPage' => 10,
+        'instance' => 'p'
+    );
+
     /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE AND PROTECTED
     /////////////////////////////////////////////////
@@ -22,23 +28,8 @@ class Controller
      */
     protected $_modelName;
 
-    /*
-     * Array of components to be loaded into controller, model, and view
-     */
-    protected $_components = array();
-
-    /*
-     * Default pagination settings
-     */
-    protected $_paginationConfig = array(
-        'perPage' => 10,
-        'instance' => 'p'
-    );
-
-    public function __construct(View $view)
+    public function __construct()
     {
-        $this->view = $view;
-        $this->view->paginator = new Paginator($this->_paginationConfig);
         $this->_modelName = ucfirst(
             strtolower(
                 Inflector::singularize(
