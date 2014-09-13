@@ -19,15 +19,11 @@ use Primer\View\View;
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
-class Application extends Object implements ArrayAccess
+class Application extends Container
 {
     private $_router;
     private $_controller = null;
-    private $_action = null;
     private $_view = null;
-    private $_bindings = array();
-    private $_aliases = array();
-    private $_config;
 
     /*
      * Contains values that may be accessible throughout the framework
@@ -52,19 +48,18 @@ class Application extends Object implements ArrayAccess
         spl_autoload_register(
             array(__NAMESPACE__ . '\\Application', 'loadClass')
         );
-        $this->_config = new ParameterContainer();
+
         $this->_bootstrap();
     }
 
     private function _bootstrap()
     {
-        $this->_config['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
-        $this->_config['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
+        $this->_registerAliases();
+        $this->_registerProxies();
 
-        // Composer autoloader
-        if (file_exists(APP_ROOT . DS . 'vendor/autoload.php')) {
-            require_once(APP_ROOT . DS . 'vendor/autoload.php');
-        }
+        $this->instance('Primer\\Config\\Config', new ParameterContainer());
+        $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
+        $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
 
         $this->_session = new SessionComponent();
         $this->_auth = new AuthComponent($this->_session);
@@ -89,7 +84,7 @@ class Application extends Object implements ArrayAccess
             'Primer\\Datasource\\Database',
             function () {
                 try {
-                    return new \Primer\Datasource\Database($this->_config['database']);
+                    return new \Primer\Datasource\Database($this['config']['database']);
                 } catch (PDOException $e) {
                     die('Database connection could not be established.');
                 }
@@ -104,14 +99,18 @@ class Application extends Object implements ArrayAccess
         );
 
         $this->bind(
-            '\\Primer\\Mail\\Mail',
+            'Primer\\Mail\\Mail',
             function ($this) {
-                return new Mail($this->_config->get('email'));
+                return new Mail($this['config']['email']);
             }
         );
+    }
 
+    private function _registerAliases()
+    {
         $aliases = array(
             'app'       => 'Primer\\Core\\Application',
+            'config'    => 'Primer\\Config\\Config',
             'primer'    => 'Primer\\Core\\Application',
             'router'    => 'Primer\\Routing\\Router',
             'ioc'       => 'Primer\\IOC\\IOC',
@@ -123,104 +122,10 @@ class Application extends Object implements ArrayAccess
             'security'  => 'Primer\\Utility\\Security',
             'form'      => 'Primer\\View\\Form',
         );
+
         foreach ($aliases as $alias => $class) {
             $this->alias($alias, $class);
         }
-        $this->_registerProxies();
-    }
-
-    public function instance($key, $o)
-    {
-        if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
-        }
-
-        $this->_bindings[$key] = $o;
-    }
-
-    public function singleton($key, $o)
-    {
-        if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
-        }
-
-        if (!is_callable($o)) {
-            throw new \RuntimeException(sprintf(
-                'Binding is not a valid callable for "%s"',
-                $key
-            ));
-        }
-
-        $this->_bindings[$key] = call_user_func($o, $this);
-    }
-
-    public function make($key, $parameters = array())
-    {
-        if (array_key_exists($key, $this->_aliases)) {
-            $key = $this->_aliases[$key];
-            return $this->make($key);
-        }
-
-        if (!array_key_exists($key, $this->_bindings)) {
-            $parameters = array();
-
-            $class = new \ReflectionClass($key);
-            $method = $class->getMethod('__construct');
-            $classParams = $method->getParameters();
-
-            foreach ($classParams as $param) {
-                try {
-                    $parameters[] = $this->make($param->getClass()->getName());
-                } catch (\ReflectionException $e) {
-                    echo "Class $key does not exist";
-                    return null;
-                }
-            }
-
-            $newInstance = new \ReflectionClass($key);
-            $newInstance = $newInstance->newInstanceArgs($parameters);
-            return $newInstance;
-        }
-
-        if (is_callable($this->_bindings[$key])) {
-            return call_user_func(
-                $this->_bindings[$key],
-                $this,
-                $parameters
-            );
-        }
-
-        return $this->_bindings[$key];
-    }
-
-    public function bind($key, $o)
-    {
-        if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
-        }
-
-        if (!is_callable($o)) {
-            throw new \RuntimeException(sprintf(
-                'Binding is not a valid callable for "%s"',
-                $key
-            ));
-        }
-
-        $this->_bindings[$key] = $o;
-    }
-
-    public function alias($alias, $binding)
-    {
-        $this->_aliases[$alias] = $binding;
     }
 
     private function _registerProxies()
@@ -228,16 +133,17 @@ class Application extends Object implements ArrayAccess
         Proxy::setIOC($this);
 
         $aliases = array(
-            'Primer'   => '\\Primer\\Proxy\\Primer',
-            'Session'  => '\\Primer\\Proxy\\Session',
-            'Auth'     => '\\Primer\\Proxy\\Auth',
-            'Request'  => '\\Primer\\Proxy\\Request',
-            'Router'   => '\\Primer\\Proxy\\Router',
-            'IOC'      => '\\Primer\\Proxy\\IOC',
-            'Mail'     => '\\Primer\\Proxy\\Mail',
-            'Security' => '\\Primer\\Proxy\\Security',
-            'Form'     => '\\Primer\\Proxy\\Form',
-            'Carbon'   => '\\Carbon\\Carbon',
+            'Config'   => 'Primer\\Proxy\\Config',
+            'Primer'   => 'Primer\\Proxy\\Primer',
+            'Session'  => 'Primer\\Proxy\\Session',
+            'Auth'     => 'Primer\\Proxy\\Auth',
+            'Request'  => 'Primer\\Proxy\\Request',
+            'Router'   => 'Primer\\Proxy\\Router',
+            'IOC'      => 'Primer\\Proxy\\IOC',
+            'Mail'     => 'Primer\\Proxy\\Mail',
+            'Security' => 'Primer\\Proxy\\Security',
+            'Form'     => 'Primer\\Proxy\\Form',
+            'Carbon'   => 'Carbon\\Carbon',
         );
 
         foreach ($aliases as $alias => $class) {
@@ -265,10 +171,8 @@ class Application extends Object implements ArrayAccess
          * want /pages/index and /page/index to both work. That function will
          * properly pluralize and format regardless if that controller exists.
          */
-        if (file_exists(
-            $this->getControllersPath() . ucfirst(
-                strtolower($this->_router->getController())
-            ) . 'Controller.php'
+        if (class_exists(
+            $this->getControllerName($this->_router->getController())
         )
         ) {
             $controllerName = $this->getControllerName(
@@ -307,11 +211,6 @@ class Application extends Object implements ArrayAccess
         $o->$key = $value;
     }
 
-    public function getControllersPath()
-    {
-        return APP_ROOT . DS . 'Controllers' . DS;
-    }
-
     /**
      * If a method is passed in the GET url parameter
      *
@@ -336,7 +235,7 @@ class Application extends Object implements ArrayAccess
             $this->_router->getArgs()
         );
 
-        $authorized = $this->_auth->run($this->_action);
+        $authorized = $this->_auth->run($this->_router->getAction());
         if (!$authorized) {
             $this->_session->setFlash(
                 'You are not authorized to do that',
@@ -396,6 +295,11 @@ class Application extends Object implements ArrayAccess
             require_once($this->getModelsPath() . $class . '.php');
             return;
         }
+    }
+
+    public function getControllersPath()
+    {
+        return APP_ROOT . DS . 'Controllers' . DS;
     }
 
     public function getModelsPath()
