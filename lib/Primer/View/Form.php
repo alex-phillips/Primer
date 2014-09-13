@@ -8,7 +8,7 @@
 namespace Primer\View;
 
 use Primer\Core\Object;
-use Primer\Component\RequestComponent;
+use Primer\Http\Request;
 use Primer\Routing\Router;
 
 class Form extends Object
@@ -23,7 +23,7 @@ class Form extends Object
     private $_markup = '';
     private $request;
 
-    public function __construct(Router $router, RequestComponent $request)
+    public function __construct(Router $router, Request $request)
     {
         $this->_controller = $router->getController();
         $this->_action = $router->getAction();
