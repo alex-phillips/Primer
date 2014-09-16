@@ -178,12 +178,18 @@ class Model extends Object
             // Instantiate variable if a value was given for it
             if (isset($params[$variable])) {
                 $this->$variable = $params[$variable];
-            } else if ($info['default']) {
-                $this->$variable = $info['default'];
-            } else if ($info['default'] === null && $info['null'] === 'YES') {
-                // Only set other variables to NULL if a that is accepted. Otherwise,
-                // a value should be provided before save.
-                $this->$variable = null;
+            }
+            else {
+                if ($info['default']) {
+                    $this->$variable = $info['default'];
+                }
+                else {
+                    if ($info['default'] === null && $info['null'] === 'YES') {
+                        // Only set other variables to NULL if a that is accepted. Otherwise,
+                        // a value should be provided before save.
+                        $this->$variable = null;
+                    }
+                }
             }
         }
 
@@ -276,6 +282,7 @@ class Model extends Object
                     $field => $arguments[0]
                 )
             );
+
             if (!preg_match("#\\AfindAllBy{$matches[1]}$#", $matches[0])) {
                 $params['limit'] = 1;
                 return static::findFirst($params);
@@ -321,7 +328,8 @@ class Model extends Object
         $fields = '*';
         if (isset($params['fields']) && is_array($params['fields'])) {
             $fields = implode(', ', $params['fields']);
-        } else {
+        }
+        else {
             if (isset($params['fields']) && is_string($params['fields'])) {
                 $fields = $params['fields'];
             }
@@ -358,7 +366,8 @@ class Model extends Object
         foreach ($sth->fetchAll() as $result) {
             if ($return_objects) {
                 $results[] = new $className($result);
-            } else {
+            }
+            else {
                 $results[] = $result;
             }
         }
@@ -375,29 +384,29 @@ class Model extends Object
      *
      * @return string
      */
-    protected static function _buildFindConditions(
-        $conditions,
-        $conjunction = ''
-    ) {
+    protected static function _buildFindConditions($conditions, $conjunction = '')
+    {
         $retval = array();
         foreach ($conditions as $k => $v) {
-            if ((strtoupper($k) === 'OR' || strtoupper(
-                        $k
-                    ) === 'AND') && is_array($v)
-            ) {
+            if ((strtoupper($k) === 'OR' || strtoupper($k) === 'AND') && is_array($v)) {
                 $retval[] = '(' . static::_buildFindConditions(
                         $v,
                         strtoupper($k)
                     ) . ')';
-            } else if (is_array($v)) {
-                $retval[] = static::_buildFindConditions($v);
-            } else {
-                if (preg_match('# LIKE$#', $k)) {
-                    $retval[] = "$k :$k" . sizeof(self::$_bindings) . "";
-                } else {
-                    $retval[] = "$k = :$k" . sizeof(self::$_bindings) . "";
+            }
+            else {
+                if (is_array($v)) {
+                    $retval[] = static::_buildFindConditions($v);
                 }
-                self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
+                else {
+                    if (preg_match('# LIKE$#', $k)) {
+                        $retval[] = "$k :$k" . sizeof(self::$_bindings) . "";
+                    }
+                    else {
+                        $retval[] = "$k = :$k" . sizeof(self::$_bindings) . "";
+                    }
+                    self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
+                }
             }
         }
 
@@ -409,13 +418,12 @@ class Model extends Object
         $retval = array();
         $relatedModel = $this->getModelName($relatedModel);
 
-        if (array_key_exists(
-            $this->getForeignIdField($this->_className),
-            $relatedModel::getSchema()
-        )
-        ) {
+        if (array_key_exists($this->getForeignIdField($this->_className), $relatedModel::getSchema())) {
             $retval = call_user_func(
-                array($relatedModel, 'find'),
+                array(
+                    $relatedModel,
+                    'find'
+                ),
                 array(
                     'conditions' => array(
                         $this->getForeignIdField($this->_className) => $this->id
@@ -495,14 +503,17 @@ class Model extends Object
         foreach ($this as $col => $val) {
             if ($col == 'created' || $col == 'modified') {
                 continue;
-            } else if (array_key_exists($col, static::getSchema())) {
-                self::$_bindings[":$col"] = $val;
+            }
+            else {
+                if (array_key_exists($col, static::getSchema())) {
+                    self::$_bindings[":$col"] = $val;
 
-                // @TODO: try and get rid of $set and $columns by using array walk. i.e. - this might not be any more efficient.
-                // Columns are used for INSERT
-                $columns[] = $col;
-                // Set array is used for UPDATE
-                $set[] = "$col = :$col";
+                    // @TODO: try and get rid of $set and $columns by using array walk. i.e. - this might not be any more efficient.
+                    // Columns are used for INSERT
+                    $columns[] = $col;
+                    // Set array is used for UPDATE
+                    $set[] = "$col = :$col";
+                }
             }
         }
 
@@ -524,7 +535,8 @@ class Model extends Object
 
             $sth = self::$_db->prepare($query);
             $success = $sth->execute(self::$_bindings);
-        } else {
+        }
+        else {
             // Insert query
             if (array_key_exists('created', static::getSchema())) {
                 $columns[] = 'created';
@@ -567,12 +579,12 @@ class Model extends Object
                 // If not required and
                 if (!array_key_exists('required', $rules)) {
                     break;
-                } else {
+                }
+                else {
                     if (!isset($rules['required']['message'])) {
-                        $message = 'There was a problem validating REQUIRED for field ' . strtoupper(
-                                $field
-                            );
-                    } else {
+                        $message = 'There was a problem validating REQUIRED for field ' . strtoupper($field);
+                    }
+                    else {
                         $message = $rules['required']['message'];
                     }
                     $this->errors[] = $message;
@@ -678,21 +690,27 @@ class Model extends Object
         if (isset($this->belongsTo)) {
             if (is_array($this->belongsTo)) {
 
-            } else if (is_string($this->belongsTo)) {
-                $ownerModel = $this->getModelName($this->belongsTo);
-                try {
-                    $ownerId = $this->{$this->getForeignIdField(
-                        $this->belongsTo
-                    )};
-                    $owner = call_user_func(
-                        array($ownerModel, 'findById'),
-                        $ownerId
-                    );
-                    if (!($owner instanceof $ownerModel)) {
+            }
+            else {
+                if (is_string($this->belongsTo)) {
+                    $ownerModel = $this->getModelName($this->belongsTo);
+                    try {
+                        $ownerId = $this->{$this->getForeignIdField(
+                                $this->belongsTo
+                            )};
+                        $owner = call_user_func(
+                            array(
+                                $ownerModel,
+                                'findById'
+                            ),
+                            $ownerId
+                        );
+                        if (!($owner instanceof $ownerModel)) {
+                            return false;
+                        }
+                    } catch (Exception $e) {
                         return false;
                     }
-                } catch (Exception $e) {
-                    return false;
                 }
             }
         }
