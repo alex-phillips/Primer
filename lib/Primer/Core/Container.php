@@ -68,7 +68,7 @@ abstract class Container extends Object implements ArrayAccess
         $this->_aliases[$alias] = $binding;
     }
 
-    public function make($key, $parameters = array())
+    public function make($key, $dependencies = array())
     {
         if (array_key_exists($key, $this->_aliases)) {
             $key = $this->_aliases[$key];
@@ -76,31 +76,48 @@ abstract class Container extends Object implements ArrayAccess
         }
 
         if (!array_key_exists($key, $this->_bindings)) {
-            $parameters = array();
+            $dependencies = array();
 
-            $class = new \ReflectionClass($key);
-            $method = $class->getMethod('__construct');
-            $classParams = $method->getParameters();
+            $reflector = new \ReflectionClass($key);
+            $constructor = $reflector->getConstructor();
+
+            if (is_null($constructor)) {
+                return new $key();
+            }
+
+            $classParams = $constructor->getParameters();
 
             foreach ($classParams as $param) {
-                try {
-                    $parameters[] = $this->make($param->getClass()->getName());
-                } catch (\ReflectionException $e) {
-                    echo "Class $key does not exist";
-                    return null;
+                $dependency = $param->getClass();
+
+                if (!is_null($dependency)) {
+                    if ($param->isDefaultValueAvailable()) {
+                        $dependencies[] = $param->getDefaultValue();
+                    }
+                    else {
+                        try {
+                            $dependencies[] = $this->make($param->getClass()->name);
+                        }
+                        catch (\Exception $e) {
+                            if ($param->isOptional()) {
+                                $dependencies[] = $param->getDefaultValue();
+                            }
+                            else {
+                                throw $e;
+                            }
+                        }
+                    }
                 }
             }
 
-            $newInstance = new \ReflectionClass($key);
-            $newInstance = $newInstance->newInstanceArgs($parameters);
-            return $newInstance;
+            return $reflector->newInstanceArgs($dependencies);
         }
 
         if (is_callable($this->_bindings[$key])) {
             return call_user_func(
                 $this->_bindings[$key],
                 $this,
-                $parameters
+                $dependencies
             );
         }
 
