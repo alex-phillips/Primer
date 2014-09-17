@@ -17,14 +17,10 @@ use Primer\View\Form;
 use Primer\View\View;
 use Primer\Utility\Paginator;
 
-error_reporting(E_ALL);
-ini_set("display_errors", 1);
-
 class Application extends Container
 {
     private $_router;
     private $_controller = null;
-    private $_view = null;
 
     /*
      * Contains values that may be accessible throughout the framework
@@ -55,42 +51,13 @@ class Application extends Container
 
     private function _bootstrap()
     {
-        $this->_registerAliases();
-        $this->_registerProxies();
-
         $this->instance('Primer\\Core\\Application', $this);
         $this->instance('config', new ParameterContainer());
-        $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
-        $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
-        $this->singleton('Primer\\Session\\Session');
-        $this->singleton('Primer\\Security\\Auth', function($app){
-                return new Auth($app->make('Primer\\Session\\Session'));
-            });
-        $this->singleton('Primer\\Routing\\Router');
-        $this->singleton('Primer\\Http\\Request');
-        $this->singleton(
-            'Primer\\Datasource\\Database',
-            function () {
-                try {
-                    return new \Primer\Datasource\Database($this['config']['database']);
-                } catch (PDOException $e) {
-                    die('Database connection could not be established.');
-                }
-            }
-        );
-        $this->singleton(
-            'Primer\\View\\Form',
-            function ($app) {
-                return new Form(
-                    $app->make('Primer\\Routing\\Router'),
-                    $app->make('Primer\\Http\\Request')
-                );
-            }
-        );
 
-        $this->_session = $this->make('Primer\\Session\\Session');
-        $this->_auth = $this->make('Primer\\Security\\Auth');
-        $this->_router = $this->make('Primer\\Routing\\Router');
+        $this->_readConfigs();
+        $this->_registerAliases();
+        $this->_registerProxies();
+        $this->_registerSingletons();
 
         $this->bind(
             'Primer\\Mail\\Mail',
@@ -98,6 +65,53 @@ class Application extends Container
                 return new Mail($this['config']['email']);
             }
         );
+
+        $this->_session = $this->make('Primer\\Session\\Session');
+        $this->_auth = $this->make('Primer\\Security\\Auth');
+        $this->_router = $this->make('Primer\\Routing\\Router');
+    }
+
+    private function _readConfigs()
+    {
+        $domain = str_replace('www.', '', $_SERVER['SERVER_NAME']);
+        if (file_exists(APP_ROOT . '/Config/' . $domain . '.php')) {
+            $this['config']['app'] = require_once(APP_ROOT . '/Config/' . $domain . '.php');
+        }
+        else {
+            $this['config']['app'] = require_once(APP_ROOT . '/Config/config.php');
+        }
+
+        $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
+        $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
+
+        if ($this['config']['app.environment'] == 'test' || $this['config']['app.environment'] == 'testing') {
+            error_reporting(E_ALL);
+            ini_set("display_errors", 1);
+        }
+        else {
+            error_reporting(0);
+            ini_set("display_errors", 0);
+        }
+    }
+
+    private function _registerSingletons()
+    {
+        $this->singleton('Primer\\Session\\Session');
+        $this->singleton('Primer\\Security\\Auth');
+        $this->singleton('Primer\\Routing\\Router');
+        $this->singleton('Primer\\Http\\Request');
+        $this->singleton(
+            'Primer\\Datasource\\Database',
+            function () {
+                try {
+                    return new \Primer\Datasource\Database($this['config']['database'][$this['config']->get('app.environment')]);
+                } catch (PDOException $e) {
+                    die('Database connection could not be established.');
+                }
+            }
+        );
+        $this->singleton('Primer\\View\\Form');
+        $this->singleton('Primer\\View\\View');
     }
 
     /**
@@ -158,32 +172,43 @@ class Application extends Container
     {
         require_once(APP_ROOT . '/Config/routes.php');
 
-        $this->_router->dispatch();
+        $dispatch = $this->_router->dispatch();
 
-        $this->setValue('conroller', $this->_router->getController());
-        $this->setValue('action', $this->_router->getAction());
+        if (is_array($dispatch)) {
+            $this->setValue('conroller', $this->_router->getController());
+            $this->setValue('action', $this->_router->getAction());
 
-        Model::init($this->make('Primer\\Datasource\\Database'));
-        $this->_view = new View($this->_session);
-        $this->instance('Primer\\View\\View', $this->_view);
+            Model::init($this->make('Primer\\Datasource\\Database'));
 
-        /*
-         * Check if chosen controller exists, otherwise, 404
-         *
-         * We don't want to call Primer::getControllerName here because we don't
-         * want /pages/index and /page/index to both work. That function will
-         * properly pluralize and format regardless if that controller exists.
-         */
-        if (class_exists($this->getControllerName($this->_router->getController()))) {
-            $controllerName = $this->getControllerName(
-                $this->_router->getController()
-            );
-            $this->_controller = new $controllerName();
-            $this->_view->paginator = new Paginator($this->_controller->paginationConfig);
-            $this->_callControllerMethod();
+            /*
+             * Check if chosen controller exists, otherwise, 404
+             *
+             * We don't want to call Primer::getControllerName here because we don't
+             * want /pages/index and /page/index to both work. That function will
+             * properly pluralize and format regardless if that controller exists.
+             */
+            if (class_exists($this->getControllerName($this->_router->getController()))) {
+                $controllerName = $this->getControllerName(
+                    $this->_router->getController()
+                );
+                $this->_controller = new $controllerName();
+                $this['view']->paginator = new Paginator($this->_controller->paginationConfig);
+                $this->_callControllerMethod();
+
+                $body = $this['view']->render(
+                    $this->_router->getController() . DS . $this->_router->getAction()
+                );
+
+                echo $body;
+            }
+            else {
+                $this->abort();
+            }
         }
         else {
-            $this->abort();
+            if (is_callable($dispatch)) {
+                echo call_user_func($dispatch);
+            }
         }
     }
 
@@ -260,17 +285,14 @@ class Application extends Container
             array($this->_controller, 'afterFilter'),
             $this->_router->getArgs()
         );
-        $this->_view->render(
-            $this->_router->getController() . DS . $this->_router->getAction()
-        );
     }
 
     public function abort($code = 404)
     {
         if ($code == 404) {
             header("HTTP/1.0 404 Not Found");
-            $this->_view->set('title', 'Page Not Found');
-            $this->_view->render('error/404');
+            $this['view']->set('title', 'Page Not Found');
+            $this['view']->render('error/404');
         }
     }
 
