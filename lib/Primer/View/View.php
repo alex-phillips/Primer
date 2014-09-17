@@ -113,29 +113,37 @@ class View extends Object
      * and using the passed in file to render the contents of the page.
      *
      * @param $view
+     *
+     * @return mixed|string
      */
     public function render($view)
     {
+        // @TODO: modify code to use a proper reponse class
+        ob_clean();
+        ob_start();
         $view = str_replace('.', '/', $view);
         $this->filename = 'Views/' . $view . '.php';
 
+        $response = '';
         if (isset($this->request->format)) {
             switch ($this->request->format) {
                 case 'json':
                     echo app()->getValue('rendering_object')->JSONSerialize();
-                    break;
                 default:
                     Router::error404();
                     break;
             }
-            exit;
         }
         else {
             require_once("Views/templates/$this->template.php");
         }
 
         $this->Session->delete('messages');
-        exit(1);
+
+        $response = ob_get_contents();
+        ob_end_clean();
+
+        return $response;
     }
 
     /**
