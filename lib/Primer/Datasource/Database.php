@@ -6,8 +6,6 @@ class Database extends \PDO
 {
     public function __construct($config)
     {
-        $config = $config[ENVIRONMENT];
-
         if (strcasecmp($config['db_type'], 'mysql') === 0) {
             // set the (optional) options of the PDO connection. in this case, we set the fetch mode to
             // "objects", which means all results will be objects, like this: $result->user_name !
