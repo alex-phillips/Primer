@@ -56,7 +56,7 @@ abstract class Container extends Object implements ArrayAccess
         }
 
         if (!is_callable($o)) {
-            $this->_bindings[$key] = new $key();
+            $this->_bindings[$key] = $this->make($key);
         }
         else {
             $this->_bindings[$key] = call_user_func($o, $this);
