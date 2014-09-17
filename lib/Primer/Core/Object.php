@@ -13,7 +13,7 @@ use Primer\Utility\Inflector;
  * This is the object that every object in Primer is extended from. It allows
  * all classes to share functions across the entire application.
  */
-class Object
+abstract class Object
 {
     public function getControllerName($string)
     {
