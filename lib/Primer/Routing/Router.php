@@ -52,7 +52,10 @@ class Router extends Object
                 if (sizeof($this->_url) > 2) {
                     $this->_args = array_slice($this->_url, 2);
                 }
-                return;
+
+                $route['args'] = $this->_args;
+
+                return $route;
             }
 
             $tmp = array();
@@ -63,12 +66,14 @@ class Router extends Object
                 }
                 if (preg_match('#:.*#', $path[0], $matches)) {
                     $tmp[str_replace(':', '', $matches[0])] = $this->_url[0];
-                } else {
+                }
+                else {
                     if ($path[0] !== $this->_url[0]) {
                         continue;
                     }
                 }
-            } else {
+            }
+            else {
                 if (isset($this->_url[0])) {
                     continue;
                 }
@@ -79,44 +84,48 @@ class Router extends Object
                 }
                 if (preg_match('#:.*#', $path[1], $matches)) {
                     $tmp[str_replace(':', '', $matches[0])] = $this->_url[1];
-                } else {
+                }
+                else {
                     if ($path[1] !== $this->_url[1]) {
                         continue;
                     }
                 }
-            } else {
+            }
+            else {
                 if (isset($this->_url[1])) {
                     continue;
                 }
             }
 
-            $args = array();
-            foreach (array_keys($route) as $key) {
-                if (is_int($key)) {
-                    if (array_key_exists($route[$key], $tmp)) {
-                        $args[] = $tmp[$route[$key]];
-                    } else {
-                        $args[] = $route[$key];
+            if (is_array($route)) {
+                $args = array();
+                foreach (array_keys($route) as $key) {
+                    if (is_int($key)) {
+                        if (array_key_exists($route[$key], $tmp)) {
+                            $args[] = $tmp[$route[$key]];
+                        }
+                        else {
+                            $args[] = $route[$key];
+                        }
                     }
                 }
+
+                $this->_controller = $route['controller'];
+                $this->_action = $route['action'];
+                $this->_args = $args;
+                $route['args'] = $args;
             }
 
-            $this->_controller = $route['controller'];
-            $this->_action = $route['action'];
-            $this->_args = $args;
-            return;
+            return $route;
         }
 
         if ($this->_url) {
             $this->_controller = $this->_url[0];
-            if (sizeof($this->_url) === 1 || preg_match(
-                    '#\?.+#',
-                    $this->_url[1]
-                ) || preg_match('#.+:.+#', $this->_url[1])
-            ) {
+            if (sizeof($this->_url) === 1 || preg_match('#\?.+#', $this->_url[1]) || preg_match('#.+:.+#', $this->_url[1])) {
                 $this->_action = 'index';
                 $args = array_slice($this->_url, 1);
-            } else {
+            }
+            else {
                 $this->_action = $this->_url[1];
                 $args = array_slice($this->_url, 2);
             }
@@ -129,12 +138,18 @@ class Router extends Object
                 if (preg_match('#.+:.+#', $arg)) {
                     // @TODO: why isn't this setting any significant varialbes? Check this out.
                     list($key, $value) = explode(':', $arg);
-                } else {
+                }
+                else {
                     $this->_args[] = $arg;
                 }
             }
         }
-        return;
+
+        return array(
+            'controller' => $this->_controller,
+            'action'     => $this->_action,
+            'args'       => $this->_args,
+        );
     }
 
     public function route($path, $params)
