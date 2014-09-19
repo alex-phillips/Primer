@@ -219,9 +219,8 @@ class Application extends Container
             }
         }
 
-        $this->_response = new Response(function(){
-
-        });
+        $this->_response = new Response($body);
+        $this->_response->send();
     }
 
     /**

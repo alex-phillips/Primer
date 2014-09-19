@@ -8,8 +8,6 @@
 
 namespace Primer\Http;
 
-use Whoops\Exception\ErrorException;
-
 class Response
 {
     protected $_statusCodes = array(
@@ -381,17 +379,41 @@ class Response
      */
     public function __construct($body = '', $statusCode = 200, $headers = array())
     {
-        $this->_body = $this->setBody($body);
+        $this->setContent($body);
         $this->_status = $statusCode;
         $this->_headers = $headers;
     }
 
-    private function setBody($body)
+    private function setContent($body)
     {
         if (!is_string($body)) {
-            throw new ErrorException('Body for response content must be a string or implement __toString() function');
+            throw new \ErrorException('Body for response content must be a string or implement __toString() function');
         }
 
         $this->_body = (string)$body;
+    }
+
+    public function send()
+    {
+        $this->sendHeaders();
+        $this->sendBody();
+    }
+
+    private function sendHeaders()
+    {
+        if (headers_sent()) {
+            return false;
+        }
+
+        header(sprintf('%s %s %s', $this->_protocol, $this->_status, $this->_statusCodes[$this->_status]), true, $this->_status);
+
+        return true;
+    }
+
+    private function sendBody()
+    {
+        echo $this->_body;
+
+        return true;
     }
 }
