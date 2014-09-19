@@ -6,6 +6,7 @@
 namespace Primer\Core;
 
 use ArrayAccess;
+use Primer\Http\Response;
 use Primer\Security\Auth;
 use Primer\Session\Session;
 use Primer\Mail\Mail;
@@ -16,6 +17,8 @@ use Primer\Utility\ParameterContainer;
 use Primer\View\Form;
 use Primer\View\View;
 use Primer\Utility\Paginator;
+use Whoops\Handler\PrettyPageHandler;
+use Whoops\Run;
 
 class Application extends Container
 {
@@ -69,6 +72,10 @@ class Application extends Container
         $this->_session = $this->make('Primer\\Session\\Session');
         $this->_auth = $this->make('Primer\\Security\\Auth');
         $this->_router = $this->make('Primer\\Routing\\Router');
+
+        $whoops = new Run();
+        $whoops->pushHandler(new PrettyPageHandler());
+        $whoops->register();
     }
 
     private function _readConfigs()
@@ -133,6 +140,9 @@ class Application extends Container
             'security'  => 'Primer\\Utility\\Security',
             'form'      => 'Primer\\View\\Form',
 
+            /*
+             * Third-party aliasing
+             */
             'Inflector' => 'Primer\\Utility\\Inflector',
             'Carbon'   => 'Carbon\\Carbon',
         );
@@ -198,8 +208,6 @@ class Application extends Container
                 $body = $this['view']->render(
                     $this->_router->getController() . DS . $this->_router->getAction()
                 );
-
-                echo $body;
             }
             else {
                 $this->abort();
@@ -207,9 +215,13 @@ class Application extends Container
         }
         else {
             if (is_callable($dispatch)) {
-                echo call_user_func($dispatch);
+                $body = call_user_func($dispatch);
             }
         }
+
+        $this->_response = new Response(function(){
+
+        });
     }
 
     /**
@@ -308,14 +320,18 @@ class Application extends Container
 
         // Load controllers
         if (preg_match('#.+Controller$#', $class)) {
-            require_once($this->getControllersPath() . DS . $class . '.php');
+            if (file_exists($this->getControllersPath() . $class . '.php')) {
+                require_once($this->getControllersPath() . $class . '.php');
+            }
             return;
         }
 
         // Attempt to load in Model files
         $dir = scandir($this->getModelsPath());
         if (in_array($class . '.php', $dir)) {
-            require_once($this->getModelsPath() . $class . '.php');
+            if (file_exists($this->getModelsPath() . $class . '.php')) {
+                require_once($this->getModelsPath() . $class . '.php');
+            }
             return;
         }
     }
