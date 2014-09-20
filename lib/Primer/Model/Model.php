@@ -3,7 +3,6 @@
 namespace Primer\Model;
 
 use Carbon\Carbon;
-use PDOException;
 use Primer\Core\Object;
 use Primer\Utility\Inflector;
 use Primer\Datasource\Database;
@@ -15,7 +14,7 @@ use Primer\Datasource\Database;
  * Class in which all models are inherited from. Contains all 'generic' database
  * interactions and validation for models.
  */
-class Model extends Object
+abstract class Model extends Object
 {
     /////////////////////////////////////////////////
     // PROPERTIES, PUBLIC
