@@ -34,6 +34,10 @@ class Cookie extends ParameterContainer
             }
         }
 
+        if ($domain === null) {
+            $domain = apache_request_headers()['Host'];
+        }
+
         $this->_name = $name;
         $this->_value = $value;
         $this->_expire = $expire;
