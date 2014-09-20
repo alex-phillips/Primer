@@ -184,6 +184,7 @@ class Application extends Container
 
         $dispatch = $this->_router->dispatch();
 
+        $body = null;
         if (is_array($dispatch)) {
             $this->setValue('conroller', $this->_router->getController());
             $this->setValue('action', $this->_router->getAction());
@@ -219,8 +220,14 @@ class Application extends Container
             }
         }
 
-        $this->_response = new Response($body);
-        $this->_response->send();
+        if (!$body) {
+            $this->abort();
+        }
+        else {
+            Response::create($body)->send();
+        }
+
+        exit(1);
     }
 
     /**
@@ -300,11 +307,9 @@ class Application extends Container
 
     public function abort($code = 404)
     {
-        if ($code == 404) {
-            header("HTTP/1.0 404 Not Found");
-            $this['view']->set('title', 'Page Not Found');
-            $this['view']->render('error/404');
-        }
+        $this['view']->set('title', 'Page Not Found');
+        Response::create($this['view']->render('error/404'), $code)->send();
+        exit(1);
     }
 
     public function loadClass($class)
