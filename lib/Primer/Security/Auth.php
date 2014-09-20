@@ -7,6 +7,8 @@
 namespace Primer\Security;
 
 use Primer\Core\Object;
+use Primer\Http\Cookie;
+use Primer\Http\Response;
 use Primer\Session\Session;
 
 class Auth extends Object
@@ -20,6 +22,8 @@ class Auth extends Object
      */
     private $_session;
 
+    private $_response;
+
     /*
      * Actions permitted in the current controller with having to authenticate
      */
@@ -30,9 +34,10 @@ class Auth extends Object
     /**
      * Initialize Component
      */
-    public function __construct(Session $session)
+    public function __construct(Session $session, Response $response)
     {
         $this->_session = $session;
+        $this->_response = $response;
         $this->loginWithCookie();
     }
 
@@ -68,12 +73,14 @@ class Auth extends Object
                 $this->login($user);
                 return true;
             } else {
-                setcookie(
-                    'rememberme',
-                    false,
-                    time() - (3600 * 3650),
-                    '/',
-                    DOMAIN
+                $this->_response->setCookie(
+                    new Cookie(
+                        'rememberme',
+                        false,
+                        time() - (3600 * 3650),
+                        '/',
+                        DOMAIN
+                    )
                 );
                 $this->logout();
             }
@@ -93,7 +100,7 @@ class Auth extends Object
 
     public function logout()
     {
-        setcookie('rememberme', false, time() - (3600 * 3650), '/', DOMAIN);
+        $this->_response->setCookie(new Cookie('rememberme', false, time() - (3600 * 3650), '/', DOMAIN));
         $this->_session->delete('Auth');
     }
 
