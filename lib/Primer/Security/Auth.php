@@ -66,7 +66,7 @@ class Auth extends Object
             }
 
             // @TODO: need to find a better way to tie this in without using global User
-            $user = new \User();
+            $user = \User::create();
             $user = $user->findById($user_id);
 
             if ($user->rememberme_token == $token) {
