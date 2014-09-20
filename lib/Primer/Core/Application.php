@@ -204,6 +204,7 @@ class Application extends Container
                 );
                 $this->_controller = new $controllerName();
                 $this['view']->paginator = new Paginator($this->_controller->paginationConfig);
+                $this['view']->paginationConfig = $this->_controller->paginationConfig;
                 $this->_callControllerMethod();
 
                 $body = $this['view']->render(
