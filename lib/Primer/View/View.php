@@ -21,6 +21,8 @@ class View extends Object
      */
     private static $_jsFiles = array();
 
+    public $paginationConfig = array();
+
     /*
      * This variable holds the filename of the view to be rendered inside the
      * template
@@ -156,8 +158,8 @@ class View extends Object
         $markup = '';
         if ($this->Session->read('flash_messages')) {
             foreach ($this->Session->read(
-                         'flash_messages'
-                     ) as $error => $class) {
+                'flash_messages'
+            ) as $error => $class) {
                 $markup .= "<div class='system-message $class'>" . $error . "</div>";
             }
         }
@@ -188,13 +190,23 @@ class View extends Object
     {
         $this->paginator->set_total(
             call_user_func(
-                array($modelName, 'findCount'),
+                array(
+                    $modelName,
+                    'findCount'
+                ),
                 array('conditions' => $conditions)
             )
         );
         return call_user_func(
-            array($modelName, 'find'),
-            array('conditions' => $conditions, 'limit' => $this->paginator->get_limit())
+            array(
+                $modelName,
+                'find'
+            ),
+            array(
+                'conditions' => $conditions,
+                'limit'      => $this->paginator->get_limit(),
+                'order'      => $this->paginationConfig['order'],
+            )
         );
     }
 
