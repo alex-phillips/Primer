@@ -76,7 +76,7 @@ class Model extends Object
      * creates a PDO database connection when a model is constructed
      * We are using the try/catch error/exception handling here
      */
-    public function __construct($params = array())
+    protected function __construct($params = array())
     {
         $this->_idField = static::getIdField();
         $this->_tableName = static::getTableName();
@@ -86,6 +86,11 @@ class Model extends Object
         if (!empty($params)) {
             $this->set($params);
         }
+    }
+
+    public static function create($params = array())
+    {
+        return new static($params);
     }
 
     public function __set($key, $value)

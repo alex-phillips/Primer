@@ -48,7 +48,7 @@ class Controller
     public function loadModel()
     {
         if (class_exists($this->_modelName)) {
-            $this->{$this->_modelName} = new $this->_modelName();
+            $this->{$this->_modelName} = call_user_func(array($this->_modelName, 'create'));
         }
     }
 

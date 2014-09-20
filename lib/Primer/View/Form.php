@@ -33,7 +33,7 @@ class Form extends Object
     public function create($object, $method = 'post', $params = null)
     {
         $modelName = $this->getModelName($object);
-        $this->_model = new $modelName;
+        $this->_model = call_user_func(array($modelName, 'create'));
         $class = "";
 
         // TODO: there's gotta be a better way to do this...
