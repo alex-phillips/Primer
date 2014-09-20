@@ -24,6 +24,7 @@ use Primer\Core\Object;
 class Security extends Object
 {
     private $_session;
+
     private $_request;
 
     /*
@@ -49,7 +50,8 @@ class Security extends Object
      */
     private $_hashCostFactor = 10;
 
-    public function __construct(Session $session, Request $request) {
+    public function __construct(Session $session, Request $request)
+    {
         $this->_session = $session;
         $this->_request = $request;
     }
@@ -174,23 +176,18 @@ class Security extends Object
         // a little bit simple, but it will work for a basic captcha system
         // TODO: write stuff like that simpler with ternary operators
         if ($check === null) {
-            if (strtolower(
-                    $this->_request->post()->get('captcha')
-                ) == strtolower(
-                    $this->_session->read('captcha')
-                )
-            ) {
+            if (strtolower($this->_request->post()->get('captcha')) == strtolower($this->_session->read('captcha'))) {
                 return true;
-            } else {
+            }
+            else {
                 return false;
             }
-        } else {
-            if (strtolower($check) == strtolower(
-                    $this->_session->read('captcha')
-                )
-            ) {
+        }
+        else {
+            if (strtolower($check) == strtolower($this->_session->read('captcha'))) {
                 return true;
-            } else {
+            }
+            else {
                 return false;
             }
         }
