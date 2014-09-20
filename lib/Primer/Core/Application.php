@@ -107,6 +107,7 @@ class Application extends Container
         $this->singleton('Primer\\Security\\Auth');
         $this->singleton('Primer\\Routing\\Router');
         $this->singleton('Primer\\Http\\Request');
+        $this->singleton('Primer\\Http\\Response');
         $this->singleton(
             'Primer\\Datasource\\Database',
             function () {
@@ -139,6 +140,8 @@ class Application extends Container
             'mail'      => 'Primer\\Mail\\Mail',
             'security'  => 'Primer\\Utility\\Security',
             'form'      => 'Primer\\View\\Form',
+            'response'  => 'Primer\\Http\\Response',
+            'cookie'    => 'Primer\\Http\\Cookie',
 
             /*
              * Third-party aliasing
@@ -171,6 +174,8 @@ class Application extends Container
             'Mail'     => 'Primer\\Proxy\\Mail',
             'Security' => 'Primer\\Proxy\\Security',
             'Form'     => 'Primer\\Proxy\\Form',
+            'Response' => 'Primer\\Proxy\\Response',
+            'Cookie'   => 'Primer\\Proxy\\Cookie',
         );
 
         foreach ($aliases as $alias => $class) {
