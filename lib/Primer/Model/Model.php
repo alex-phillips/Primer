@@ -2,6 +2,7 @@
 
 namespace Primer\Model;
 
+use Carbon\Carbon;
 use PDOException;
 use Primer\Core\Object;
 use Primer\Utility\Inflector;
@@ -84,6 +85,32 @@ class Model extends Object
         static::getSchema();
         if (!empty($params)) {
             $this->set($params);
+        }
+    }
+
+    public function __set($key, $value)
+    {
+        /*
+         * Make sure that created and modified properties are Carbon objects.
+         */
+        if ($key === 'created' || $key === 'modified') {
+            if ($value === null) {
+                $this->$key = null;
+            }
+            else if ($value instanceof Carbon) {
+                $this->$key = $value;
+            }
+            else {
+                if (is_numeric($value)) {
+                    $this->$key = Carbon::createFromTimestamp($value);
+                }
+                else {
+                    $this->$key = Carbon::createFromTimestamp(strtotime($value));
+                }
+            }
+        }
+        else {
+            $this->$key = $value;
         }
     }
 
@@ -175,7 +202,10 @@ class Model extends Object
     {
         $params = (array)$params;
         foreach (static::getSchema() as $variable => $info) {
-            // Instantiate variable if a value was given for it
+            /*
+             * Instantiate variable if a value was given for it, otherwise, set
+             * the variable to its default value via the schema.
+             */
             if (isset($params[$variable])) {
                 $this->$variable = $params[$variable];
             }
@@ -316,7 +346,7 @@ class Model extends Object
         $className = static::getClassName();
         $tableName = static::getTableName();
         self::$_bindings = array();
-        $return_objects = true;
+        $returnObjects = true;
 
         $where = '';
         if (isset($params['conditions'])) {
@@ -338,7 +368,7 @@ class Model extends Object
         if (isset($params['count']) && $params['count'] === true) {
             if ($fields === '*' || is_string($params['fields'])) {
                 $fields = 'COUNT(' . $fields . ')';
-                $return_objects = false;
+                $returnObjects = false;
             }
         }
 
@@ -364,7 +394,14 @@ class Model extends Object
 
         $results = array();
         foreach ($sth->fetchAll() as $result) {
-            if ($return_objects) {
+            if ($returnObjects) {
+                if ($result->created) {
+                    $result->created = Carbon::createFromTimestampUTC(strtotime($result->created))->setTimezone(date_default_timezone_get());
+                }
+                if ($result->modified) {
+                    $result->modified = Carbon::createFromTimestampUTC(strtotime($result->modified))->setTimezone(date_default_timezone_get());
+                }
+                $result->created = Carbon::createFromTimestampUTC(strtotime($result->created))->setTimezone(date_default_timezone_get());
                 $results[] = new $className($result);
             }
             else {
@@ -502,7 +539,9 @@ class Model extends Object
 
         foreach ($this as $col => $val) {
             if ($col == 'created' || $col == 'modified') {
-                continue;
+                if ($this->$col !== null) {
+                    $this->$col = $this->$col->setTimezone('UTC')->toDateTimeString();
+                }
             }
             else {
                 if (array_key_exists($col, static::getSchema())) {
