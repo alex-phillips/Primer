@@ -296,11 +296,11 @@ class Response
     );
 
     /**
-     * Protocol header to send to the client
+     * HTTP version to send to the client
      *
      * @var string
      */
-    protected $_protocol = 'HTTP/1.1';
+    protected $_version = '1.0';
 
     /**
      * Status code to send to the client
@@ -322,28 +322,14 @@ class Response
      *
      * @var array
      */
-    protected $_headers = array();
+    protected $_headers;
 
     /**
      * Buffer string for response message
      *
      * @var string
      */
-    protected $_body = null;
-
-    /**
-     * File object for file to be read out as response
-     *
-     * @var File
-     */
-    protected $_file = null;
-
-    /**
-     * File range. Used for requesting ranges of files.
-     *
-     * @var array
-     */
-    protected $_fileRange = null;
+    protected $_content = null;
 
     /**
      * The charset the response body is encoded with
@@ -377,26 +363,36 @@ class Response
      *    - type: a complete mime-type string or an extension mapped in this class
      *    - charset: the charset for the response body
      */
-    public function __construct($body = '', $statusCode = 200, $headers = array())
+    public function __construct($content = '', $status = 200, $headers = array())
     {
-        $this->setContent($body);
-        $this->_status = $statusCode;
-        $this->_headers = $headers;
+        $this->setContent($content);
+        $this->_status = $status;
+        $this->_headers = new HeaderContainer($headers);
     }
 
-    private function setContent($body)
+    public static function create($content = '', $status = 200, $headers = array())
     {
-        if (!is_string($body)) {
+        return new static($content, $status, $headers);
+    }
+
+    private function setContent($content)
+    {
+        if (!is_string($content)) {
             throw new \ErrorException('Body for response content must be a string or implement __toString() function');
         }
 
-        $this->_body = (string)$body;
+        $this->_content = (string)$content;
     }
 
     public function send()
     {
         $this->sendHeaders();
-        $this->sendBody();
+        $this->sendContent();
+    }
+
+    public function setCookie(Cookie $cookie)
+    {
+        $this->_cookies[] = $cookie;
     }
 
     private function sendHeaders()
@@ -405,14 +401,19 @@ class Response
             return false;
         }
 
-        header(sprintf('%s %s %s', $this->_protocol, $this->_status, $this->_statusCodes[$this->_status]), true, $this->_status);
+        header(sprintf('HTTP/%s %s %s', $this->_version, $this->_status, $this->_statusCodes[$this->_status]), true, $this->_status);
+
+        // cookies
+        foreach ($this->_headers->getCookies() as $cookie) {
+            setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
+        }
 
         return true;
     }
 
-    private function sendBody()
+    private function sendContent()
     {
-        echo $this->_body;
+        echo $this->_content;
 
         return true;
     }
