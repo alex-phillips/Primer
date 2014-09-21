@@ -8,7 +8,9 @@
 
 namespace Primer\Http;
 
-class Response
+use Primer\Core\Object;
+
+class Response extends Object
 {
     protected $_statusCodes = array(
         100 => 'Continue',
@@ -347,13 +349,6 @@ class Response
     protected $_cacheDirectives = array();
 
     /**
-     * Holds cookies to be sent to the client
-     *
-     * @var array
-     */
-    protected $_cookies = array();
-
-    /**
      * Constructor
      *
      * @param array $options list of parameters to setup the response. Possible values are:
@@ -365,14 +360,16 @@ class Response
      */
     public function __construct($content = '', $status = 200, $headers = array())
     {
+        $this->set($content, $status, $headers);
+    }
+
+    public function set($content = '', $status = 200, $headers = array())
+    {
         $this->setContent($content);
         $this->_status = $status;
         $this->_headers = new HeaderContainer($headers);
-    }
 
-    public static function create($content = '', $status = 200, $headers = array())
-    {
-        return new static($content, $status, $headers);
+        return $this;
     }
 
     private function setContent($content)
@@ -392,7 +389,7 @@ class Response
 
     public function setCookie(Cookie $cookie)
     {
-        $this->_cookies[] = $cookie;
+        $this->_headers->setCookie($cookie);
     }
 
     private function sendHeaders()
@@ -405,7 +402,12 @@ class Response
 
         // cookies
         foreach ($this->_headers->getCookies() as $cookie) {
-            setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpiresTime(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
+            /* @var $cookie Cookie */
+            setcookie($cookie->getName(), $cookie->getValue(), $cookie->getExpire(), $cookie->getPath(), $cookie->getDomain(), $cookie->isSecure(), $cookie->isHttpOnly());
+        }
+
+        foreach ($this->_headers as $name => $value) {
+            header("$name: $value", false, $this->_status);
         }
 
         return true;
@@ -416,5 +418,23 @@ class Response
         echo $this->_content;
 
         return true;
+    }
+
+    /**
+     * Control browser redirects
+     *
+     * @param $location
+     */
+    public function redirect($location)
+    {
+        if ($location === 'referrer') {
+            $location = isset($_SERVER['HTTP_REFERRER']) ? $_SERVER['HTTP_REFERRER'] : '/';
+        }
+
+        $this->_status = 307;
+        $this->_headers['Location'] = $location;
+
+        $this->sendHeaders();
+        exit(1);
     }
 }
