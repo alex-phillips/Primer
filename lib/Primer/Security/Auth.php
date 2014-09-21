@@ -74,7 +74,7 @@ class Auth extends Object
                 return true;
             } else {
                 $this->_response->setCookie(
-                    new Cookie(
+                    Cookie::create()->make(
                         'rememberme',
                         false,
                         time() - (3600 * 3650),
@@ -99,7 +99,7 @@ class Auth extends Object
 
     public function logout()
     {
-        $this->_response->setCookie(new Cookie('rememberme', false, time() - (3600 * 3650), '/'));
+        $this->_response->setCookie(Cookie::create()->make('rememberme', false, time() - (3600 * 3650), '/'));
         $this->_session->delete('Auth');
     }
 
