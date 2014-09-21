@@ -7,12 +7,18 @@
 
 namespace Primer\Utility;
 
+use ArrayAccess;
+use IteratorAggregate;
+use Serializable;
+use JsonSerializable;
+use Countable;
 use Primer\Core\Object;
 
 /**
  * Class ParameterContainer
  */
-class ParameterContainer extends Object implements \ArrayAccess
+class ParameterContainer extends Object implements ArrayAccess, IteratorAggregate, Serializable, JsonSerializable, Countable
+
 {
     /*
      * Parameters array that contains all accessible values
@@ -109,6 +115,11 @@ class ParameterContainer extends Object implements \ArrayAccess
         $this->delete($key);
     }
 
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->_parameters);
+    }
+
     /**
      * Unset a value in the class's parameters given a '.'
      * delimited array path.
@@ -128,5 +139,25 @@ class ParameterContainer extends Object implements \ArrayAccess
         }
 
         unset($key[$p]);
+    }
+
+    public function serialize()
+    {
+        return serialize($this->_parameters);
+    }
+
+    public function unserialize($data)
+    {
+        $this->_parameters = unserialize($data);
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->_parameters;
+    }
+
+    public function count()
+    {
+        return count($this->_parameters);
     }
 }
