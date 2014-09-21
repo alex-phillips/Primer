@@ -103,11 +103,11 @@ class Application extends Container
 
     private function _registerSingletons()
     {
+        $this->singleton('Primer\\Http\\Response');
         $this->singleton('Primer\\Session\\Session');
         $this->singleton('Primer\\Security\\Auth');
         $this->singleton('Primer\\Routing\\Router');
         $this->singleton('Primer\\Http\\Request');
-        $this->singleton('Primer\\Http\\Response');
         $this->singleton(
             'Primer\\Datasource\\Database',
             function () {
@@ -230,7 +230,7 @@ class Application extends Container
             $this->abort();
         }
         else {
-            Response::create($body)->send();
+            $this['response']->set($body)->send();
         }
 
         exit(1);
@@ -314,7 +314,7 @@ class Application extends Container
     public function abort($code = 404)
     {
         $this['view']->set('title', 'Page Not Found');
-        Response::create($this['view']->render('error/404'), $code)->send();
+        $this['response']->set($this['view']->render('error/404'), $code)->send();
         exit(1);
     }
 
