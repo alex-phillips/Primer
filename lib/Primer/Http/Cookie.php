@@ -20,7 +20,12 @@ class Cookie extends ParameterContainer
     private $_secure;
     private $_httpOnly;
 
-    public function __construct($name, $value = null, $expire = null, $path = null, $domain = null, $secure = null, $httpOnly = null)
+    public static function create()
+    {
+        return new static();
+    }
+
+    public function make($name, $value = null, $expire = null, $path = null, $domain = null, $secure = null, $httpOnly = null)
     {
         // convert expiration time to a Unix timestamp
         if ($expire instanceof \DateTime) {
@@ -45,6 +50,8 @@ class Cookie extends ParameterContainer
         $this->_domain = $domain;
         $this->_secure = (bool)$secure;
         $this->_httpOnly = (bool)$httpOnly;
+
+        return $this;
     }
 
     /**
