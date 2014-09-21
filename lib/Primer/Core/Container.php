@@ -13,6 +13,7 @@ use ArrayAccess;
 abstract class Container extends Object implements ArrayAccess
 {
     protected $_bindings = array();
+    protected $_instances = array();
     protected $_aliases = array();
 
     public function bind($key, $o)
@@ -43,23 +44,24 @@ abstract class Container extends Object implements ArrayAccess
             ));
         }
 
-        $this->_bindings[$key] = $o;
+        $this->_instances[$key] = $o;
     }
 
     public function singleton($key, $o = null)
     {
-        if (array_key_exists($key, $this->_bindings)) {
+        if (array_key_exists($key, $this->_instances)) {
             throw new \RuntimeException(sprintf(
                 'Cannot override service "%s"',
                 $key
             ));
         }
 
+        $this->_instances[$key] = null;
         if (!is_callable($o)) {
-            $this->_bindings[$key] = $this->make($key);
+            $this->_instances[$key] = $this->make($key);
         }
         else {
-            $this->_bindings[$key] = call_user_func($o, $this);
+            $this->_instances[$key] = call_user_func($o, $this);
         }
     }
 
@@ -73,6 +75,20 @@ abstract class Container extends Object implements ArrayAccess
         if (array_key_exists($key, $this->_aliases)) {
             $key = $this->_aliases[$key];
             return $this->make($key);
+        }
+
+        if (array_key_exists($key, $this->_instances)) {
+            if (is_callable($this->_instances[$key])) {
+                return call_user_func(
+                    $this->_instances[$key],
+                    $this,
+                    $dependencies
+                );
+            }
+
+            if (isset($this->_instances[$key])) {
+                return $this->_instances[$key];
+            }
         }
 
         if (!array_key_exists($key, $this->_bindings)) {
