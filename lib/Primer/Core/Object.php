@@ -25,7 +25,7 @@ abstract class Object
         return ucfirst(Inflector::singularize($string));
     }
 
-    public function logMessage($msg, $filename = 'default')
+    public function logMessage($msg, $filename = 'core.log')
     {
         $pid = getmypid();
         $dt = date("Y-m-d H:i:s (T)");

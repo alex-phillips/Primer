@@ -6,6 +6,9 @@
 namespace Primer\Core;
 
 use ArrayAccess;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Primer\Http\Response;
 use Primer\Security\Auth;
 use Primer\Session\Session;
@@ -120,6 +123,19 @@ class Application extends Container
         );
         $this->singleton('Primer\\View\\Form');
         $this->singleton('Primer\\View\\View');
+        $this->singleton('Monolog\\Logger', function($app){
+            $logger = new Logger('primer');
+
+            $fileName = $app['config']['app.logfile'];
+            if ($app['config']['app.log_daily_files'] === true) {
+                $logger->pushHandler(new RotatingFileHandler(LOG_PATH . $fileName, 7));
+            }
+            else {
+                $logger->pushHandler(new StreamHandler(LOG_PATH . $fileName));
+            }
+
+            return $logger;
+        });
     }
 
     /**
@@ -146,6 +162,7 @@ class Application extends Container
             /*
              * Third-party aliasing
              */
+            'logger'    => 'Monolog\\Logger',
             'Inflector' => 'Primer\\Utility\\Inflector',
             'Carbon'   => 'Carbon\\Carbon',
         );
@@ -176,6 +193,7 @@ class Application extends Container
             'Form'     => 'Primer\\Proxy\\Form',
             'Response' => 'Primer\\Proxy\\Response',
             'Cookie'   => 'Primer\\Proxy\\Cookie',
+            'Log'      => 'Primer\\Proxy\\Log',
         );
 
         foreach ($aliases as $alias => $class) {
