@@ -9,6 +9,7 @@ use ArrayAccess;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Primer\Console\Console;
 use Primer\Http\Response;
 use Primer\Security\Auth;
 use Primer\Session\Session;
@@ -20,6 +21,7 @@ use Primer\Utility\ParameterContainer;
 use Primer\View\Form;
 use Primer\View\View;
 use Primer\Utility\Paginator;
+use Whoops\Exception\ErrorException;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
 
@@ -75,15 +77,15 @@ class Application extends Container
         $this->_session = $this->make('Primer\\Session\\Session');
         $this->_auth = $this->make('Primer\\Security\\Auth');
         $this->_router = $this->make('Primer\\Routing\\Router');
-
-        $whoops = new Run();
-        $whoops->pushHandler(new PrettyPageHandler());
-        $whoops->register();
     }
 
     private function _readConfigs()
     {
-        $domain = str_replace('www.', '', $_SERVER['SERVER_NAME']);
+        $domain = '';
+        if (!$this->isRunningInConsole()) {
+            $domain = str_replace('www.', '', $_SERVER['SERVER_NAME']);
+        }
+
         if (file_exists(APP_ROOT . '/Config/' . $domain . '.php')) {
             $this['config']['app'] = require_once(APP_ROOT . '/Config/' . $domain . '.php');
         }
@@ -94,48 +96,18 @@ class Application extends Container
         $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
         $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
 
-        if ($this['config']['app.environment'] == 'test' || $this['config']['app.environment'] == 'testing') {
+        if ($this['config']['app.debug'] === true) {
             error_reporting(E_ALL);
             ini_set("display_errors", 1);
+
+            $whoops = new Run();
+            $whoops->pushHandler(new PrettyPageHandler());
+            $whoops->register();
         }
         else {
             error_reporting(0);
             ini_set("display_errors", 0);
         }
-    }
-
-    private function _registerSingletons()
-    {
-        $this->singleton('Primer\\Http\\Response');
-        $this->singleton('Primer\\Session\\Session');
-        $this->singleton('Primer\\Security\\Auth');
-        $this->singleton('Primer\\Routing\\Router');
-        $this->singleton('Primer\\Http\\Request');
-        $this->singleton(
-            'Primer\\Datasource\\Database',
-            function () {
-                try {
-                    return new \Primer\Datasource\Database($this['config']['database'][$this['config']->get('app.environment')]);
-                } catch (PDOException $e) {
-                    die('Database connection could not be established.');
-                }
-            }
-        );
-        $this->singleton('Primer\\View\\Form');
-        $this->singleton('Primer\\View\\View');
-        $this->singleton('Monolog\\Logger', function($app){
-            $logger = new Logger('primer');
-
-            $fileName = $app['config']['app.logfile'];
-            if ($app['config']['app.log_daily_files'] === true) {
-                $logger->pushHandler(new RotatingFileHandler(LOG_PATH . $fileName, 7));
-            }
-            else {
-                $logger->pushHandler(new StreamHandler(LOG_PATH . $fileName));
-            }
-
-            return $logger;
-        });
     }
 
     /**
@@ -201,57 +173,109 @@ class Application extends Container
         }
     }
 
-    public function run()
+    private function _registerSingletons()
     {
-        require_once(APP_ROOT . '/Config/routes.php');
+        $this->singleton('Primer\\Http\\Response');
+        $this->singleton('Primer\\Session\\Session');
+        $this->singleton('Primer\\Security\\Auth');
+        $this->singleton('Primer\\Routing\\Router');
+        $this->singleton('Primer\\Http\\Request');
+        $this->singleton(
+            'Primer\\Datasource\\Database',
+            function () {
+                try {
+                    return new \Primer\Datasource\Database($this['config']['database'][$this['config']->get('app.environment')]);
+                } catch (PDOException $e) {
+                    die('Database connection could not be established.');
+                }
+            }
+        );
+        $this->singleton('Primer\\View\\Form');
+        $this->singleton('Primer\\View\\View');
+        $this->singleton('Monolog\\Logger', function($app){
+            $logger = new Logger('primer');
 
-        $dispatch = $this->_router->dispatch();
-
-        $body = null;
-        if (is_array($dispatch)) {
-            $this->setValue('conroller', $this->_router->getController());
-            $this->setValue('action', $this->_router->getAction());
-
-            Model::init($this->make('Primer\\Datasource\\Database'));
-
-            /*
-             * Check if chosen controller exists, otherwise, 404
-             *
-             * We don't want to call Primer::getControllerName here because we don't
-             * want /pages/index and /page/index to both work. That function will
-             * properly pluralize and format regardless if that controller exists.
-             */
-            if (class_exists($this->getControllerName($this->_router->getController()))) {
-                $controllerName = $this->getControllerName(
-                    $this->_router->getController()
-                );
-                $this->_controller = new $controllerName();
-                $this['view']->paginator = new Paginator($this->_controller->paginationConfig);
-                $this['view']->paginationConfig = $this->_controller->paginationConfig;
-                $this->_callControllerMethod();
-
-                $body = $this['view']->render(
-                    $this->_router->getController() . DS . $this->_router->getAction()
-                );
+            $fileName = $app['config']['app.logfile'];
+            if ($app['config']['app.log_daily_files'] === true) {
+                $logger->pushHandler(new RotatingFileHandler(LOG_PATH . $fileName, 7));
             }
             else {
+                $logger->pushHandler(new StreamHandler(LOG_PATH . $fileName));
+            }
+
+            return $logger;
+        });
+    }
+
+    public function run()
+    {
+        if ($this->isRunningInConsole()) {
+            $console = new Console();
+            $console->run();
+        }
+        else {
+            $dispatch = $this->_router->dispatch();
+
+            $body = null;
+            if (is_array($dispatch)) {
+                $this->setValue('conroller', $this->_router->getController());
+                $this->setValue('action', $this->_router->getAction());
+
+                Model::init($this->make('Primer\\Datasource\\Database'));
+
+                /*
+                 * Check if chosen controller exists, otherwise, 404
+                 *
+                 * We don't want to call Primer::getControllerName here because we don't
+                 * want /pages/index and /page/index to both work. That function will
+                 * properly pluralize and format regardless if that controller exists.
+                 */
+                if (class_exists($this->getControllerName($this->_router->getController()))) {
+                    $controllerName = $this->getControllerName(
+                        $this->_router->getController()
+                    );
+                    $this->_controller = new $controllerName();
+                    $this['view']->paginator = new Paginator($this->_controller->paginationConfig);
+                    $this['view']->paginationConfig = $this->_controller->paginationConfig;
+                    $this->_callControllerMethod();
+
+                    if ($this['view']->rendered === false) {
+                        $body = $this['view']->render(
+                            $this->_router->getController() . DS . $this->_router->getAction()
+                        );
+                    }
+                }
+                else {
+                    $this->abort();
+                }
+            }
+            else {
+                if (is_callable($dispatch)) {
+                    $body = call_user_func($dispatch);
+                }
+            }
+
+            if (!$body) {
                 $this->abort();
             }
-        }
-        else {
-            if (is_callable($dispatch)) {
-                $body = call_user_func($dispatch);
+            else {
+                $this['response']->set($body)->send();
             }
         }
+    }
 
-        if (!$body) {
-            $this->abort();
-        }
-        else {
-            $this['response']->set($body)->send();
+    private function isRunningInConsole()
+    {
+        return php_sapi_name() === 'cli';
+    }
+
+    private function isServerDown()
+    {
+        if (file_exists(APP_ROOT . DS . 'Configs/down')) {
+            return true;
         }
 
-        exit(1);
+        return false;
     }
 
     /**
