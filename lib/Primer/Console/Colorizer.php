@@ -1,14 +1,16 @@
 <?php
 
+namespace Primer\Console;
+
 /**
  * Created by IntelliJ IDEA.
  * User: exonintrendo
  * Date: 8/3/14
  * Time: 11:08 AM
  */
-class Colors
+class Colorizer
 {
-    private $_foreground_colors = array(
+    private static $_foreground_colors = array(
         'black'        => '0;30',
         'dark_gray'    => '1;30',
         'blue'         => '0;34',
@@ -26,7 +28,7 @@ class Colors
         'light_gray'   => '0;37',
         'white'        => '1;37',
     );
-    private $_background_colors = array(
+    private static $_background_colors = array(
         'black'      => '40',
         'red'        => '41',
         'green'      => '42',
@@ -38,20 +40,17 @@ class Colors
     );
 
     // Returns colored string
-    public function getColoredString(
-        $string,
-        $foreground_color = null,
-        $background_color = null
-    ) {
+    public static function getColoredString($string, $foreground_color = null, $background_color = null)
+    {
         $colored_string = "";
 
         // Check if given foreground color found
-        if (isset($this->_foreground_colors[$foreground_color])) {
-            $colored_string .= "\033[" . $this->_foreground_colors[$foreground_color] . "m";
+        if (isset(self::$_foreground_colors[$foreground_color])) {
+            $colored_string .= "\033[" . self::$_foreground_colors[$foreground_color] . "m";
         }
         // Check if given background color found
-        if (isset($this->_background_colors[$background_color])) {
-            $colored_string .= "\033[" . $this->_background_colors[$background_color] . "m";
+        if (isset(self::$_background_colors[$background_color])) {
+            $colored_string .= "\033[" . self::$_background_colors[$background_color] . "m";
         }
 
         // Add string and end coloring
@@ -61,14 +60,14 @@ class Colors
     }
 
     // Returns all foreground color names
-    public function getForegroundColors()
+    public static function getForegroundColors()
     {
-        return array_keys($this->_foreground_colors);
+        return array_keys(self::$_foreground_colors);
     }
 
     // Returns all background color names
-    public function getBackgroundColors()
+    public static function getBackgroundColors()
     {
-        return array_keys($this->_background_colors);
+        return array_keys(self::$_background_colors);
     }
 }
