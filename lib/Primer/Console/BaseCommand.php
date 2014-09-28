@@ -28,6 +28,8 @@ class BaseCommand extends ConsoleObject
 
     public function configure() {}
 
+    public function run() {}
+
     public function setup($aliases, $args, $applicationOptions)
     {
         $this->_aliases = $aliases;

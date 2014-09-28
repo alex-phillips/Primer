@@ -10,7 +10,7 @@ namespace Primer\Console;
 
 class UpCommand extends BaseCommand
 {
-    public function main()
+    public function run()
     {
         if (unlink(APP_ROOT . '/Config/down')) {
             $this->out("Server has been brought up.");

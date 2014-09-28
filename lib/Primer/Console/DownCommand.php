@@ -12,7 +12,7 @@ use Primer\Console\Input\DefinedInput;
 
 class DownCommand extends BaseCommand
 {
-    public function main()
+    public function run()
     {
         if (touch(APP_ROOT . '/Config/down')) {
             $this->out("Server has been brought down.");
