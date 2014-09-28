@@ -16,21 +16,21 @@ class Console extends ConsoleObject
     private $_userPassedArgv = array();
     private $_commands = array();
     private $_applicationOptions = array(
-        'quiet' => array(
-            'aliases' => array('quiet', 'q'),
+        'quiet'   => array(
+            'aliases'     => array(
+                'quiet',
+                'q'
+            ),
             'description' => "Don't output any messages",
         ),
         'verbose' => array(
-            'aliases' => array('verbose', 'v'),
+            'aliases'     => array(
+                'verbose',
+                'v'
+            ),
             'description' => 'Output all application information',
         ),
     );
-
-    static public function runScript($argv)
-    {
-        $dispatcher = new Dispatcher($argv);
-        $dispatcher->dispatch();
-    }
 
     public function __construct($applicationName = '', $applicationVersion = '', $argv = null)
     {
@@ -150,7 +150,22 @@ class Console extends ConsoleObject
             }
         }
 
+        $applicationInformation = array();
+        if ($this->_applicationName) {
+            $applicationInformation[] = $this->_applicationName;
+        }
+        if ($this->_applicationVersion) {
+            $applicationInformation[] = "version " . $this->_applicationVersion;
+        }
+        if (!empty($applicationInformation)) {
+            $applicationInformation = implode(' ', $applicationInformation) . "\n";
+        }
+        else {
+            $applicationInformation = '';
+        }
+
         echo <<<__USAGE__
+$applicationInformation
 Usage:
     [options] command [arguments]
 
@@ -158,6 +173,7 @@ Available Options:
     $options
 Available Commands:
 $commands
+
 __USAGE__;
 
     }
