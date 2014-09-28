@@ -9,8 +9,8 @@ namespace Primer\Console;
 
 use Primer\Console\Helpers\Helper;
 use Primer\Console\Input\DefinedInput;
-use Primer\Console\Input\DefinedInputException;
 use Primer\Console\Output\Writer;
+use Primer\Console\Exception\DefinedInputException;
 
 class BaseCommand extends ConsoleObject
 {
@@ -205,6 +205,6 @@ DESCRIPTION
     {$this->_description}
 __USAGE__;
 
-        $this->out($message);
+        return $message;
     }
 }
