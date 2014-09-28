@@ -209,6 +209,8 @@ class Application extends Container
 
     public function run()
     {
+        require_once(APP_ROOT . '/Config/routes.php');
+
         if ($this->isRunningInConsole()) {
             $console = new Console();
             $console->run();
