@@ -46,6 +46,9 @@ class HelloCommand extends \Primer\Console\BaseCommand
 Running application
 -------------------
 
+Note: running the application without any arguments will output all available
+options and commands.
+
 After creating the command, you'll need to add it to the application. Pass either the class name
 or an instance of the class and an array of aliases the class can be called by. After adding
 the command, we want run it from our console.
