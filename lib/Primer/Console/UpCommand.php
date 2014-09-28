@@ -10,6 +10,11 @@ namespace Primer\Console;
 
 class UpCommand extends BaseCommand
 {
+    public function configure()
+    {
+        $this->setDescription("Bring the server out of maintenance mode");
+    }
+
     public function run()
     {
         if (unlink(APP_ROOT . '/Config/down')) {

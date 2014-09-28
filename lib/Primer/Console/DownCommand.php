@@ -12,6 +12,11 @@ use Primer\Console\Input\DefinedInput;
 
 class DownCommand extends BaseCommand
 {
+    public function configure()
+    {
+        $this->setDescription("Bring the server down for maintenance mode");
+    }
+
     public function run()
     {
         if (touch(APP_ROOT . '/Config/down')) {
@@ -21,9 +26,4 @@ class DownCommand extends BaseCommand
             $this->out("There was a problem putting the server into maintenance mode. Please check file permissions.");
         }
     }
-
-//    public function getDescription($aliases, $argLinker)
-//    {
-//        return "Bring down the application into maintenance mode";
-//    }
 }
