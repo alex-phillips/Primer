@@ -7,8 +7,9 @@
 
 namespace Primer\Console\Interfaces;
 
-interface ApplicationInterface
+interface CommandInterface
 {
     public function configure();
-    public function main();
+
+    public function run();
 }
