@@ -45,6 +45,8 @@ class View extends Object
      */
     public $template = 'default';
 
+    public $rendered = false;
+
     /**
      * Constructor
      */
@@ -110,6 +112,16 @@ class View extends Object
         return self::$_jsFiles;
     }
 
+    public function make($view)
+    {
+        $this->filename = $view;
+    }
+
+    public function useTemplate($template)
+    {
+        $this->template = str_replace('.', '/', $template);
+    }
+
     /**
      * Render the view given a template (or using the default template)
      * and using the passed in file to render the contents of the page.
@@ -123,22 +135,15 @@ class View extends Object
         // @TODO: modify code to use a proper reponse class
         ob_clean();
         ob_start();
+
+        if ($this->filename) {
+            $view = $this->filename;
+        }
+
         $view = str_replace('.', '/', $view);
         $this->filename = 'Views/' . $view . '.php';
 
-        $response = '';
-        if (isset($this->request->format)) {
-            switch ($this->request->format) {
-                case 'json':
-                    echo app()->getValue('rendering_object')->JSONSerialize();
-                default:
-                    Router::error404();
-                    break;
-            }
-        }
-        else {
-            require_once("Views/templates/$this->template.php");
-        }
+        require_once("Views/templates/$this->template.php");
 
         $this->Session->delete('messages');
 
