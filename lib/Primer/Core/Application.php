@@ -51,7 +51,10 @@ class Application extends Container
         }
 
         spl_autoload_register(
-            array(__NAMESPACE__ . '\\Application', 'loadClass')
+            array(
+                __NAMESPACE__ . '\\Application',
+                'loadClass'
+            )
         );
 
         $this->_bootstrap();
@@ -110,6 +113,11 @@ class Application extends Container
         }
     }
 
+    private function isRunningInConsole()
+    {
+        return php_sapi_name() === 'cli';
+    }
+
     /**
      * Alias classes required for use outside of the Primer namespace or to
      * match up with any available proxies.
@@ -136,7 +144,7 @@ class Application extends Container
              */
             'logger'    => 'Monolog\\Logger',
             'Inflector' => 'Primer\\Utility\\Inflector',
-            'Carbon'   => 'Carbon\\Carbon',
+            'Carbon'    => 'Carbon\\Carbon',
         );
 
         foreach ($aliases as $alias => $class) {
@@ -192,7 +200,7 @@ class Application extends Container
         );
         $this->singleton('Primer\\View\\Form');
         $this->singleton('Primer\\View\\View');
-        $this->singleton('Monolog\\Logger', function($app){
+        $this->singleton('Monolog\\Logger', function ($app) {
             $logger = new Logger('primer');
 
             $fileName = $app['config']['app.logfile'];
@@ -266,20 +274,6 @@ class Application extends Container
         }
     }
 
-    private function isRunningInConsole()
-    {
-        return php_sapi_name() === 'cli';
-    }
-
-    private function isServerDown()
-    {
-        if (file_exists(APP_ROOT . DS . 'Configs/down')) {
-            return true;
-        }
-
-        return false;
-    }
-
     /**
      * Sets a key/value pair in the framework
      *
@@ -325,7 +319,10 @@ class Application extends Container
         }
 
         call_user_func_array(
-            array($this->_controller, 'beforeFilter'),
+            array(
+                $this->_controller,
+                'beforeFilter',
+            ),
             $this->_router->getArgs()
         );
 
@@ -346,11 +343,17 @@ class Application extends Container
         }
 
         call_user_func_array(
-            array($this->_controller, $this->_router->getAction()),
+            array(
+                $this->_controller,
+                $this->_router->getAction(),
+            ),
             $this->_router->getArgs()
         );
         call_user_func_array(
-            array($this->_controller, 'afterFilter'),
+            array(
+                $this->_controller,
+                'afterFilter',
+            ),
             $this->_router->getArgs()
         );
     }
@@ -528,5 +531,14 @@ class Application extends Container
     public function offsetUnset($key)
     {
         unset($this->_aliases[$key]);
+    }
+
+    private function isServerDown()
+    {
+        if (file_exists(APP_ROOT . DS . 'Configs/down')) {
+            return true;
+        }
+
+        return false;
     }
 }
