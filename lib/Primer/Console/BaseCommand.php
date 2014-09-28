@@ -10,6 +10,7 @@ namespace Primer\Console;
 use Primer\Console\Helpers\Helper;
 use Primer\Console\Input\DefinedInput;
 use Primer\Console\Interfaces\CommandInterface;
+use Primer\Console\Output\StyleFormatter;
 use Primer\Console\Output\Writer;
 use Primer\Console\Exception\DefinedInputException;
 
@@ -73,14 +74,16 @@ class BaseCommand extends ConsoleObject implements CommandInterface
             switch ($input->getValueRequirement()) {
                 case DefinedInput::VALUE_NONE:
                     if ($value !== null && $value !== true) {
-                        throw new DefinedInputException;
+                        $this->out("<error>Parameter {$input->getLongName()} does not take a value.</error>");
+                        exit();
                     }
                     break;
                 case DefinedInput::VALUE_OPTIONAL:
                     break;
                 case DefinedInput::VALUE_REQUIRED:
                     if ($value === null || $value === true) {
-                        throw new DefinedInputException;
+                        $this->out("<error>Parameter {$input->getLongName()} is missing required value.</error>");
+                        exit();
                     }
                     break;
             }
