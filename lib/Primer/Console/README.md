@@ -1,30 +1,36 @@
 PHP Shell Framework
 ===================
 
-This framework can be used to creating fully shell scripts.
-
-Configuration
--------------
-* Copy `/path/to/php-shell-framework/config/psf.config.php` to your code base location `/path/to/application/psf.config.php` and set `application_dirs` to corresponding console applications.
-* Inside application dir create catalog `Console` which contains shell apps.
+This framework can be used to creating fully shell scripts. Originally forked from https://github.com/piotrooo/php-shell-framework.
 
 Creating new application
 ------------------------
-To create new application, you must create a new PHP file in __your_name_path/Console__ location, name of file this should be __YourApplicationNameShell.php__.
+To create new application, create a new Console application and calling run.
 
-Newly created file should have number of requirements:
-* Name of class inside file should be corresponding name to file.
-* Class should extends from `Shell` and implements `ApplicationInterface`.
-
-So created appliaction should looks like:
 ```php
 <?php
-namespace Console;
+/*
+ * Console.php
+ */
+$app = new \Primer\Console\Console();
+$app->run();
+```
 
-use Psf\Interfaces\ShellApplicationInterface;
-use Psf\Shell;
+Then simply run the php script from the command line.
 
-class HelloShell extends Shell implements ApplicationInterface
+Creating Commands
+-----------------
+
+Newly created file should have number of requirements:
+* Class should extends from `BaseCommand`.
+* Should include the `run` method which contains the execution code.
+* You can also include the `configure` method for any setup code. This is automatically
+called before running the command.
+
+So created command should looks like:
+```php
+<?php
+class HelloCommand extends \Primer\Console\BaseCommand
 {
     public function configure()
     {
@@ -32,28 +38,34 @@ class HelloShell extends Shell implements ApplicationInterface
 
     public function main()
     {
-      $this->out("Hello world");
+        $this->out("Hello world");
     }
 }
-?>
 ```
 
 Running application
 -------------------
 
-After create application, we want run it from our console. 
+After creating the command, you'll need to add it to the application. Pass either the class name
+or an instance of the class and an array of aliases the class can be called by. After adding
+the command, we want run it from our console.
+
+```php
+<?php
+$app->addCommand(new HelloCommand(), array('hello'));
+```
 
 ### Basicly call from shell
-    $ php psf.php app:hello
+    $ php console.php hello
 
-Constraint `app` determines which application should be called. After this call, our application print - by use `out` method - on `STDOUT` string __Hello world__.
+After this call, our application print - by use `out` method - on `STDOUT` string __Hello world__.
 
 ### Calling with arguments
-    $ php psf.php app:hello -N --user=Piotr
-    
+    $ php console.php hello -N --user=Alex
+
 Application can accept short and long types of parameters.
 
-PHP Shell Framework implements this approach:
+This framework implements this approach:
 
 [http://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html](http://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html)
 
@@ -65,16 +77,15 @@ Possible combinations:
 * `-n hello` *short parameter with argument, space separed, return hello*
 * `-nhello` *short parameter with argument, no space separed, return hello*
 * `--user` *long parameter without argument, return true*
-* `--user=Piotr` *long parameter with argument, equal sign separed, return Piotr*
+* `--user=Alex` *long parameter with argument, equal sign separed, return Alex*
 
 To add support to parameters in application in method `configure`, we must set parameters of each parameter.
+Support is added for short parameters, long parameters, and a value requirement.
 
 ```php
 public function configure()
 {
-    $this
-        ->addParameter('N', 'namespace')
-        ->addParameter('u', 'user');
+    $this->addParameter('u', 'user', \Primer\Console\Input\DefinedInput::VALUE_REQUIRED);
 }
 ```
 
@@ -82,23 +93,23 @@ This configuration allows us to many possibilities call our parameters.
 
 This call:
 
-    $ php psf.php app:hello -N php/\shell/\output
+    $ php console.php hello -u Alex
 
 is corresponding to:
 
-    $ php psf.php app:hello --namespace php/\shell/\output
+    $ php console.php hello --username Alex
 
 In `main` method we get parameter like this:
 
-    $namespace = $this->getParameterValue('namespace');
+    $namespace = $this->getParameterValue('username');
 
-this getter working on `-N` and `--namespace` parameter equally.
+this getter working on `-u` and `--user` parameter equally.
 
 __Special case.__ If we call application like that:
 
-    $ php psf.php app:hello -N php/\shell/\output --namespace php/\formatter
-    
-The `getParameterValue` method will return `php/formatter`.
+    $ php psf.php app:hello -u Alex --username AlexP
+
+The `getParameterValue` method will return `AlexP`.
 
 Output
 ------
@@ -144,13 +155,13 @@ __Example:__
 
 ```php
 $this->out('This message is in normal verbosity');
-$this->out('This message is in quiet verbosity', 1, Writer::VERBOSITY_QUIET);
-$this->out('This message is in verbose verbosity', 1, Writer::VERBOSITY_VERBOSE);
+$this->out('This message is in quiet verbosity', 1, \Primer\Console\Output\Writer::VERBOSITY_QUIET);
+$this->out('This message is in verbose verbosity', 1, \Primer\Console\Output\Writer::VERBOSITY_VERBOSE);
 ```
 
 If you want run application in `NORMAL` level:
 
-    $ php psf.php app:hello
+    $ php console.php hello
 
 output:
 
@@ -159,16 +170,16 @@ output:
 
 If you want run application in `QUIET` level:
 
-    $ php psf.php app:hello --quiet
+    $ php console.php hello --quiet
 
 output:
 
     This message is in quiet verbosity
-    
+
 If you want run application in `VERBOSE` level:
 
-    $ php psf.php app:hello --verbose
-    
+    $ php console.php hello --verbose
+
 output:
 
     This message is in normal verbosity
@@ -183,7 +194,7 @@ Styling output is done by user-defined tags - like XML. PHP Shell Framework usin
 To declare new XML tag and corresonding with him ANSI code you do:
 
 ```php
-$styleFormat = new StyleFormatter('gray', 'magenta', array('blink', 'underline'));
+$styleFormat = new \Primer\Console\Output\StyleFormatter('gray', 'magenta', array('blink', 'underline'));
 $this->setFormatter('special', $styleFormat);
 ```
 
@@ -309,7 +320,7 @@ for ($i = 0; $i < 9; $i++) {
 will produce:
 
     4/9 (44%) [======================............................]
-    
+
 ### Loader
 Loader helper get possibility of display loader pseudo animation.
 
