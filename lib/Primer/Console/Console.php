@@ -91,7 +91,7 @@ class Console extends ConsoleObject
             $application->setup($aliases, $commandParameters, $applicationParameters);
             $application->configure();
             $application->verify();
-            $application->main();
+            $application->run();
         }
     }
 
