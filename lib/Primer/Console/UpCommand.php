@@ -10,14 +10,13 @@ namespace Primer\Console;
 
 class UpCommand extends BaseCommand
 {
-    public function run($arguments, Console $cliController)
+    public function main()
     {
-        unlink(APP_ROOT . '/Config/down');
-        return "Server has been brought up\n";
-    }
-
-    public function getDescription($aliases, $argLinker)
-    {
-        return "Bring back the server from maintenance mode";
+        if (unlink(APP_ROOT . '/Config/down')) {
+            $this->out("Server has been brought up.");
+        }
+        else {
+            $this->out("There was a problem bringing the server out of maintenance mode. Please check file permissions.");
+        }
     }
 }

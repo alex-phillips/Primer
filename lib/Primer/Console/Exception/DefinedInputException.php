@@ -2,12 +2,14 @@
 /**
  * Created by PhpStorm.
  * User: exonintrendo
- * Date: 9/24/14
- * Time: 6:21 PM
+ * Date: 9/27/14
+ * Time: 9:29 PM
  */
 
 namespace Primer\Console\Exception;
 
 use Exception;
 
-class ArgumentException extends Exception {}
+class DefinedInputException extends Exception
+{
+}
