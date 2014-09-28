@@ -12,32 +12,42 @@ use Primer\Console\XmlParser;
 class StyleFormatter
 {
     public static $fgColors = array(
-        'black' => 30,
-        'red' => 31,
-        'green' => 32,
-        'brown' => 33,
-        'blue' => 34,
-        'magenta' => 35,
-        'cyan' => 36,
-        'gray' => 37
+        'black'        => '0;30',
+        'dark_gray'    => '1;30',
+        'blue'         => '0;34',
+        'light_blue'   => '1;34',
+        'green'        => '0;32',
+        'light_green'  => '1;32',
+        'cyan'         => '0;36',
+        'light_cyan'   => '1;36',
+        'red'          => '0;31',
+        'light_red'    => '1;31',
+        'purple'       => '0;35',
+        'light_purple' => '1;35',
+        'brown'        => '0;33',
+        'yellow'       => '1;33',
+        'light_gray'   => '0;37',
+        'white'        => '1;37',
     );
+
     public static $bgColors = array(
-        'black' => 40,
-        'red' => 41,
-        'green' => 42,
-        'brown' => 43,
-        'blue' => 44,
+        'black'   => 40,
+        'red'     => 41,
+        'green'   => 42,
+        'brown'   => 43,
+        'blue'    => 44,
         'magenta' => 45,
-        'cyan' => 46,
-        'white' => 47
+        'cyan'    => 46,
+        'white'   => 47,
     );
+
     public static $effects = array(
-        'defaults' => 0,
-        'bold' => 1,
+        'defaults'  => 0,
+        'bold'      => 1,
         'underline' => 4,
-        'blink' => 5,
-        'reverse' => 7,
-        'conceal' => 8
+        'blink'     => 5,
+        'reverse'   => 7,
+        'conceal'   => 8,
     );
 
     private $_fgColor;
@@ -79,7 +89,7 @@ class StyleFormatter
 
     public function getBgColorCode()
     {
-        return self::$bgColors[$this->_bgColor];
+        return isset(self::$bgColors[$this->_bgColor]) ? self::$bgColors[$this->_bgColor] : '';
     }
 
     public function getParsedToStringEffects()
