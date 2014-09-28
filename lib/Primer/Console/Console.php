@@ -73,6 +73,14 @@ class Console extends ConsoleObject
         $this->_callApplication($command, $parsedArgv, $applicationOptions);
     }
 
+    public function getParseInputArgv(array $argv = array())
+    {
+        $paramsToParse = (!empty($argv) ? $argv : $this->_userPassedArgv);
+        $parser = new ArgumentParser($paramsToParse);
+
+        return $parser->parseArgs();
+    }
+
     private function _callApplication($applicationName, $commandParameters, $applicationParameters)
     {
         $commandAvailable = false;
@@ -93,14 +101,6 @@ class Console extends ConsoleObject
             $application->verify();
             $application->run();
         }
-    }
-
-    public function getParseInputArgv(array $argv = array())
-    {
-        $paramsToParse = (!empty($argv) ? $argv : $this->_userPassedArgv);
-        $parser = new ArgumentParser($paramsToParse);
-
-        return $parser->parseArgs();
     }
 
     private function _listCommands()
