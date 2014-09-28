@@ -45,9 +45,14 @@ class Console extends ConsoleObject
         parent::__construct();
     }
 
-    public function addCommand(BaseCommand $command, Array $aliases)
+    public function addCommand($command, Array $aliases)
     {
-        $this->_commands[get_class($command)] = $aliases;
+        if (is_string($command)) {
+            $this->_commands[$command] = $aliases;
+        }
+        else {
+            $this->_commands[get_class($command)] = $aliases;
+        }
     }
 
     public function run()
