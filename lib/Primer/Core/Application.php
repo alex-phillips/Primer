@@ -380,6 +380,14 @@ class Application extends Container
             return;
         }
 
+        // Load commands
+        if (preg_match('#.+Command$#', $class)) {
+            if (file_exists($this->getCommandsPath() . $class . '.php')) {
+                require_once($this->getCommandsPath() . $class . '.php');
+            }
+            return;
+        }
+
         // Attempt to load in Model files
         $dir = scandir($this->getModelsPath());
         if (in_array($class . '.php', $dir)) {
@@ -393,6 +401,11 @@ class Application extends Container
     public function getControllersPath()
     {
         return APP_ROOT . DS . 'Controllers' . DS;
+    }
+
+    public function getCommandsPath()
+    {
+        return APP_ROOT . DS . 'Commands' . DS;
     }
 
     public function getModelsPath()
