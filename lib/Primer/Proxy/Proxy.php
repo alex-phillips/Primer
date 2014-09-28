@@ -23,7 +23,10 @@ abstract class Proxy extends Object
     {
         $proxy = static::getProxy();
 
-        return call_user_func_array(array($proxy, $method), $args);
+        return call_user_func_array(array(
+                $proxy,
+                $method
+            ), $args);
     }
 
     protected static function getProxy()
@@ -34,5 +37,10 @@ abstract class Proxy extends Object
     protected static function getAccessor()
     {
         throw new \RuntimeException("Proxy not available");
+    }
+
+    public function getApp()
+    {
+        return static::$_app;
     }
 }
