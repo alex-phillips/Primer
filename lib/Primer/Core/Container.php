@@ -56,13 +56,7 @@ abstract class Container extends Object implements ArrayAccess
             ));
         }
 
-        $this->_instances[$key] = null;
-        if (!is_callable($o)) {
-            $this->_instances[$key] = $this->make($key);
-        }
-        else {
-            $this->_instances[$key] = call_user_func($o, $this);
-        }
+        $this->_instances[$key] = $o;
     }
 
     public function alias($alias, $binding)
@@ -79,54 +73,17 @@ abstract class Container extends Object implements ArrayAccess
 
         if (array_key_exists($key, $this->_instances)) {
             if (is_callable($this->_instances[$key])) {
-                return call_user_func(
-                    $this->_instances[$key],
-                    $this,
-                    $dependencies
-                );
+                $this->_instances[$key] = call_user_func($this->_instances[$key], $this);
+            }
+            else if ($this->_instances[$key] === null) {
+                $this->_instances[$key] = $this->_buildClass($key);
             }
 
-            if (isset($this->_instances[$key])) {
-                return $this->_instances[$key];
-            }
+            return $this->_instances[$key];
         }
 
         if (!array_key_exists($key, $this->_bindings)) {
-            $dependencies = array();
-
-            $reflector = new \ReflectionClass($key);
-            $constructor = $reflector->getConstructor();
-
-            if (is_null($constructor)) {
-                return new $key();
-            }
-
-            $classParams = $constructor->getParameters();
-
-            foreach ($classParams as $param) {
-                $dependency = $param->getClass();
-
-                if (!is_null($dependency)) {
-                    if ($param->isDefaultValueAvailable()) {
-                        $dependencies[] = $param->getDefaultValue();
-                    }
-                    else {
-                        try {
-                            $dependencies[] = $this->make($param->getClass()->name);
-                        }
-                        catch (\Exception $e) {
-                            if ($param->isOptional()) {
-                                $dependencies[] = $param->getDefaultValue();
-                            }
-                            else {
-                                throw $e;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return $reflector->newInstanceArgs($dependencies);
+            return $this->_buildClass($key);
         }
 
         if (is_callable($this->_bindings[$key])) {
@@ -140,6 +97,45 @@ abstract class Container extends Object implements ArrayAccess
         if (isset($this->_bindings[$key])) {
             return $this->_bindings[$key];
         }
+    }
+
+    private function _buildClass($key)
+    {
+        $dependencies = array();
+
+        $reflector = new \ReflectionClass($key);
+        $constructor = $reflector->getConstructor();
+
+        if (is_null($constructor)) {
+            return new $key();
+        }
+
+        $classParams = $constructor->getParameters();
+
+        foreach ($classParams as $param) {
+            $dependency = $param->getClass();
+
+            if (!is_null($dependency)) {
+                if ($param->isDefaultValueAvailable()) {
+                    $dependencies[] = $param->getDefaultValue();
+                }
+                else {
+                    try {
+                        $dependencies[] = $this->make($param->getClass()->name);
+                    }
+                    catch (\Exception $e) {
+                        if ($param->isOptional()) {
+                            $dependencies[] = $param->getDefaultValue();
+                        }
+                        else {
+                            throw $e;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $reflector->newInstanceArgs($dependencies);
     }
 
     public function offsetExists($key)
