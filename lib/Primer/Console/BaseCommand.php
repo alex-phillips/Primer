@@ -9,26 +9,28 @@ namespace Primer\Console;
 
 use Primer\Console\Helpers\Helper;
 use Primer\Console\Input\DefinedInput;
+use Primer\Console\Interfaces\CommandInterface;
 use Primer\Console\Output\Writer;
 use Primer\Console\Exception\DefinedInputException;
 
-class BaseCommand extends ConsoleObject
+class BaseCommand extends ConsoleObject implements CommandInterface
 {
     public $parsedArgv;
-
+    protected $_description = '';
     private $_applicationOptions = array();
     /**
      * @var DefinedInput[]
      */
     private $_userDefinedInput = array();
-
     private $_aliases = array();
 
-    protected $_description = '';
+    public function configure()
+    {
+    }
 
-    public function configure() {}
-
-    public function run() {}
+    public function run()
+    {
+    }
 
     public function setup($aliases, $args, $applicationOptions)
     {
@@ -108,15 +110,6 @@ class BaseCommand extends ConsoleObject
         }
     }
 
-    public function addParameter($shortName, $longName, $valueRequirement = DefinedInput::VALUE_OPTIONAL, $description = '')
-    {
-        $definedInput = new DefinedInput();
-        $definedInput->addParameter($shortName, $longName, $valueRequirement, $description);
-        $this->_userDefinedInput[] = $definedInput;
-
-        return $this;
-    }
-
     public function getParameterValue($input)
     {
         if ($input instanceof DefinedInput) {
@@ -160,26 +153,6 @@ class BaseCommand extends ConsoleObject
         }
     }
 
-    public function getHelper($helperName)
-    {
-        return Helper::loadHelper($helperName);
-    }
-
-    public function setDescription($description)
-    {
-        $this->_description = $description;
-    }
-
-    public function getDescription()
-    {
-        return $this->_description;
-    }
-
-    public function getDefinedParameters()
-    {
-        return $this->_userDefinedInput;
-    }
-
     public function getUsage()
     {
         $applicationName = implode(', ', $this->_aliases);
@@ -208,5 +181,34 @@ DESCRIPTION
 __USAGE__;
 
         return $message;
+    }
+
+    public function addParameter($shortName, $longName, $valueRequirement = DefinedInput::VALUE_OPTIONAL, $description = '')
+    {
+        $definedInput = new DefinedInput();
+        $definedInput->addParameter($shortName, $longName, $valueRequirement, $description);
+        $this->_userDefinedInput[] = $definedInput;
+
+        return $this;
+    }
+
+    public function getHelper($helperName)
+    {
+        return Helper::loadHelper($helperName);
+    }
+
+    public function getDescription()
+    {
+        return $this->_description;
+    }
+
+    public function setDescription($description)
+    {
+        $this->_description = $description;
+    }
+
+    public function getDefinedParameters()
+    {
+        return $this->_userDefinedInput;
     }
 }
