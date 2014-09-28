@@ -9,6 +9,7 @@
 namespace Primer\Core;
 
 use ArrayAccess;
+use Exception;
 
 abstract class Container extends Object implements ArrayAccess
 {
@@ -75,8 +76,10 @@ abstract class Container extends Object implements ArrayAccess
             if (is_callable($this->_instances[$key])) {
                 $this->_instances[$key] = call_user_func($this->_instances[$key], $this);
             }
-            else if ($this->_instances[$key] === null) {
-                $this->_instances[$key] = $this->_buildClass($key);
+            else {
+                if ($this->_instances[$key] === null) {
+                    $this->_instances[$key] = $this->_buildClass($key);
+                }
             }
 
             return $this->_instances[$key];
@@ -122,8 +125,7 @@ abstract class Container extends Object implements ArrayAccess
                 else {
                     try {
                         $dependencies[] = $this->make($param->getClass()->name);
-                    }
-                    catch (\Exception $e) {
+                    } catch (Exception $e) {
                         if ($param->isOptional()) {
                             $dependencies[] = $param->getDefaultValue();
                         }
@@ -140,27 +142,17 @@ abstract class Container extends Object implements ArrayAccess
 
     public function offsetExists($key)
     {
-        return (isset($this->_bindings[$key]));
     }
 
     public function offsetGet($key)
     {
-        $this->make($key);
     }
 
     public function offsetSet($key, $value)
     {
-        if (!$value instanceof Closure) {
-            $value = function () use ($value) {
-                return $value;
-            };
-        }
-
-        $this->bind($key, $value);
     }
 
     public function offsetUnset($key)
     {
-        unset($this->_bindings[$key]);
     }
 }
