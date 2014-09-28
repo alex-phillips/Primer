@@ -38,6 +38,11 @@ class ConsoleObject
         $this->setFormatter('error', $error);
     }
 
+    public function setFormatter($xmlTag, StyleFormatter $displayFormat)
+    {
+        $this->_stdout->setFormatter($xmlTag, $displayFormat);
+    }
+
     /**
      * @return \Primer\Console\Output\Writer
      */
@@ -55,11 +60,6 @@ class ConsoleObject
     public function err($message, $numberOfNewLines = 1, $verbosityLevel = Writer::VERBOSITY_NORMAL)
     {
         $this->_stderr->writeMessage($message, $numberOfNewLines, $verbosityLevel);
-    }
-
-    public function setFormatter($xmlTag, StyleFormatter $displayFormat)
-    {
-        $this->_stdout->setFormatter($xmlTag, $displayFormat);
     }
 
     public function read()

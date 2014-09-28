@@ -82,14 +82,14 @@ class StyleFormatter
         return sprintf("\033[%sm%s\033[0m", $colors . $effectsCodeString, $text);
     }
 
-    public function getFgColorCode()
-    {
-        return isset(self::$fgColors[$this->_fgColor]) ? self::$fgColors[$this->_fgColor] : '';
-    }
-
     public function getBgColorCode()
     {
         return isset(self::$bgColors[$this->_bgColor]) ? self::$bgColors[$this->_bgColor] : '';
+    }
+
+    public function getFgColorCode()
+    {
+        return isset(self::$fgColors[$this->_fgColor]) ? self::$fgColors[$this->_fgColor] : '';
     }
 
     public function getParsedToStringEffects()
