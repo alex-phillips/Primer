@@ -16,11 +16,6 @@ class Log extends Proxy
 {
     private static $_channels = array();
 
-    protected static function getProxyAccessor()
-    {
-        return 'logger';
-    }
-
     public static function record($message, $file, $level = 'info', $context = array())
     {
         if (!array_key_exists($file, self::$_channels)) {
@@ -36,5 +31,10 @@ class Log extends Proxy
         }
 
         self::$_channels[$file]->$level($message, $context);
+    }
+
+    protected static function getProxyAccessor()
+    {
+        return 'logger';
     }
 }
