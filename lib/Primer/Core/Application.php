@@ -99,13 +99,15 @@ class Application extends Container
         $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
         $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
 
-        if ($this['config']['app.debug'] === true) {
+        if ($this['config']['app.debug'] === true || $this->isRunningInConsole()) {
             error_reporting(E_ALL);
             ini_set("display_errors", 1);
 
-            $whoops = new Run();
-            $whoops->pushHandler(new PrettyPageHandler());
-            $whoops->register();
+            if (!$this->isRunningInConsole()) {
+                $whoops = new Run();
+                $whoops->pushHandler(new PrettyPageHandler());
+                $whoops->register();
+            }
         }
         else {
             error_reporting(0);
