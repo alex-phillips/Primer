@@ -50,7 +50,7 @@ class Console extends ConsoleObject
         $this->_commands[get_class($command)] = $aliases;
     }
 
-    public function dispatch()
+    public function run()
     {
         $parsedArgv = $this->getParseInputArgv();
 
@@ -118,7 +118,7 @@ class Console extends ConsoleObject
             }
 
             $aliases = implode(', ', $aliases);
-            $options .= "\t$aliases\t\t{$info['description']}\n";
+            $options .= "<info>\t$aliases\t\t{$info['description']}</info>\n";
         }
 
         $commands = "";
@@ -127,7 +127,7 @@ class Console extends ConsoleObject
             $command->configure();
             $names = implode(', ', $aliases);
             $description = $command->getDescription();
-            $commands .= "\t$names\t\t$description\n";
+            $commands .= "<info>\t$names\t\t$description</info>\n";
 
             $params = '';
             foreach ($command->getDefinedParameters() as $parameter) {
@@ -146,16 +146,17 @@ class Console extends ConsoleObject
             }
 
             if ($params) {
-                $commands .= "\t\t\t$params\n";
+                $commands .= "<info>\t\t\t$params</info>\n";
             }
         }
 
+        // Build application and version information
         $applicationInformation = array();
         if ($this->_applicationName) {
-            $applicationInformation[] = $this->_applicationName;
+            $applicationInformation[] = "<info>$this->_applicationName</info>";
         }
         if ($this->_applicationVersion) {
-            $applicationInformation[] = "version " . $this->_applicationVersion;
+            $applicationInformation[] = "version <warning>$this->_applicationVersion</warning>";
         }
         if (!empty($applicationInformation)) {
             $applicationInformation = implode(' ', $applicationInformation) . "\n";
@@ -164,17 +165,18 @@ class Console extends ConsoleObject
             $applicationInformation = '';
         }
 
-        echo <<<__USAGE__
+        $usage = <<<__USAGE__
 $applicationInformation
-Usage:
+<warning>Usage:</warning>
     [options] command [arguments]
 
-Available Options:
+<warning>Available Options:</warning>
     $options
-Available Commands:
+<warning>Available Commands:</warning>
 $commands
 
 __USAGE__;
 
+        $this->out($usage);
     }
 }
