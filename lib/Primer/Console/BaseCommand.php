@@ -10,7 +10,6 @@ namespace Primer\Console;
 use Primer\Console\Helpers\Helper;
 use Primer\Console\Input\DefinedInput;
 use Primer\Console\Interfaces\CommandInterface;
-use Primer\Console\Output\StyleFormatter;
 use Primer\Console\Output\Writer;
 use Primer\Console\Exception\DefinedInputException;
 
