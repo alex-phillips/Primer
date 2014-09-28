@@ -23,6 +23,19 @@ class ConsoleObject
         $this->_stdout = new Writer(Writer::STREAM_STDOUT);
         $this->_stderr = new Writer(Writer::STREAM_STDERR);
         $this->_stdin = new Reader(Reader::STREAM_READ);
+        $this->setupStyles();
+    }
+
+    protected function setupStyles()
+    {
+        $info = new StyleFormatter('green');
+        $this->setFormatter('info', $info);
+
+        $warning = new StyleFormatter('yellow');
+        $this->setFormatter('warning', $warning);
+
+        $error = new StyleFormatter('red');
+        $this->setFormatter('error', $error);
     }
 
     /**
