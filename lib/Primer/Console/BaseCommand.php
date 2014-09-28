@@ -26,6 +26,8 @@ class BaseCommand extends ConsoleObject
 
     protected $_description = '';
 
+    public function configure() {}
+
     public function setup($aliases, $args, $applicationOptions)
     {
         $this->_aliases = $aliases;
