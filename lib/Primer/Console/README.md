@@ -1,4 +1,4 @@
-PHP Shell Framework
+Primer Console Framework
 ===================
 
 This framework can be used to creating fully shell scripts. Originally forked from https://github.com/piotrooo/php-shell-framework.
