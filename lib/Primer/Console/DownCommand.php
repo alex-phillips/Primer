@@ -1,14 +1,11 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: exonintrendo
- * Date: 9/24/14
- * Time: 6:33 PM
+ * DownCommand
+ *
+ * @author Alex Phillips <exonintrendo@gmail.com>
  */
 
 namespace Primer\Console;
-
-use Primer\Console\Input\DefinedInput;
 
 class DownCommand extends BaseCommand
 {

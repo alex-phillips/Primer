@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: exonintrendo
- * Date: 9/24/14
- * Time: 7:45 PM
+ * UpCommand
+ *
+ * @author Alex Phillips <exonintrendo@gmail.com>
+ * @date 9/24/14
+ * @time 7:45 PM
  */
 
 namespace Primer\Console;

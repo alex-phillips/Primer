@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: exonintrendo
- * Date: 9/27/14
- * Time: 11:57 AM
+ * ConsoleObject
+ *
+ * @author Alex Phillips <exonintrendo@gmail.com>
+ * @date 9/27/14
+ * @time 11:57 AM
  */
 
 namespace Primer\Console;

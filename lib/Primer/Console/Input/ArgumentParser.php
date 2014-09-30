@@ -1,22 +1,12 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: exonintrendo
- * Date: 9/27/14
- * Time: 8:30 AM
+ * ArgumentParser
+ *
+ * @author Alex Phillips <exonintrendo@gmail.com>
  */
 
 namespace Primer\Console\Input;
 
-/**
- * CommandLine class
- *
- * Command Line Interface (CLI) utility class.
- *
- * @author              Patrick Fisher <patrick@pwfisher.com>
- * @since               August 21, 2009
- * @see                 https://github.com/pwfisher/CommandLine.php
- */
 class ArgumentParser
 {
     public $args;

@@ -2,7 +2,7 @@
 /**
  * StyleFormatter
  *
- * @author Piotr Olaszewski
+ * @author Alex Phillips <exonintrendo@gmail.com>
  */
 
 namespace Primer\Console\Output;

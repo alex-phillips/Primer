@@ -1,8 +1,8 @@
 <?php
 /**
- * Dispatcher
+ * Console
  *
- * @author Piotr Olaszewski
+ * @author Alex Phillips <exonintrendo@gmail.com>
  */
 
 namespace Primer\Console;
@@ -11,10 +11,29 @@ use Primer\Console\Input\ArgumentParser;
 
 class Console extends ConsoleObject
 {
+    /*
+     * Name of the application.
+     */
     private $_applicationName;
+
+    /*
+     * Version of the application.
+     */
     private $_applicationVersion;
+
+    /*
+     * Array of parsed arguments passed in the command line.
+     */
     private $_userPassedArgv = array();
+
+    /*
+     * Available commands created and passed in with aliases to call each command.
+     */
     private $_commands = array();
+
+    /*
+     * These are options global to all commands for the application.
+     */
     private $_applicationOptions = array(
         'quiet'   => array(
             'aliases'     => array(

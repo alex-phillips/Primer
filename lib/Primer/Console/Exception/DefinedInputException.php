@@ -1,9 +1,8 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: exonintrendo
- * Date: 9/27/14
- * Time: 9:29 PM
+ * DefinedInputException
+ *
+ * @author Alex Phillips <exonintrendo@gmail.com>
  */
 
 namespace Primer\Console\Exception;
