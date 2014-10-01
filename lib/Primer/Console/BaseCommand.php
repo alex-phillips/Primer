@@ -13,7 +13,7 @@ use Primer\Console\Interfaces\CommandInterface;
 use Primer\Console\Output\Writer;
 use Primer\Console\Exception\DefinedInputException;
 
-class BaseCommand extends ConsoleObject implements CommandInterface
+abstract class BaseCommand extends ConsoleObject implements CommandInterface
 {
     public $parsedArgv;
     protected $_description = '';
@@ -28,9 +28,7 @@ class BaseCommand extends ConsoleObject implements CommandInterface
     {
     }
 
-    public function run()
-    {
-    }
+    abstract public function run();
 
     public function setup($aliases, $args, $applicationOptions)
     {
