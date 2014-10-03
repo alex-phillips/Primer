@@ -77,6 +77,8 @@ class Application extends Container
             }
         );
 
+        Model::init($this->make('Primer\\Datasource\\Database'));
+
         $this->_session = $this->make('Primer\\Session\\Session');
         $this->_auth = $this->make('Primer\\Security\\Auth');
         $this->_router = $this->make('Primer\\Routing\\Router');
@@ -232,8 +234,6 @@ class Application extends Container
             if (is_array($dispatch)) {
                 $this->setValue('conroller', $this->_router->getController());
                 $this->setValue('action', $this->_router->getAction());
-
-                Model::init($this->make('Primer\\Datasource\\Database'));
 
                 /*
                  * Check if chosen controller exists, otherwise, 404
