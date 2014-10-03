@@ -76,12 +76,6 @@ class Application extends Container
                 return new Mail($this['config']['email']);
             }
         );
-
-        Model::init($this->make('Primer\\Datasource\\Database'));
-
-        $this->_session = $this->make('Primer\\Session\\Session');
-        $this->_auth = $this->make('Primer\\Security\\Auth');
-        $this->_router = $this->make('Primer\\Routing\\Router');
     }
 
     private function _readConfigs()
@@ -221,6 +215,12 @@ class Application extends Container
 
     public function run()
     {
+        Model::init($this->make('Primer\\Datasource\\Database'));
+
+        $this->_session = $this->make('Primer\\Session\\Session');
+        $this->_auth = $this->make('Primer\\Security\\Auth');
+        $this->_router = $this->make('Primer\\Routing\\Router');
+
         require_once(APP_ROOT . '/Config/routes.php');
 
         if ($this->isRunningInConsole()) {
