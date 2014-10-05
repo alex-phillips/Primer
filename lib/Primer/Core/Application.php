@@ -215,9 +215,21 @@ class Application extends Container
 
     public function run()
     {
+        $this->_session = $this->make('Primer\\Session\\Session');
+
+        /*
+         * If the server is down for maintenance, only instantiate necessary
+         * objects to send response.
+         */
+        if ($this->isServerDown()) {
+            $this['view']->set('title', 'Down for Maintenance');
+            $this['view']->useTemplate('ajax');
+            $this['response']->set($this['view']->render('error/maintenance'))->send();
+            exit(1);
+        }
+
         Model::init($this->make('Primer\\Datasource\\Database'));
 
-        $this->_session = $this->make('Primer\\Session\\Session');
         $this->_auth = $this->make('Primer\\Security\\Auth');
         $this->_router = $this->make('Primer\\Routing\\Router');
 
@@ -316,7 +328,7 @@ class Application extends Container
         }
         else {
             if ($this->_router->getAction()[0] === '_') {
-                $this->_router->error404();
+                $this->abort(404);
             }
         }
 
@@ -537,7 +549,7 @@ class Application extends Container
 
     private function isServerDown()
     {
-        if (file_exists(APP_ROOT . DS . 'Configs/down')) {
+        if (file_exists(APP_ROOT . DS . 'Config/down')) {
             return true;
         }
 
