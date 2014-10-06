@@ -224,7 +224,7 @@ class Application extends Container
         if ($this->isServerDown()) {
             $this['view']->set('title', 'Down for Maintenance');
             $this['view']->useTemplate('ajax');
-            $this['response']->set($this['view']->render('error/maintenance'))->send();
+            $this['response']->set($this['view']->render('errors/maintenance'))->send();
             exit(1);
         }
 
