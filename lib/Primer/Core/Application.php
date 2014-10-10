@@ -259,6 +259,11 @@ class Application extends Container
                         $this->_router->getController()
                     );
                     $this->_controller = new $controllerName();
+
+                    foreach ($this->_controller->components as $component) {
+                        $this->_controller->$component = $this->make(strtolower($component));
+                    }
+
                     $this['view']->paginator = new Paginator($this->_controller->paginationConfig);
                     $this['view']->paginationConfig = $this->_controller->paginationConfig;
                     $this->_callControllerMethod();

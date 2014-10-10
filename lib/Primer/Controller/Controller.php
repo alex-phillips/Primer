@@ -3,13 +3,18 @@
 namespace Primer\Controller;
 
 use Primer\Utility\Inflector;
-use Primer\Utility\Paginator;
 
 /**
  * This is the "base controller class". All other "real" controllers extend this class.
  */
 class Controller
 {
+    /////////////////////////////////////////////////
+    // PROPERTIES, PUBLIC
+    /////////////////////////////////////////////////
+
+    public $components = array();
+
     /*
      * Default pagination settings
      */
@@ -40,6 +45,16 @@ class Controller
 
         // Load Model (if controller's model exists)
         $this->loadModel();
+    }
+
+    public function __set($key, $value)
+    {
+        if ($key === 'components') {
+            array_merge($this->components, $value);
+        }
+        else {
+            $this->$key = $value;
+        }
     }
 
     /**
