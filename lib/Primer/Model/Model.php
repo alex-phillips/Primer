@@ -353,18 +353,18 @@ abstract class Model extends Object
         $returnObjects = true;
 
         $where = '';
-        if (isset($params['conditions'])) {
+        if (isset($params['conditions']) && $params['conditions']) {
             $where = 'WHERE ' . static::_buildFindConditions(
                     $params['conditions']
                 );
         }
 
         $fields = '*';
-        if (isset($params['fields']) && is_array($params['fields'])) {
+        if (isset($params['fields']) && is_array($params['fields']) && $params['fields']) {
             $fields = implode(', ', $params['fields']);
         }
         else {
-            if (isset($params['fields']) && is_string($params['fields'])) {
+            if (isset($params['fields']) && is_string($params['fields']) && $params['fields']) {
                 $fields = $params['fields'];
             }
         }
@@ -377,17 +377,17 @@ abstract class Model extends Object
         }
 
         $order = '';
-        if (isset($params['order'])) {
+        if (isset($params['order']) && $params['order']) {
             $order = 'ORDER BY ' . implode(', ', $params['order']);
         }
 
         $limit = '';
-        if (isset($params['limit'])) {
+        if (isset($params['limit']) && $params['limit']) {
             $limit = 'LIMIT ' . $params['limit'];
         }
 
         $offset = '';
-        if (isset($params['offset'])) {
+        if (isset($params['offset']) && $params['offset']) {
             $offset = 'OFFSET ' . $params['offset'];
         }
 
