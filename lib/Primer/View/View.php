@@ -188,7 +188,7 @@ class View extends Object
         if (is_array($key)) {
             foreach ($key as $k => $v) {
                 $this->$k = $v;
-            }
+            }ixed
         }
         else {
             $this->$key = $value;
@@ -206,16 +206,22 @@ class View extends Object
                 array('conditions' => $conditions)
             )
         );
+
+        $params = array(
+            'conditions' => $conditions,
+            'limit' => $this->paginator->get_limit(),
+        );
+
+        if (isset($this->paginationConfig['order'])) {
+            $params['order'] = $this->paginationConfig['order'];
+        }
+
         return call_user_func(
             array(
                 $modelName,
                 'find'
             ),
-            array(
-                'conditions' => $conditions,
-                'limit'      => $this->paginator->get_limit(),
-                'order'      => $this->paginationConfig['order'],
-            )
+            $params
         );
     }
 
