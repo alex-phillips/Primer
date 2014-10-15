@@ -133,7 +133,9 @@ class View extends Object
     public function render($view)
     {
         // @TODO: modify code to use a proper reponse class
-        ob_clean();
+        if (ob_get_contents()) {
+            ob_clean();
+        }
         ob_start();
 
         if ($this->filename) {
@@ -147,8 +149,10 @@ class View extends Object
 
         $this->Session->delete('messages');
 
-        $response = ob_get_contents();
-        ob_end_clean();
+        $response = '';
+        if ($response = ob_get_contents()) {
+            ob_end_clean();
+        }
 
         return $response;
     }
