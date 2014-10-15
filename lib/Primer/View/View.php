@@ -188,7 +188,7 @@ class View extends Object
         if (is_array($key)) {
             foreach ($key as $k => $v) {
                 $this->$k = $v;
-            }ixed
+            }
         }
         else {
             $this->$key = $value;
