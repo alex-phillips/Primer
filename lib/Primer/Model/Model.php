@@ -427,6 +427,11 @@ abstract class Model extends Object
      */
     protected static function _buildFindConditions($conditions, $conjunction = '')
     {
+        // @TODO: $this->User->find( 'all', array(
+        //        'conditions' => array("not" => array ( "User.site_url" => null)
+        //    ))
+        //
+        // Add 'not' functionality
         $retval = array();
         foreach ($conditions as $k => $v) {
             if ((strtoupper($k) === 'OR' || strtoupper($k) === 'AND') && is_array($v)) {
@@ -435,18 +440,40 @@ abstract class Model extends Object
                         strtoupper($k)
                     ) . ')';
             }
+            else if ($conjunction == 'NOT') {
+                // @TODO: need to fully test this - not ready for production
+                if (is_array($v)) {
+//                    $v = implode(',', $v);
+//                    return ""
+                }
+                else {
+                    self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
+                    return "$k IS NOT :$v";
+                }
+            }
             else {
                 if (is_array($v)) {
                     $retval[] = static::_buildFindConditions($v);
                 }
                 else {
-                    if (preg_match('# LIKE$#', $k)) {
-                        $retval[] = "$k :$k" . sizeof(self::$_bindings) . "";
+                    $binding = $k;
+                    $operators = array(
+                        'LIKE',
+                        '!=',
+                    );
+                    if (preg_match('#\s+(' . implode('|', $operators) . ')\s*$#', $k, $matches)) {
+                        $binding = preg_replace("#{$matches[0]}#", '', $k);
+                        switch ($matches[1]) {
+                            case 'LIKE':
+                                $v = "%$v%";
+                                break;
+                        }
+                        $retval[] = "$k :$binding" . sizeof(self::$_bindings) . "";
                     }
                     else {
-                        $retval[] = "$k = :$k" . sizeof(self::$_bindings) . "";
+                        $retval[] = "$k = :$binding" . sizeof(self::$_bindings) . "";
                     }
-                    self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
+                    self::$_bindings[":$binding" . sizeof(self::$_bindings)] = $v;
                 }
             }
         }
@@ -528,7 +555,6 @@ abstract class Model extends Object
         }
 
         if ($this->beforeSave() == false) {
-            $this->errors[] = "beforeSave function returned false";
             return false;
         }
 
@@ -560,7 +586,9 @@ abstract class Model extends Object
             }
         }
 
-        self::$_db->beginTransaction();
+        if (!self::$_db->inTransaction()) {
+            self::$_db->beginTransaction();
+        }
 
         // If ID is not null, then UPDATE row in the database, else INSERT new row
         if ($this->{"{$this->_idField}"} !== null) {
@@ -599,6 +627,20 @@ abstract class Model extends Object
             $success = $sth->execute(self::$_bindings);
             $this->{"{$this->_idField}"} = self::$_db->lastInsertId();
         }
+
+        /*
+         * Here is where we handle various relationships
+         */
+//        if (isset($this->hasOne) && $this->hasOne) {
+//            $hasOne = call_user_func(array($this->hasOne, 'findById'), $this->{$this->getForeignIdField($this->hasOne)});
+//            if ($hasOne) {
+//                $hasOne->{$this->getForeignIdField($this->_className)} = $this->{$this->getForeignIdField($this->hasOne)};
+//                if (!$hasOne->save()) {
+//                    self::$_db->rollBack();
+//                    return false;
+//                }
+//            }
+//        }
 
         if ($this->afterSave() == false) {
             self::$_db->rollBack();
