@@ -22,6 +22,7 @@ class Form extends Object
     private $_validate = array();
     private $_markup = '';
     private $request;
+    private $_method;
 
     public function __construct(Router $router, Request $request)
     {
@@ -33,17 +34,22 @@ class Form extends Object
     public function create($object, $method = 'post', $params = null)
     {
         $modelName = $this->getModelName($object);
-        $this->_model = call_user_func(array($modelName, 'create'));
-        $class = "";
+        if (class_exists($modelName)) {
+            $this->_model = call_user_func(array($modelName, 'create'));
 
-        // TODO: there's gotta be a better way to do this...
-        $this->_objectName = call_user_func(
-            array($this->_model, 'getClassName')
-        );
-        $this->_schema = call_user_func(array($this->_model, 'getSchema'));
-        $this->_validate = call_user_func(
-            array($this->_model, 'getValidationArray')
-        );
+            // TODO: there's gotta be a better way to do this...
+            $this->_objectName = call_user_func(
+                array($this->_model, 'getClassName')
+            );
+            $this->_schema = call_user_func(array($this->_model, 'getSchema'));
+            $this->_validate = call_user_func(
+                array($this->_model, 'getValidationArray')
+            );
+        }
+
+        $this->_method = $method;
+
+        $class = "";
 
         $action = '';
         if (isset($params['action'])) {
@@ -188,7 +194,13 @@ __TEXT__;
             }
         }
 
-        $form_name = "data[{$this->_objectName}][$name]";
+        if (strtolower($this->_method) == 'get') {
+            $form_name = "$name";
+        }
+        else {
+            $form_name = "data[{$this->_objectName}][$name]";
+        }
+
         if ($type === 'file') {
             $form_name = 'file' . self::$_fileCounter;
             self::$_fileCounter++;
