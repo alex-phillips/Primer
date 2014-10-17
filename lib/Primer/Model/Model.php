@@ -16,64 +16,75 @@ use Primer\Datasource\Database;
  */
 abstract class Model extends Object
 {
-    /////////////////////////////////////////////////
-    // PROPERTIES, PUBLIC
-    /////////////////////////////////////////////////
-
-    /*
-     * Array that contains validation and save error messages
-     */
-    protected static $_schema = array();
-
-    /////////////////////////////////////////////////
-    // PROPERTIES, PRIVATE AND PROTECTED
-    /////////////////////////////////////////////////
-
-    /*
-     * This is the ID field in the database for the object. This is stored so
-     * we know what the primary key for the table is for each model.
-     */
-    protected static $_validate = array();
-
-    /*
-     * Name of the model's table in the database. This is set automatically
-     * unless overridden.
-     */
-    protected static $_db;
-
-    /*
-     * Name of the current instance's model. Used for automatically creating
-     * new instances when returning objects. Ex: user, post
-     */
-    protected static $_bindings = array();
-
-    /*
+    /**
      * Schema variable is built from the table in the database for the Model.
      * This is used to determine what values to set, default values, and what
      * to insert and update in the database when the save() method is called.
+     *
+     * @var array
      */
-    public $errors = array();
+    protected static $_schema = array();
 
-    /*
+    /**
      * Validation array contains rules to check on each model field.
      * This is not validation for forms or client-side validation, but
      * validation before a model is created or updated in the database.
+     *
+     * @var array
+     */
+    protected static $_validate = array();
+
+    /**
+     * Database variable to handle all query creations and executions.
+     *
+     * @var
+     */
+    protected static $_db;
+
+    /**
+     * Array of variables to pass to PDO to bind in preparing DB queries
+     *
+     * @var array
+     */
+    protected static $_bindings = array();
+
+    /**
+     * Array that contains validation and save error messages
+     *
+     * @var array
+     */
+    public $errors = array();
+
+    /**
+     * This is the ID field in the database for the object. This is stored so
+     * we know what the primary key for the table is for each model.
+     *
+     * @var string
      */
     protected $_idField;
 
-    /*
-     * Database variable to handle all query creations and executions.
+    /**
+     * Name of the model's table in the database. This is set automatically
+     * unless overridden.
+     *
+     * @var string
      */
     protected $_tableName;
 
-    /*
-     * Array of variables to pass to PDO to bind in preparing DB queries
+    /**
+     * Name of the current instance's model. Used for automatically creating
+     * new instances when returning objects. Ex: user, post
+     *
+     * @var string
      */
     protected $_className;
 
     /**
-     * creates a PDO database connection when a model is constructed
-     * We are using the try/catch error/exception handling here
+     * Constructor for every model class. This is protected as every model
+     * instantiated outside of this class should use the static function
+     * 'create'.
+     *
+     * @param array $params
      */
     protected function __construct($params = array())
     {
