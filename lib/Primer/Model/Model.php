@@ -145,9 +145,11 @@ abstract class Model extends Object
      *
      * @return string
      */
-    public static function getTableName()
+    public static function getTableName($class = null)
     {
-        return Inflector::pluralize(strtolower(get_called_class()));
+        $class = $class ?: get_called_class();
+
+        return Inflector::pluralize(strtolower($class));
     }
 
     /**
@@ -372,19 +374,31 @@ abstract class Model extends Object
 
         $fields = '*';
         if (isset($params['fields']) && is_array($params['fields']) && $params['fields']) {
+            foreach ($params['fields'] as $index => $field) {
+                $params['fields'][$index] = static::getTableName() . ".$field";
+            }
             $fields = implode(', ', $params['fields']);
         }
         else {
             if (isset($params['fields']) && is_string($params['fields']) && $params['fields']) {
-                $fields = $params['fields'];
+                $fields = static::getTableName() . ".{$params['fields']}";
             }
         }
 
+//        $join = '';
+//        if (isset(static::$hasMany)) {
+//            if (is_array(static::$hasMany)) {
+//
+//            }
+//            else {
+//                $foreignTable = static::getTableName(static::$hasMany);
+//                $join = 'LEFT JOIN ' . $foreignTable . ' ON ' . static::getModelName() . '.' . static::getIdField() . ' = ' . static::getModelName(static::$hasMany) . '.'. static::getForeignIdField();
+//            }
+//        }
+
         if (isset($params['count']) && $params['count'] === true) {
-            if ($fields === '*' || is_string($params['fields'])) {
-                $fields = 'COUNT(' . $fields . ')';
-                $returnObjects = false;
-            }
+            $fields = 'COUNT(' . $fields . ')';
+            $returnObjects = false;
         }
 
         $order = '';
@@ -402,7 +416,7 @@ abstract class Model extends Object
             $offset = 'OFFSET ' . $params['offset'];
         }
 
-        $query = "SELECT $fields FROM {$tableName} $where $order $limit $offset;";
+        $query = "SELECT {$fields} FROM {$tableName} {$where} {$order} {$limit} {$offset};";
 
         $sth = self::$_db->prepare($query);
         $sth->execute(self::$_bindings);
@@ -522,8 +536,10 @@ abstract class Model extends Object
      *
      * @return string
      */
-    public static function getForeignIdField($class)
+    public static function getForeignIdField($class = null)
     {
+        $class = $class ?: get_called_class();
+
         return 'id_' . self::getClassName($class);
     }
 
