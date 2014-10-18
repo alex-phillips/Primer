@@ -15,8 +15,10 @@ use Primer\Utility\Inflector;
  */
 abstract class Object
 {
-    public static function getControllerName($string)
+    public static function getControllerName($string = null)
     {
+        $string = $string ?: get_called_class();
+
         return ucfirst(Inflector::pluralize($string) . 'Controller');
     }
 
