@@ -15,17 +15,19 @@ use Primer\Utility\Inflector;
  */
 abstract class Object
 {
-    public function getControllerName($string)
+    public static function getControllerName($string)
     {
         return ucfirst(Inflector::pluralize($string) . 'Controller');
     }
 
-    public function getModelName($string)
+    public static function getModelName($string = null)
     {
+        $string = $string ?: get_called_class();
+
         return ucfirst(Inflector::singularize($string));
     }
 
-    public function logMessage($msg, $filename = 'core.log')
+    public static function logMessage($msg, $filename = 'core.log')
     {
         $pid = getmypid();
         $dt = date("Y-m-d H:i:s (T)");
