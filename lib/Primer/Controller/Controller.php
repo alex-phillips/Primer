@@ -15,21 +15,26 @@ class Controller
 
     public $components = array();
 
-    /*
+    /**
      * Default pagination settings
+     *
+     * @var array
      */
     public $paginationConfig = array(
-        'perPage' => 10,
-        'instance' => 'p'
-    );
+            'perPage'  => 10,
+            'instance' => 'p',
+            'query'    => 'q',
+        );
 
     /////////////////////////////////////////////////
     // PROPERTIES, PRIVATE AND PROTECTED
     /////////////////////////////////////////////////
 
-    /*
+    /**
      * Variable of the model name of the controller
      * i.e. 'User' model for UsersController
+     *
+     * @var string
      */
     protected $_modelName;
 
@@ -50,7 +55,7 @@ class Controller
     public function __set($key, $value)
     {
         if ($key === 'components') {
-            array_merge($this->components, $value);
+            array_merge($this->$key, $value);
         }
         else {
             $this->$key = $value;
