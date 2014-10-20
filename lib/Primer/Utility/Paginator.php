@@ -30,6 +30,13 @@ class Paginator extends Object
     private $_instance;
 
     /**
+     * Set the query string to preserve in pagination links
+     *
+     * @var
+     */
+    private $_queryString;
+
+    /**
      * sets the page number.
      *
      * @var numeric
@@ -60,6 +67,7 @@ class Paginator extends Object
     {
         $this->_perPage = $params['perPage'];
         $this->_instance = $params['instance'];
+        $this->_queryString = $params['query'];
 
         $this->set_instance();
     }
@@ -207,6 +215,10 @@ class Paginator extends Object
         $next = $this->_page + 1;
         $lastpage = ceil($this->_totalRows / $this->_perPage);
         $lpm1 = $lastpage - 1;
+
+        if (isset($_GET[$this->_queryString])) {
+            $path .= "{$this->_queryString}={$_GET[$this->_queryString]}&";
+        }
 
         $pagination = "";
         if ($lastpage > 1) {
