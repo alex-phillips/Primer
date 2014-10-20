@@ -4,44 +4,55 @@ namespace Primer\View;
 
 use Primer\Session\Session;
 use Primer\Core\Object;
-use Primer\Routing\Router;
 
 /**
  * Class View
  */
 class View extends Object
 {
-    /*
+    /**
      * Additional CSS files to be included at render
+     *
+     * @var string
      */
-    private static $_cssFiles = '';
+    private static $_cssFiles = array();
 
-    /*
+    /**
      * Additional JS files to be included at render
+     *
+     * @var array
      */
     private static $_jsFiles = array();
 
     public $paginationConfig = array();
 
-    /*
+    /**
      * This variable holds the filename of the view to be rendered inside the
      * template
+     *
+     * @var
      */
     public $filename;
 
-    /*
+    /**
      * Title that is used in the HTML tag. Also accessible in views and templates
+     *
+     * @var string
      */
     public $title = '';
 
-    /*
+    /**
      * Variable that holds the paginator object to build pagination as well as
      * the paging links
+     *
+     * @var
      */
     public $paginator;
 
-    /*
+    /**
      * This determines the template file that is to be used
+     *
+     * @var string
      */
     public $template = 'default';
 
