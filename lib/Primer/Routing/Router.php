@@ -46,12 +46,13 @@ class Router extends Object
         foreach ($this->_routes as $path => $route) {
             $path = $this->parseUrl($path);
 
+            /*
+             * This handles the case of the root path
+             */
             if ($path === $this->_url && empty($path)) {
                 $this->_controller = $route['controller'];
                 $this->_action = $route['action'];
-                if (sizeof($this->_url) > 2) {
-                    $this->_args = array_slice($this->_url, 2);
-                }
+                $this->_args = array_slice($route, 2);
 
                 $route['args'] = $this->_args;
 
@@ -64,7 +65,7 @@ class Router extends Object
                 if (!isset($this->_url[0])) {
                     continue;
                 }
-                if (preg_match('#:.*#', $path[0], $matches)) {
+                if (preg_match('#\A:#', $path[0], $matches)) {
                     $tmp[str_replace(':', '', $matches[0])] = $this->_url[0];
                 }
                 else {
@@ -78,6 +79,7 @@ class Router extends Object
                     continue;
                 }
             }
+
             if (isset($path[1])) {
                 if (!isset($this->_url[1])) {
                     continue;
