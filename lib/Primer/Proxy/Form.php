@@ -14,4 +14,9 @@ class Form extends Proxy
     {
         return 'form';
     }
+
+    public static function create($name, $method = "POST", $action = '', $attributes = '')
+    {
+        return new \Primer\Form\Form($name, $method, $action, $attributes);
+    }
 }
