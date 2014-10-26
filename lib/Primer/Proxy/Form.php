@@ -17,6 +17,8 @@ class Form extends Proxy
 
     public static function create($name, $method = "POST", $action = '', $attributes = '')
     {
-        return new \Primer\Form\Form($name, $method, $action, $attributes);
+        $form = new \Primer\Form\Form($name, $method, $action, $attributes);
+        $form->assetsPath(APP_ROOT . '/public/libs/Form/', '/libs/Form/');
+        return $form;
     }
 }
