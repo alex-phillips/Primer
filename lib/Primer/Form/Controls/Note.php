@@ -154,7 +154,7 @@ class Note extends Control
     function toHTML()
     {
 
-        $attributes = $this->get_attributes('caption');
+        $attributes = $this->getAttributes('caption');
         
         return '<div ' . $this->_render_attributes() . '>' . $attributes['caption'] . '</div>';
 

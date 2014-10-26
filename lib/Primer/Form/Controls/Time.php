@@ -163,7 +163,7 @@ class Time extends Control
     {
 
         // get some attributes of the control
-        $attributes = $this->get_attributes(array('name', 'value', 'class', 'format', 'hours', 'minutes', 'seconds'));
+        $attributes = $this->getAttributes(array('name', 'value', 'class', 'format', 'hours', 'minutes', 'seconds'));
 
         // make sure format is in lower characters
         $attributes['format'] = strtolower($attributes['format']);

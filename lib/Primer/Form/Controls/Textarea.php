@@ -142,7 +142,7 @@ class Textarea extends Control
     {
 
         // get private attributes
-        $attributes = $this->get_attributes('value');
+        $attributes = $this->getAttributes('value');
 
         return '<textarea ' . $this->_render_attributes() . '>' . (isset($attributes['value']) ? $attributes['value'] : '') . '</textarea>';
 

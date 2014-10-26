@@ -172,7 +172,7 @@ class Label extends Control
     {
 
         // get private attributes
-        $attributes = $this->get_attributes('label');
+        $attributes = $this->getAttributes('label');
         
         // if access key needs to be showed
         if (preg_match('/\$(.{1})/', $attributes['label'], $matches) > 0) {

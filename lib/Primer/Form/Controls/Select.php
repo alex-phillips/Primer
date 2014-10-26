@@ -245,7 +245,7 @@ class Select extends Control
         if (is_array($options)) {
 
             // get some properties of the select control
-            $attributes = $this->get_attributes(array('options', 'multiple'));
+            $attributes = $this->getAttributes(array('options', 'multiple'));
 
             // if there are no options so far AND
             // we're not overwriting existing options AND
@@ -291,7 +291,7 @@ class Select extends Control
     {
 
         // get the options of the select control
-        $attributes = $this->get_attributes(array('options', 'value', 'multiple', 'other'));
+        $attributes = $this->getAttributes(array('options', 'value', 'multiple', 'other'));
 
         // if select box is not "multi-select" and the "other" attribute is set
         if (!isset($attributes['multiple']) && isset($attributes['other']))

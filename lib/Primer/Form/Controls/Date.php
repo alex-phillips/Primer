@@ -472,7 +472,7 @@ class Date extends Control
     function get_date()
     {
 
-        $result = $this->get_attributes('date');
+        $result = $this->getAttributes('date');
 
         // if control had a value return it, or return an empty string otherwise
         return (isset($result['date'])) ? $result['date'] : '';

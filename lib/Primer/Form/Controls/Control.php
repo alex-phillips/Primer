@@ -171,7 +171,7 @@ class Control extends XSSClean
      *  ));
      *
      *  // retrieve the attributes
-     *  $attributes = $obj->get_attributes(array('readonly', 'style'));
+     *  $attributes = $obj->getAttributes(array('readonly', 'style'));
      *
      *  // the result will be an associative array
      *  //
@@ -186,7 +186,7 @@ class Control extends XSSClean
      *  @return array                   Returns an associative array where keys are the attributes and the values are
      *                                  each attribute's value, respectively.
      */
-    function get_attributes($attributes)
+    function getAttributes($attributes)
     {
 
         // initialize the array that will be returned
@@ -228,7 +228,7 @@ class Control extends XSSClean
     {
 
         // get some attributes of the control
-        $attribute = $this->get_attributes(array('name', 'type', 'value', 'disable_xss_filters', 'locked'));
+        $attribute = $this->getAttributes(array('name', 'type', 'value', 'disable_xss_filters', 'locked'));
 
         // if control's value is not locked to the default value
         if ($attribute['locked'] !== true) {
@@ -475,7 +475,7 @@ class Control extends XSSClean
         $method = & ${'_' . $this->form_properties['method']};
 
         // get some attributes of the control
-        $attributes = $this->get_attributes(array('type', 'name', 'other'));
+        $attributes = $this->getAttributes(array('type', 'name', 'other'));
 
         // sanitize the control's name
         $attributes['name'] = preg_replace('/\[\]/', '', $attributes['name']);
@@ -559,7 +559,7 @@ class Control extends XSSClean
      *  ));
      *
      *  // retrieve the attributes
-     *  $attributes = $obj->get_attributes(array('readonly', 'style'));
+     *  $attributes = $obj->getAttributes(array('readonly', 'style'));
      *
      *  // the result will be an associative array
      *  //
@@ -1877,7 +1877,7 @@ class Control extends XSSClean
      *
      *  @return void
      */
-    function set_rule($rules)
+    function setRule($rules)
     {
 
         // continue only if argument is an array
