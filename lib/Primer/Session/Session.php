@@ -95,6 +95,7 @@ class Session extends Object
         if ($this->read('Auth')) {
             return true;
         }
+
         return false;
     }
 
