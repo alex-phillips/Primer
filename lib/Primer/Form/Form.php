@@ -1,5 +1,28 @@
 <?php
 
+namespace Primer\Form;
+
+use Primer\Form\Controls\XSSClean;
+use Primer\Form\Controls\Control;
+use Primer\Form\Controls\Button;
+use Primer\Form\Controls\Captcha;
+use Primer\Form\Controls\Checkbox;
+use Primer\Form\Controls\Date;
+use Primer\Form\Controls\File;
+use Primer\Form\Controls\Hidden;
+use Primer\Form\Controls\Image;
+use Primer\Form\Controls\Label;
+use Primer\Form\Controls\Note;
+use Primer\Form\Controls\Password;
+use Primer\Form\Controls\Radio;
+use Primer\Form\Controls\Reset;
+use Primer\Form\Controls\Select;
+use Primer\Form\Controls\Submit;
+use Primer\Form\Controls\Text;
+use Primer\Form\Controls\Textarea;
+use Primer\Form\Controls\Time;
+use ReflectionClass;
+
 define('ZEBRA_FORM_UPLOAD_RANDOM_NAMES', false);
 
 /**
@@ -33,8 +56,9 @@ define('ZEBRA_FORM_UPLOAD_RANDOM_NAMES', false);
  *  @package    Zebra_Form
  */
 
-class Zebra_Form
+class Form
 {
+    private $_markup = '';
 
     /**
      *  Array containing all the controls added to the form
@@ -80,7 +104,7 @@ class Zebra_Form
      *  same name (for example, if at the path where a file named "example.txt" is uploaded to, a file with the same name
      *  exists, the file's new name will be "example1.txt").
      *
-     *  The file names can also be random-generated. See the {@link Zebra_Form_Control::set_rule() set_rule()} method and
+     *  The file names can also be random-generated. See the {@link Zebra_Form_Control::setRule() setRule()} method and
      *  the <b>upload</b> rule
      *
      *  @var    array
@@ -89,7 +113,7 @@ class Zebra_Form
 
     /**
      *  Indicates the {@link http://en.wikipedia.org/wiki/Filesystem_permissions filesystem} permissions to be set for
-     *  files uploaded through the {@link Zebra_Form_Control::set_rule() upload} rule.
+     *  files uploaded through the {@link Zebra_Form_Control::setRule() upload} rule.
      *
      *  <code>
      *  $form->file_upload_permissions = '0777';
@@ -130,38 +154,33 @@ class Zebra_Form
     var $variables;
 
     /**
-     *  Constructor of the class
+     * Constructor of the class
      *
-     *  Initializes the form.
+     * Initializes the form.
      *
-     *  <code>
-     *  $form = new Zebra_Form('myform');
-     *  </code>
+     * <code>
+     * $form = new Zebra_Form('myform');
+     * </code>
      *
-     *  @param  string  $name           Name of the form
+     * @param string $name          Name of the form
+     * @param string $method        (Optional) Specifies which HTTP method will be used to submit the form data set.
      *
-     *  @param  string  $method         (Optional) Specifies which HTTP method will be used to submit the form data set.
+     *                              Possible (case-insensitive) values are <b>POST</b> an <b>GET</b>
      *
-     *                                  Possible (case-insensitive) values are <b>POST</b> an <b>GET</b>
+     *                              Default is <b>POST</b>
+     * @param string $action        (Optional) An URI to where to submit the form data set.
      *
-     *                                  Default is <b>POST</b>
+     *                              If left empty, the form will submit to itself.
      *
-     *  @param  string  $action         (Optional) An URI to where to submit the form data set.
+     *                              <samp>You should *always* submit the form to itself, or server-side validation
+     *                              will not take place and you will have a great security risk. Submit the form
+     *                              to itself, let it do the server-side validation, and then redirect accordingly!</samp>
+     * @param string $attributes    (Optional) An array of attributes valid for a <form> tag (i.e. style)
      *
-     *                                  If left empty, the form will submit to itself.
+     *                              Note that the following attributes are automatically set when the control is
+     *                              created and should not be altered manually:
      *
-     *                                  <samp>You should *always* submit the form to itself, or server-side validation
-     *                                  will not take place and you will have a great security risk. Submit the form
-     *                                  to itself, let it do the server-side validation, and then redirect accordingly!</samp>
-     *
-     *  @param  array   $attributes     (Optional) An array of attributes valid for a <form> tag (i.e. style)
-     *
-     *                                  Note that the following attributes are automatically set when the control is
-     *                                  created and should not be altered manually:
-     *
-     *                                  <b>action</b>, <b>method</b>, <b>enctype</b>, <b>name</b>
-     *
-     *  @return void
+     *                              <b>action</b>, <b>method</b>, <b>enctype</b>, <b>name</b>
      */
     function __construct($name, $method = 'POST', $action = '', $attributes = '')
     {
@@ -230,11 +249,11 @@ class Zebra_Form
         $this->form_properties['max_file_size'] = $value;
 
         // include the XSS filter class - the Zebra_Form_Control class extends this class
-        require_once dirname(__FILE__) . '/includes/XSSClean.php';
+//        require_once dirname(__FILE__) . '/includes/XSSClean.php';
 
         // include the Control.php file which contains the Zebra_Form_Control class which is
         // extended by all of the classes
-        require_once dirname(__FILE__) . '/includes/Control.php';
+//        require_once dirname(__FILE__) . '/includes/Control.php';
 
         // load the default language file
         $this->language('english');
@@ -256,7 +275,7 @@ class Zebra_Form
      *  $obj = $form->add('text', 'my_text');
      *
      *  // make the text field required
-     *  $obj->set_rule(
+     *  $obj->setRule(
      *       'required' => array(
      *          'error',            // variable to add the error message to
      *          'Field is required' // error message if value doesn't validate
@@ -379,10 +398,10 @@ class Zebra_Form
             $file_name = ucfirst(strtolower($type));
 
             // the classes have the "Zebra_Form_" prefix
-            $class_name = 'Zebra_Form_' . ucfirst(strtolower($type));
+            $class_name = 'Primer\\Form\\Controls\\' . ucfirst(strtolower($type));
 
             // include the file containing the PHP class, if not already included
-            require_once dirname(__FILE__) . '/includes/' . $file_name . '.php';
+//            require_once dirname(__FILE__) . '/includes/' . $file_name . '.php';
 
             // if included file contains such a class
             if (class_exists($class_name)) {
@@ -402,7 +421,7 @@ class Zebra_Form
                 $obj->form_properties = & $this->form_properties;
 
                 // get some attributes for the newly created control
-                $attributes = $obj->get_attributes(array('id', 'name'));
+                $attributes = $obj->getAttributes(array('id', 'name'));
 
                 // perform some extra tasks for different types of controls
                 switch ($class_name) {
@@ -456,7 +475,7 @@ class Zebra_Form
     }
 
     /**
-     *  Appends a message to an already existing {@link Zebra_Form_Control::set_rule() error block}
+     *  Appends a message to an already existing {@link Zebra_Form_Control::setRule() error block}
      *
      *  <code>
      *  //  create a new form
@@ -466,7 +485,7 @@ class Zebra_Form
      *  $obj = $form->add('text', 'my_text');
      *
      *  // make the text field required
-     *  $obj->set_rule(
+     *  $obj->setRule(
      *       'required' => array(
      *          'error',            // variable to add the error message to
      *          'Field is required' // error message if value doesn't validate
@@ -504,7 +523,7 @@ class Zebra_Form
      *
      *  @return void
      */
-    function add_error($error_block, $error_message)
+    function addError($error_block, $error_message)
     {
 
         // if the error block was not yet created, create the error block
@@ -547,7 +566,7 @@ class Zebra_Form
      *
      *  @return void
      */
-    function assets_path($server_path, $url)
+    function assetsPath($server_path, $url)
     {
 
         // set values
@@ -601,12 +620,12 @@ class Zebra_Form
      *  <b>Notes:</b>
      *
      *  -   unless overridden, the value of {@link Zebra_Form_Password password} controls will always be "12345678";
-     *  -   unless overridden, the value of controls having the "email" or "emails" {@link Zebra_Form_Control::set_rule() rule}
+     *  -   unless overridden, the value of controls having the "email" or "emails" {@link Zebra_Form_Control::setRule() rule}
      *      set will be in the form of <i>random_text@random_text.com</i>;
-     *  -   unless overridden, the value of controls having the "url" {@link Zebra_Form_Control::set_rule() rule} set will
+     *  -   unless overridden, the value of controls having the "url" {@link Zebra_Form_Control::setRule() rule} set will
      *      be in the form of <i>random_text.com</i>, prefixed or not with "http://", depending on the rule's attributes;
      *  -   {@link Zebra_Form_File file upload} controls and controls having the "captcha" or "regexp"
-     *      {@link Zebra_Form_Control::set_rule() rule} set will *not* be autofilled;
+     *      {@link Zebra_Form_Control::setRule() rule} set will *not* be autofilled;
      *
      *  <samp>This method will produce results *only* if the form has not yet been submitted! Also, this method will fill
      *  elements with random content *only* if the element does not already has a default value! And finally, this method
@@ -620,11 +639,11 @@ class Zebra_Form
      *
      *                                      <code>
      *                                      // auto-fill all fields with random values
-     *                                      $form->auto_fill();
+     *                                      $form->autoFill();
      *
      *                                      // auto-fill all fields with random values
      *                                      // except the one called "email" which should have a custom value
-     *                                      $form->auto_fill(array(
+     *                                      $form->autoFill(array(
      *                                          'email'     =>  'some@email.com',
      *                                      ));
      *
@@ -632,7 +651,7 @@ class Zebra_Form
      *                                      // except a checkboxes group where we select multiple values
      *                                      // note that we use "my_checkboxes" insteas of "my_checkboxes[]"
      *                                      // (the same goes for "selects" with the "multiple" attribute set)
-     *                                      $form->auto_fill(array(
+     *                                      $form->autoFill(array(
      *                                          'my_checkboxes' =>  array('value_1', 'value_2'),
      *                                      ));
      *                                      </code>
@@ -651,7 +670,7 @@ class Zebra_Form
      *
      *  @return void
      */
-    function auto_fill($defaults = array(), $specifics_only = false)
+    function autoFill($defaults = array(), $specifics_only = false)
     {
 
         $this->form_properties['auto_fill'] = array($defaults, $specifics_only);
@@ -680,18 +699,17 @@ class Zebra_Form
      *
      *  @return void
      */
-    function captcha_storage($method)
+    function captchaStorage($method)
     {
-
         // if storage method is "session"
-        if ($method == 'session')
-
+        if ($method == 'session') {
             // set the storage method
             $this->form_properties['captcha_storage'] = 'session';
-
+        }
         // "cookie" otherwise
-        else $this->form_properties['captcha_storage'] = 'cookie';
-
+        else {
+            $this->form_properties['captcha_storage'] = 'cookie';
+        }
     }
 
     /**
@@ -778,7 +796,7 @@ class Zebra_Form
      *  @param  mixed   $properties     Can have the following values:
      *
      *                                  -   FALSE, disabling the client-side validation;
-     *                                      <i>Note that the {@link Zebra_Form_Control::set_rule() dependencies} rule will
+     *                                      <i>Note that the {@link Zebra_Form_Control::setRule() dependencies} rule will
      *                                      still be checked client-side so that callback functions get called, if it is
      *                                      the case!</i>
      *                                  -   TRUE, enabling the client-side validation with the default properties;
@@ -834,7 +852,6 @@ class Zebra_Form
      */
     function clientside_validation($properties)
     {
-
         // default properties of the client-side validation
         $defaults = array(
             'clientside_disabled'       =>  false,
@@ -848,17 +865,21 @@ class Zebra_Form
         );
 
         // set the default properties for the client-side validation
-        if (!isset($this->form_properties['clientside_validation'])) $this->form_properties['clientside_validation'] = $defaults;
+        if (!isset($this->form_properties['clientside_validation'])) {
+            $this->form_properties['clientside_validation'] = $defaults;
+        }
 
         // if client-side validation needs to be disabled
-        if ($properties == false) $this->form_properties['clientside_validation']['clientside_disabled'] = true;
-
+        if ($properties == false) {
+            $this->form_properties['clientside_validation']['clientside_disabled'] = true;
+        }
         // if custom settings for client-side validation
-        elseif (is_array($properties))
-
+        elseif (is_array($properties)) {
             // merge the new settings with the old ones
-            $this->form_properties['clientside_validation'] = array_merge($this->form_properties['clientside_validation'], $properties);
-
+            $this->form_properties['clientside_validation'] = array_merge(
+                $this->form_properties['clientside_validation'], $properties
+            );
+        }
     }
 
     /**
@@ -876,10 +897,8 @@ class Zebra_Form
      */
     function doctype($doctype = 'html')
     {
-
         // set the doctype
         $this->form_properties['doctype'] = (strtolower($doctype) == 'xhtml' ? 'xhtml' : 'html');
-
     }
 
     /**
@@ -1017,7 +1036,6 @@ class Zebra_Form
      */
     function csrf($csrf_storage_method = 'auto', $csrf_token_lifetime = 0, $csrf_cookie_config = array('path' => '/', 'domain' => '', 'secure' => false, 'httponly' => false))
     {
-
         // continue only if protection against CSRF attacks is not disabled and a token was not already generated
         if ($csrf_storage_method !== false && (func_num_args() > 0 || $this->form_properties['csrf_token'] == '')) {
 
@@ -1028,10 +1046,13 @@ class Zebra_Form
             if ($this->form_properties['csrf_storage_method'] == 'auto') {
 
                 // use sessions as storage method
-                if (isset($_SESSION)) $this->form_properties['csrf_storage_method'] = 'session';
-
+                if (isset($_SESSION)) {
+                    $this->form_properties['csrf_storage_method'] = 'session';
+                }
                 // if a session is not already started, use cookies as storage method
-                else $this->form_properties['csrf_storage_method'] = 'cookie';
+                else {
+                    $this->form_properties['csrf_storage_method'] = 'cookie';
+                }
 
             }
 
@@ -1047,8 +1068,10 @@ class Zebra_Form
             $this->_csrf_generate_token(func_num_args() > 0 ? true : false);
 
             // if protection against CSRF attacks is disabled, save the option for later use
-        } else $this->form_properties['csrf_storage_method'] = false;
-
+        }
+        else {
+            $this->form_properties['csrf_storage_method'] = false;
+        }
     }
 
     /**
@@ -1076,6 +1099,62 @@ class Zebra_Form
 
     }
 
+        function renderFormTag()
+    {
+        $output = '<form ' .
+            ($this->form_properties['doctype'] == 'html' ? 'name="' . $this->form_properties['name'] . '" ' : '') .
+            'id="' . $this->form_properties['name'] . '" ' .
+            'action="' . htmlspecialchars($this->form_properties['action']) . '" ' .
+            'method="' . strtolower($this->form_properties['method']) . '" ';
+
+        // if custom classes are to be set for the form
+        if (isset($this->form_properties['attributes']['class'])) {
+            // add the "Zebra_Form" required class
+            $this->form_properties['attributes']['class'] .= ' Zebra_Form';
+        }
+        // if no custom classes are set, set the required "Zebra_Form" class
+        else {
+            $this->form_properties['attributes']['class'] = 'Zebra_Form';
+        }
+
+        // if any form attributes have been specified
+        if (is_array($this->form_properties['attributes'])) {
+
+            // iterate through the form's attributes
+            foreach (
+                $this->form_properties['attributes'] as $attribute => $value
+            ) {
+                // write them
+                $output .= ' ' . $attribute . '="' . $value . '"';
+            }
+        }
+
+        // if the form has file upload controls
+        if ($this->form_properties['has_upload'] === true) {
+
+            // add the enctype to the attributes of the <form> tag
+            $output .= ' enctype="multipart/form-data"';
+
+            // and add this required hidden field containing the maximum allowed file size
+            $this->add('hidden', 'MAX_FILE_SIZE', $this->form_properties['max_file_size']);
+
+            // if client-side validation is not disabled
+            if (!$this->form_properties['clientside_validation']['clientside_disabled'] && !$this->form_properties['clientside_validation']['disable_upload_validation']) {
+                // add a new property for the client-side validation
+                $this->clientside_validation(
+                    array('assets_path' => rawurlencode(
+                        $this->form_properties['assets_url']
+                    ))
+                );
+            }
+
+        }
+
+        $output .= '>';
+
+        return $output;
+    }
+
     /**
      *  Renders the form.
      *
@@ -1099,7 +1178,7 @@ class Zebra_Form
      *                                  added to the form (except for the hidden controls, which are handled automatically)
      *                                  will be available as variables with the names as described in the documentation
      *                                  for each of the controls. Also, error messages will be available as described at
-     *                                  {@link Zebra_Form_Control::set_rule() set_rule()}.
+     *                                  {@link Zebra_Form_Control::setRule() setRule()}.
      *
      *                                  A special variable will also be available in the template file - a variable with
      *                                  the name of the form and being an associative array containing all the controls
@@ -1120,7 +1199,7 @@ class Zebra_Form
      *
      *                                      <i>note that this array will also contain variables assigned through the
      *                                      {@link assign()} method as well as any server-side error messages, as you
-     *                                      would in a custom template (see {@link Zebra_Form_Control::set_rule() set_rule()}
+     *                                      would in a custom template (see {@link Zebra_Form_Control::setRule() setRule()}
      *                                      method and read until the second highlighted box, inclusive)</i>
      *
      *                                  -   an associative array with all the controls added to the form, as objects
@@ -1153,106 +1232,120 @@ class Zebra_Form
             // or "mimes.json" file could not be found
             !file_exists($this->form_properties['assets_server_path'] . 'mimes.json')
 
-        )
+        ) {
 
             // it means the most probably the script is run on a virtual host and that paths need to be set manually so
             // we inform the user about that
-            _zebra_form_show_error('<strong>Zebra_Form</strong> could not automatically determine the correct path to the "process.php"
-            and "mimes.json" files - this may happen if the script is run on a virtual host. To fix this, use the <u>assets_path()</u>
-            method and manually set the correct <strong>server path</strong> and <strong>URL</strong> to these file!', E_USER_ERROR);
-
-        // if variables is an array
-        if (is_array($variables))
-
-            // iterate through the values in the array
-            foreach ($variables as $name => $value)
-
-                // make each value available in the template
-                $this->assign($name, $value);
-
-        // start generating the output
-        $output = '<form ' .
-            ($this->form_properties['doctype'] == 'html' ? 'name="' . $this->form_properties['name'] . '" ' : '') .
-            'id="' . $this->form_properties['name'] . '" ' .
-            'action="' . htmlspecialchars($this->form_properties['action']) . '" ' .
-            'method="' . strtolower($this->form_properties['method']) . '" ';
-
-        // if custom classes are to be set for the form
-        if (isset($this->form_properties['attributes']['class']))
-
-            // add the "Zebra_Form" required class
-            $this->form_properties['attributes']['class'] .= ' Zebra_Form';
-
-        // if no custom classes are set, set the required "Zebra_Form" class
-        else $this->form_properties['attributes']['class'] = 'Zebra_Form';
-
-        // if any form attributes have been specified
-        if (is_array($this->form_properties['attributes']))
-
-            // iterate through the form's attributes
-            foreach ($this->form_properties['attributes'] as $attribute => $value)
-
-                // write them
-                $output .= ' ' . $attribute . '="' . $value . '"';
-
-        // if the form has file upload controls
-        if ($this->form_properties['has_upload'] === true) {
-
-            // add the enctype to the attributes of the <form> tag
-            $output .= ' enctype="multipart/form-data"';
-
-            // and add this required hidden field containing the maximum allowed file size
-            $this->add('hidden', 'MAX_FILE_SIZE', $this->form_properties['max_file_size']);
-
-            // if client-side validation is not disabled
-            if (!$this->form_properties['clientside_validation']['clientside_disabled'] && !$this->form_properties['clientside_validation']['disable_upload_validation'])
-
-                // add a new property for the client-side validation
-                $this->clientside_validation(array('assets_path' => rawurlencode($this->form_properties['assets_url'])));
-
+            _zebra_form_show_error(
+                '<strong>Zebra_Form</strong> could not automatically determine the correct path to the "process.php"
+            and "mimes.json" files - this may happen if the script is run on a virtual host. To fix this, use the <u>assetsPath()</u>
+            method and manually set the correct <strong>server path</strong> and <strong>URL</strong> to these file!',
+                E_USER_ERROR
+            );
         }
 
-        $output .= '>';
+        // if variables is an array
+        if (is_array($variables)) {
+            // iterate through the values in the array
+            foreach ($variables as $name => $value) {
+                // make each value available in the template
+                $this->assign($name, $value);
+            }
+        }
+
+        // start generating the output
+//        $output = '<form ' .
+//            ($this->form_properties['doctype'] == 'html' ? 'name="' . $this->form_properties['name'] . '" ' : '') .
+//            'id="' . $this->form_properties['name'] . '" ' .
+//            'action="' . htmlspecialchars($this->form_properties['action']) . '" ' .
+//            'method="' . strtolower($this->form_properties['method']) . '" ';
+//
+//        // if custom classes are to be set for the form
+//        if (isset($this->form_properties['attributes']['class'])) {
+//            // add the "Zebra_Form" required class
+//            $this->form_properties['attributes']['class'] .= ' Zebra_Form';
+//        }
+//        // if no custom classes are set, set the required "Zebra_Form" class
+//        else {
+//            $this->form_properties['attributes']['class'] = 'Zebra_Form';
+//        }
+//
+//        // if any form attributes have been specified
+//        if (is_array($this->form_properties['attributes'])) {
+//
+//            // iterate through the form's attributes
+//            foreach (
+//                $this->form_properties['attributes'] as $attribute => $value
+//            ) {
+//                // write them
+//                $output .= ' ' . $attribute . '="' . $value . '"';
+//            }
+//        }
+//
+//        // if the form has file upload controls
+//        if ($this->form_properties['has_upload'] === true) {
+//
+//            // add the enctype to the attributes of the <form> tag
+//            $output .= ' enctype="multipart/form-data"';
+//
+//            // and add this required hidden field containing the maximum allowed file size
+//            $this->add('hidden', 'MAX_FILE_SIZE', $this->form_properties['max_file_size']);
+//
+//            // if client-side validation is not disabled
+//            if (!$this->form_properties['clientside_validation']['clientside_disabled'] && !$this->form_properties['clientside_validation']['disable_upload_validation']) {
+//                // add a new property for the client-side validation
+//                $this->clientside_validation(
+//                    array('assets_path' => rawurlencode(
+//                        $this->form_properties['assets_url']
+//                    ))
+//                );
+//            }
+//
+//        }
+//
+//        $output .= '>';
+
+        $output = $this->renderFormTag();
 
         // iterate through the form's controls
         foreach ($this->controls as $key => $control) {
 
             // get some attributes for each control
-            $attributes = $control->get_attributes(array('type', 'for', 'name', 'id', 'multiple', 'other', 'class', 'default_other', 'disable_zebra_datepicker'));
+            $attributes = $control->getAttributes(array('type', 'for', 'name', 'id', 'multiple', 'other', 'class', 'default_other', 'disable_zebra_datepicker'));
 
             // sanitize the control's name
             $attributes['name'] = preg_replace('/\[\]/', '', $attributes['name']);
 
             // validate the control's name
             switch ($attributes['name']) {
-
                 // if control has the same name as the form
                 case $this->form_properties['name']:
-                    // if control has the same name as the name of the honeypot's name
+                // if control has the same name as the name of the honeypot's name
                 case $this->form_properties['honeypot']:
-                    // if control has the same name as the name of the field containing the CSRF token
+                // if control has the same name as the name of the field containing the CSRF token
                 case $this->form_properties['csrf_token_name']:
-                    // if control has the name "submit"
+                // if control has the name "submit"
                 case 'submit':
-
                     // stop the execution of the script
                     _zebra_form_show_error('You are not allowed to have a control named "<strong>' .
                         $attributes['name'] . '</strong>" in form "<strong>' .
                         $this->form_properties['name'] . '</strong>"',
                         E_USER_ERROR);
-
                     break;
-
             }
 
             // if control name is not allowed because it looks like the automatically generated controls for <select> controls
             // with the "other" option attached
-            if (preg_match('/' . preg_quote($this->form_properties['other_suffix']) . '$/', $attributes['name']) > 0)
-
+            if (preg_match('/' . preg_quote($this->form_properties['other_suffix']) . '$/', $attributes['name']) > 0) {
                 // stop the execution of the script
-                _zebra_form_show_error('You are not allowed to have a control with the name ending in "<strong>' .
-                    $this->form_properties['other_suffix'] . '</strong>" in form "<strong>' .
-                    $this->form_properties['name'] . '</strong>"', E_USER_ERROR);
+                _zebra_form_show_error(
+                    'You are not allowed to have a control with the name ending in "<strong>'
+                    .
+                    $this->form_properties['other_suffix']
+                    . '</strong>" in form "<strong>' .
+                    $this->form_properties['name'] . '</strong>"', E_USER_ERROR
+                );
+            }
 
             // if control has any rules attached to it
             if (!empty($control->rules)) {
@@ -1302,7 +1395,6 @@ class Zebra_Form
 
                     // these rules are not checked client side
                     if (
-
                         $rule == 'captcha' || $rule == 'convert' || $rule == 'resize' ||
 
                         // also, if we're not checking files clientside, also ignore these rules
@@ -1311,8 +1403,9 @@ class Zebra_Form
                             $this->form_properties['clientside_validation']['disable_upload_validation'] &&
                             in_array($rule, array('upload', 'filetype', 'filesize', 'image'))
                         )
-
-                    ) continue;
+                    ) {
+                        continue;
+                    }
 
                     // we need to remove the error_block part as it is not needed for client-side validation
                     switch ($rule) {
@@ -1383,10 +1476,10 @@ class Zebra_Form
                     }
 
                     // if client-side validation is not disabled
-                    if (!$this->form_properties['clientside_validation']['clientside_disabled'])
-
+                    if (!$this->form_properties['clientside_validation']['clientside_disabled']) {
                         // this array will be fed to the JavaScript as a JSON
                         $clientside_validation[$attributes['name']][$rule] = $properties;
+                    }
 
                 }
 
@@ -1409,10 +1502,12 @@ class Zebra_Form
 
                 // if the select control was not submitted OR it was submitted but the selected option is other than
                 // the "other" option
-                if (!isset($control->submitted_value) || $control->submitted_value != 'other')
-
+                if (!isset($control->submitted_value) || $control->submitted_value != 'other') {
                     // hide the text box
-                    $obj->set_attributes(array('class' => 'other-invisible'), false);
+                    $obj->set_attributes(
+                        array('class' => 'other-invisible'), false
+                    );
+                }
 
                 // make sure the value in the control propagates
                 $obj->get_submitted_value();
@@ -1440,16 +1535,18 @@ class Zebra_Form
             }
 
             // if control is a label and is a "master" label
-            if (isset($attributes['type']) && $attributes['type'] == 'label' && array_key_exists($attributes['for'], $this->master_labels))
-
+            if (isset($attributes['type']) && $attributes['type'] == 'label' && array_key_exists($attributes['for'], $this->master_labels)) {
                 // save the "master" label's name
                 $this->master_labels[$attributes['for']]['control'] = $attributes['name'];
+            }
 
             // if control is a date control
             if (isset($attributes['type']) && $attributes['type'] == 'text' && preg_match('/\bdate\b/i', $attributes['class'])) {
 
                 // if variable is not yet defined. define it
-                if (!isset($datepicker_javascript)) $datepicker_javascript = '';
+                if (!isset($datepicker_javascript)) {
+                    $datepicker_javascript = '';
+                }
 
                 // if Zebra_DatePicker is *not* disabled for this control
                 if (!$attributes['disable_zebra_datepicker']) {
@@ -1461,19 +1558,25 @@ class Zebra_Form
                     $control->attributes['days'] = $this->form_properties['language']['days'];
 
                     // if we have custom day name abbreviations, use them
-                    if (is_array($this->form_properties['language']['days_abbr'])) $control->attributes['days_abbr'] = $this->form_properties['language']['days_abbr'];
+                    if (is_array($this->form_properties['language']['days_abbr'])) {
+                        $control->attributes['days_abbr'] = $this->form_properties['language']['days_abbr'];
+                    }
 
                     // take month names from the language file
                     $control->attributes['months'] = $this->form_properties['language']['months'];
 
                     // if we have custom month abbreviations, use them
-                    if (is_array($this->form_properties['language']['months_abbr'])) $control->attributes['months_abbr'] = $this->form_properties['language']['months_abbr'];
+                    if (is_array($this->form_properties['language']['months_abbr'])) {
+                        $control->attributes['months_abbr'] = $this->form_properties['language']['months_abbr'];
+                    }
 
                     // use the caption from the language file for the "Clear date" button
                     $control->attributes['lang_clear_date'] = $this->form_properties['language']['clear_date'];
 
                     // if the "Today" button is not disabled use the caption from the language file
-                    if ($control->attributes['show_select_today'] === null) $control->attributes['show_select_today'] = $this->form_properties['language']['today'];
+                    if ($control->attributes['show_select_today'] === null) {
+                        $control->attributes['show_select_today'] = $this->form_properties['language']['today'];
+                    }
 
                     $properties = '';
 
@@ -1493,47 +1596,53 @@ class Zebra_Form
                                 $is_object = false;
 
                                 // iterate through all the keys/values
-                                foreach ($value as $key => $val)
+                                foreach ($value as $key => $val) {
 
                                     // if at least one of the keys is not numeric
                                     if (preg_match('/[^0-9]/', $key) > 0) {
-
                                         // set this flag to true
                                         $is_object = true;
 
                                         // don't look further
                                         break;
-
                                     }
+                                }
 
                                 // format accordingly
                                 $properties .= ($is_object ? '{' : '[');
 
                                 // iterate through the values
-                                foreach ($value as $key => $val)
-
+                                foreach ($value as $key => $val) {
                                     $properties .= (!is_numeric($key) ? '\'' . $key . '\':' : '') . ($val === true ? 'true' : ($val === false ? 'false' : (is_numeric($val) ? $val : '\'' . $val . '\''))) . ',';
+                                }
 
                                 $properties = rtrim($properties, ',') . ($is_object ? '}' : ']');
 
                                 // if value is a jQuery selector
-                            } elseif (preg_match('/^\$\((\'|\").*?\1\)/', trim($value)) > 0) {
+                            }
+                            else if (preg_match('/^\$\((\'|\").*?\1\)/', trim($value)) > 0) {
 
                                 // use it as it is
                                 $properties .= $value;
 
                                 // if value is a string but is not a javascript object
-                            } elseif (is_string($value) && !preg_match('/^\{.*\}$/', trim($value)))
+                            }
+                            else if (is_string($value) && !preg_match('/^\{.*\}$/', trim($value)))
 
                                 // format accordingly and escape single quotes or we'll kill JavaScript
                                 $properties .= '\'' . addcslashes($value, '\'') . '\'';
 
                             // for any other case (javascript object, boolean)
-                            else
-
+                            else {
                                 // format accordingly
-                                $properties .= ($value === true ? 'true' : ($value === false ? 'false' : (is_numeric($value) ? $value : '\'' . $value . '\'')));
-
+                                $properties .= ($value === true
+                                    ? 'true'
+                                    : ($value === false
+                                        ? 'false'
+                                        : (is_numeric(
+                                            $value
+                                        ) ? $value : '\'' . $value . '\'')));
+                            }
                         }
 
                     }
@@ -1544,16 +1653,26 @@ class Zebra_Form
                     $datepicker_javascript .= ($properties != '' ? '{' . $properties . '}' : '') . ');';
 
                     // if Zebra_DatePicker is disabled
-                } else
-
+                }
+                else {
                     // in order to preserve client-side validation,
                     // we still need to pass some data to it
-                    $datepicker_javascript .= '$(\'#' . $attributes['id'] . '\').data("Zebra_DatePicker", new Object({settings: {days: ["' . implode('","', $this->form_properties['language']['days']) . '"], months: ["' . implode('","', $this->form_properties['language']['months']) . '"], format: "' . $control->attributes['format'] . '"}}));';
+                    $datepicker_javascript .= '$(\'#' . $attributes['id']
+                        . '\').data("Zebra_DatePicker", new Object({settings: {days: ["'
+                        . implode(
+                            '","', $this->form_properties['language']['days']
+                        ) . '"], months: ["' . implode(
+                            '","', $this->form_properties['language']['months']
+                        ) . '"], format: "' . $control->attributes['format']
+                        . '"}}));';
+                }
 
             }
 
             // if control has the "filetype" rule set, load MIME types now
-            if (isset($control->rules['filetype']) || isset($control->rules['image'])) $this->_load_mime_types();
+            if (isset($control->rules['filetype']) || isset($control->rules['image'])) {
+                $this->_loadMimeTypes();
+            }
 
         }
 
@@ -1580,7 +1699,7 @@ class Zebra_Form
         foreach ($this->controls as $key => $control) {
 
             // get some attributes for each control
-            $attributes = $control->get_attributes(array('type', 'for', 'name', 'label', 'inside'));
+            $attributes = $control->getAttributes(array('type', 'for', 'name', 'label', 'inside'));
 
             // sanitize the control's name
             $attributes['name'] = preg_replace('/\[\]$/', '', $attributes['name']);
@@ -1595,7 +1714,8 @@ class Zebra_Form
                 unset($this->controls[$key]);
 
                 // if control is a text field and is the control intended for the "honeypot"
-            } elseif ($attributes['type'] == 'text' && $attributes['name'] == $this->form_properties['honeypot']) {
+            }
+            else if ($attributes['type'] == 'text' && $attributes['name'] == $this->form_properties['honeypot']) {
 
                 // because http://www.w3.org/WAI/GL/WCAG20/WD-WCAG20-TECHS/html.html#H44 requires it,
                 // attach a label to the control
@@ -1608,7 +1728,8 @@ class Zebra_Form
                 unset($this->controls[$key]);
 
                 // if
-            } elseif (
+            }
+            else if (
 
                 // control is a label AND
                 $attributes['type'] == 'label' &&
@@ -1632,7 +1753,7 @@ class Zebra_Form
                 if (array_key_exists($attributes['for'], $this->controls)) {
 
                     // get some attributes of the control the label is attached to
-                    $ctrl_attributes = $this->controls[$attributes['for']]->get_attributes(array('name', 'id', 'type'));
+                    $ctrl_attributes = $this->controls[$attributes['for']]->getAttributes(array('name', 'id', 'type'));
 
                     // sanitize the control's name
                     $ctrl_attributes['name'] = preg_replace('/\[\]$/', '', $ctrl_attributes['name']);
@@ -1717,7 +1838,8 @@ class Zebra_Form
                         $this->controls[$key]->set_attributes(array('label' => $attributes['label'] . '<span class="required">*</span>'));
 
                 // if
-            } elseif (
+            }
+            else if (
 
                 // control is a label AND
                 $attributes['type'] == 'label' &&
@@ -1735,7 +1857,9 @@ class Zebra_Form
                 ($template != '' && $template != '*horizontal' && $template != '*vertical')
 
                 // remove the "for" attribute so that the form will pass the W3C validation
-            ) unset($this->controls[$key]->attributes['for']);
+            ) {
+                unset($this->controls[$key]->attributes['for']);
+            }
 
         }
 
@@ -1743,7 +1867,7 @@ class Zebra_Form
         $output .= '</div>';
 
         // if there are any error messages
-        if (!empty($this->errors))
+        if (!empty($this->errors)) {
 
             // iterate through each error block
             foreach ($this->errors as $error_block => $error_messages) {
@@ -1758,14 +1882,25 @@ class Zebra_Form
 
                     // if only one error message is to be show
                     // break out from the foreach loop
-                    if ($this->form_properties['show_all_error_messages'] === false) break;
+                    if ($this->form_properties['show_all_error_messages']
+                        === false
+                    ) {
+                        break;
+                    }
 
                 }
 
                 // switch the array entry with it's rendered form
-                $this->errors[$error_block] = '<div class="error"><div class="container">' . $content . '<div class="close"><a href="javascript:void(0)">close</a></div></div></div>';
+                $this->errors[$error_block]
+                    = <<<__HTML__
+<div class="alert alert-warning alert-dismissable" role="alert">
+    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+    $content
+</div>
+__HTML__;
 
             }
+        }
 
         // if there are any SPAM or CSRF errors
         if (isset($this->errors['zf_error_spam']) || isset($this->errors['zf_error_csrf'])) {
@@ -1805,7 +1940,7 @@ class Zebra_Form
             foreach ($this->controls as $key => $control) {
 
                 // get some attributes for the control
-                $attributes = $control->get_attributes(array('type', 'name', 'id', 'for', 'inside'));
+                $attributes = $control->getAttributes(array('type', 'name', 'id', 'for', 'inside'));
 
                 // if control is a label that is to be placed inside another control, we skip it
                 if ($attributes['type'] == 'label' && isset($attributes['inside'])) continue;
@@ -1932,7 +2067,7 @@ class Zebra_Form
                 if ($error_messages != '')
 
                     // show the error messages
-                    $contents .= '<tr><td colspan="2">' . $error_messages . '</td></tr>';
+//                    $contents .= '<tr><td colspan="2">' . $error_messages . '</td></tr>';
 
                 // keep track of odd/even rows
                 $counter = 0;
@@ -2021,12 +2156,12 @@ class Zebra_Form
                 $contents .= '</table>';
 
                 // if auto-generated output needs to be vertical
-            } else {
+            } else if ($template == '*vertical') {
 
                 $contents = '';
 
                 // if there are errors to be displayed, show the error messages
-                if ($error_messages != '') $contents .= $error_messages;
+//                if ($error_messages != '') $contents .= $error_messages;
 
                 $counter = 0;
 
@@ -2079,6 +2214,62 @@ class Zebra_Form
                 }
 
             }
+            else {
+                $contents = '';
+
+                // if there are errors to be displayed, show the error messages
+//                if ($error_messages != '') $contents .= $error_messages;
+
+                $counter = 0;
+
+                // total number of rows to be displayed
+                $rows = count($blocks);
+
+                // iterate through blocks
+                foreach ($blocks as $controls) {
+
+                    // ...then block is contained in its own row
+                    $contents .= '<div class="row' . (++$counter % 2 == 0 ? ' even' : '') . ($counter == $rows ? ' last' : '') . '">';
+
+                    // iterate through the controls to be rendered
+                    foreach ($controls as $control) {
+
+                        // if array of controls
+                        // (radio buttons/checkboxes and their labels)
+                        if (is_array($control)) {
+
+                            // iterate through the array's items
+                            foreach ($control as $ctrl)
+
+                                // and display them on the same line
+                                $contents .= '<div class="cell">' . $this->controls[$ctrl]->toHTML() . '</div>';
+
+                            // clear floats
+                            $contents .= '<div class="clear"></div>';
+
+                            // if not an array of controls
+                        } else
+
+                            // if control is required but has the label as a tip inside the control
+                            // we need to manually add the asterisk after the control
+                            if (array_key_exists('required', $this->controls[$control]->rules) && preg_match('/\binside\b/', $this->controls[$control]->attributes['class'])) {
+
+                                // first, make sure the control is inline so that the asterisk will be placed to the right of the control
+                                $this->controls[$control]->set_attributes(array('class' => 'inline'), false);
+
+                                // add the required symbol after the control
+                                $contents .= $this->controls[$control]->toHTML() . '<span class="required">*</span>';
+
+                                // else, render the control
+                            } else $contents .= $this->controls[$control]->toHTML();
+
+                    }
+
+                    // ...finish rendering
+                    $contents .= '</div>';
+
+                }
+            }
 
             // if a function with the name given as $template, and the function exists
         } elseif (function_exists($template)) {
@@ -2090,7 +2281,7 @@ class Zebra_Form
             foreach ($this->controls as $control) {
 
                 // read some attributes of the control
-                $attributes = $control->get_attributes(array('id', 'inside'));
+                $attributes = $control->getAttributes(array('id', 'inside'));
 
                 // render the control if the control is not a label that is to be displayed inside the control as it's
                 // default value
@@ -2140,7 +2331,7 @@ class Zebra_Form
             foreach ($this->controls as $control) {
 
                 // read some attributes of the control
-                $attributes = $control->get_attributes(array('id', 'inside'));
+                $attributes = $control->getAttributes(array('id', 'inside'));
 
                 // render the control if the control is not a label that is to be displayed inside the control as it's
                 // default value
@@ -2241,11 +2432,16 @@ class Zebra_Form
             '$("#' . $this->form_properties['name'] . '").Zebra_Form(' . ($javascript_object_properties != '' ? '{' . $javascript_object_properties . '}' : '') . ')})}}' .
             $function_name . '()</script>';
 
-        // if $return argument was TRUE, return the result
-        if ($return) return $output;
+        $output = $error_messages . $output;
 
+        // if $return argument was TRUE, return the result
+        if ($return) {
+            return $output;
+        }
         // if $return argument was FALSE, output the content
-        else echo $output;
+        else {
+            echo $output;
+        }
 
     }
 
@@ -2272,7 +2468,7 @@ class Zebra_Form
 
     /**
      *  Sets how error messages generated upon server-side validation are displayed in an
-     *  {@link Zebra_Form_Control::set_rule() error block}.
+     *  {@link Zebra_Form_Control::setRule() error block}.
      *
      *  Client-side validation is done on the "onsubmit" event of the form. See {@link clientside_validation()} for
      *  more information on client-side validation.
@@ -2303,7 +2499,7 @@ class Zebra_Form
 
     /**
      *  This method performs the server-side validation of all the form's controls, making sure that all the values
-     *  comply to the rules set for these controls through the {@link Zebra_Form_Control::set_rule() set_rule()} method.
+     *  comply to the rules set for these controls through the {@link Zebra_Form_Control::setRule() setRule()} method.
      *
      *  Only by calling this method will the form's controls update their values. If this method is not called, all
      *  the controls will preserve their default values after submission even if these values were altered prior to
@@ -2371,7 +2567,7 @@ class Zebra_Form
                     $control = & $this->controls[$key];
 
                     // get some attributes of the control
-                    $attribute = $control->get_attributes(array('type'));
+                    $attribute = $control->getAttributes(array('type'));
 
                     // validate the control
                     $valid = $this->validate_control($key);
@@ -2419,7 +2615,7 @@ class Zebra_Form
                                 if (!call_user_func_array(array(&$this,$actions[0]), array_slice($actions, 1))) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($actions['block'], $actions['message']);
+                                    $this->addError($actions['block'], $actions['message']);
 
                                     // set the form as not being valid
                                     $form_is_valid = false;
@@ -2439,11 +2635,11 @@ class Zebra_Form
                 $method[$this->form_properties['honeypot']] != ''
 
                 // show the appropriate error message to the user
-            ) $this->add_error('zf_error_spam', $this->form_properties['language']['spam_detected']);
+            ) $this->addError('zf_error_spam', $this->form_properties['language']['spam_detected']);
 
             // else, if a possible CSRF attack was detected
             // show the appropriate error message to the user
-            elseif (!$csrf_status) $this->add_error('zf_error_csrf', $this->form_properties['language']['csrf_detected']);
+            elseif (!$csrf_status) $this->addError('zf_error_csrf', $this->form_properties['language']['csrf_detected']);
 
             // if
             if (
@@ -2476,7 +2672,7 @@ class Zebra_Form
             foreach ($this->controls as $key => $control) {
 
                 // get some attributes for each control
-                $attributes = $control->get_attributes(array('type', 'name', 'value'));
+                $attributes = $control->getAttributes(array('type', 'name', 'value'));
 
                 // sanitize controls' name (remove square brackets)
                 $attributes['name'] = preg_replace('/\[\]$/', '', $attributes['name']);
@@ -2684,7 +2880,7 @@ class Zebra_Form
 
     /**
      *  This method performs the server-side validation of a control, making sure that the value complies to the rules
-     *  set for the control through the {@link Zebra_Form_Control::set_rule() set_rule()} method.
+     *  set for the control through the {@link Zebra_Form_Control::setRule() setRule()} method.
      *
      *  @param  string  $control    Unique name that identifies the control in the form.
      *
@@ -2720,7 +2916,7 @@ class Zebra_Form
             $control->get_submitted_value();
 
             // get some attributes of the control
-            $attribute = $control->get_attributes(array('name', 'id', 'type', 'value', 'multiple', 'format', 'disable_spam_filter', 'other'));
+            $attribute = $control->getAttributes(array('name', 'id', 'type', 'value', 'multiple', 'format', 'disable_spam_filter', 'other'));
 
             // if control doesn't have the SPAM filter disabled
             if (!isset($attribute['disable_spam_filter']) || $attribute['disable_spam_filter'] !== true) {
@@ -2806,7 +3002,7 @@ class Zebra_Form
                 if (!$valid) {
 
                     // set the error message
-                    $this->add_error('zf_error_spam', $this->form_properties['language']['spam_detected']);
+                    $this->addError('zf_error_spam', $this->form_properties['language']['spam_detected']);
 
                     // don't look further
                     return false;
@@ -2895,7 +3091,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -2935,7 +3131,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -2962,7 +3158,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3011,7 +3207,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3092,7 +3288,7 @@ class Zebra_Form
                                         $attributes_count = count($custom_rule_attributes);
 
                                         // add error message to indicated error block
-                                        $this->add_error($custom_rule_attributes[$attributes_count - 2], $custom_rule_attributes[$attributes_count - 1]);
+                                        $this->addError($custom_rule_attributes[$attributes_count - 2], $custom_rule_attributes[$attributes_count - 1]);
 
                                         // the control does not validate
                                         $valid = false;
@@ -3141,7 +3337,7 @@ class Zebra_Form
                                 ) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                    $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                     // the control does not validate
                                     $valid = false;
@@ -3207,7 +3403,7 @@ class Zebra_Form
                                 if (!$valid) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($rule_attributes[2], $rule_attributes[3]);
+                                    $this->addError($rule_attributes[2], $rule_attributes[3]);
 
                                     // the control does not validate
                                     $valid = false;
@@ -3249,7 +3445,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3288,7 +3484,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3333,7 +3529,7 @@ class Zebra_Form
                                     if (!preg_match('/^([a-zA-Z0-9_\-\+\~\^\{\}]+[\.]?)+@{1}([a-zA-Z0-9_\-\+\~\^\{\}]+[\.]?)+\.[A-Za-z0-9]{2,}$/', trim($address))) {
 
                                         // add error message to indicated error block
-                                        $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                        $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                         // the control does not validate
                                         $valid = false;
@@ -3376,7 +3572,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3425,7 +3621,7 @@ class Zebra_Form
                                 $matching_file_types = array();
 
                                 // load mime file types
-                                $this->_load_mime_types();
+                                $this->_loadMimeTypes();
 
                                 // iterate through the known mime types
                                 foreach ($this->form_properties['mimes'] as $extension => $type)
@@ -3452,7 +3648,7 @@ class Zebra_Form
                                 if (empty($matches)) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                    $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                     // the control does not validate
                                     $valid = false;
@@ -3513,7 +3709,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3549,7 +3745,7 @@ class Zebra_Form
                                 if ($type === false || $type < 1 || $type > 3) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                    $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                     // the control does not validate
                                     $valid = false;
@@ -3598,7 +3794,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[2], $rule_attributes[3]);
+                                $this->addError($rule_attributes[2], $rule_attributes[3]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3651,7 +3847,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3690,7 +3886,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -3753,7 +3949,7 @@ class Zebra_Form
                                 if (preg_match('/' . $regexp . '/i', str_replace(array(':', ' '), '', $attribute['value'])) == 0) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                    $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                     // the control does not validate
                                     $valid = false;
@@ -3803,7 +3999,7 @@ class Zebra_Form
                                 ) {
 
                                     // add error message to indicated error block
-                                    $this->add_error($rule_attributes[0], $rule_attributes[1]);
+                                    $this->addError($rule_attributes[0], $rule_attributes[1]);
 
                                     // the control does not validate
                                     $valid = false;
@@ -3929,7 +4125,7 @@ class Zebra_Form
                             ) {
 
                                 // add error message to indicated error block
-                                $this->add_error($rule_attributes[1], $rule_attributes[2]);
+                                $this->addError($rule_attributes[1], $rule_attributes[2]);
 
                                 // the control does not validate
                                 $valid = false;
@@ -4336,7 +4532,7 @@ class Zebra_Form
      *
      *  @access private
      */
-    private function _load_mime_types()
+    private function _loadMimeTypes()
     {
 
         // if file with mime types was not already loaded
