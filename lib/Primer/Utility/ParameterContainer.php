@@ -74,6 +74,11 @@ class ParameterContainer extends Object implements ArrayAccess, IteratorAggregat
         return $ary;
     }
 
+    public function getAll()
+    {
+        return $this->_parameters;
+    }
+
     public function offsetExists($key)
     {
         return $this->get($key);
