@@ -133,7 +133,7 @@ class Application extends Container
             'request'   => 'Primer\\Http\\Request',
             'mail'      => 'Primer\\Mail\\Mail',
             'security'  => 'Primer\\Utility\\Security',
-            'form'      => 'Primer\\View\\Form',
+            'form'      => 'Primer\\Form\\Form',
             'response'  => 'Primer\\Http\\Response',
             'cookie'    => 'Primer\\Http\\Cookie',
 
@@ -196,7 +196,6 @@ class Application extends Container
                 }
             }
         );
-        $this->singleton('Primer\\View\\Form');
         $this->singleton('Primer\\View\\View');
         $this->singleton('Monolog\\Logger', function ($app) {
             $logger = new Logger('primer');
