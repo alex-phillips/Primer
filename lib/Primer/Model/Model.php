@@ -618,7 +618,7 @@ abstract class Model extends Object
         }
 
         // If ID is not null, then UPDATE row in the database, else INSERT new row
-        if ($this->{"{$this->_idField}"} !== null) {
+        if ($this->{"{$this->_idField}"}) {
             // Update query
             if (array_key_exists('modified', static::getSchema())) {
                 $set[] = "modified = :modified";
