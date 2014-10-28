@@ -427,7 +427,7 @@ class Form
                 switch ($class_name) {
 
                     // if the newly created control is a file upload control
-                    case 'Zebra_Form_File':
+                    case 'Primer\\Form\\Controls\\File':
 
                         // set a flag to be used at rendering
                         $this->form_properties['has_upload'] = true;
@@ -435,8 +435,8 @@ class Form
                         break;
 
                     // if the newly created control is a radio button or a checkbox
-                    case 'Zebra_Form_Radio':
-                    case 'Zebra_Form_Checkbox':
+                    case 'Primer\\Form\\Controls\\Radio':
+                    case 'Primer\\Form\\Controls\\Checkbox':
 
                         // radio buttons and checkboxes might have a "master label", a label that is tied to the radio buttons' or
                         // checkboxes' name rather than individual controls' IDs. (as grouped radio buttons and checkboxes share
