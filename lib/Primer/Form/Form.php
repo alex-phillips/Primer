@@ -1092,7 +1092,7 @@ class Form
     {
 
         // include the language file
-        require rtrim(dirname(__FILE__), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'languages/' . strtolower(trim($language)) . '.php';
+        require rtrim(dirname(__FILE__), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'Languages/' . strtolower(trim($language)) . '.php';
 
         // make the language available in the control
         $this->form_properties['language'] = &$this->language;
@@ -4443,7 +4443,8 @@ __HTML__;
                 if (!isset($this->Zebra_Image))
 
                     // create a new instance of the image transformation class
-                    $this->Zebra_Image = new Zebra_Image();
+//                    $this->Zebra_Image = new Zebra_Image();
+                    $this->Zebra_Image = new Image();
 
                 // set the source file
                 $this->Zebra_Image->source_path = $this->file_upload[$control]['path'] . $this->file_upload[$control]['file_name'];
@@ -4730,7 +4731,8 @@ __HTML__;
             if (!isset($this->Zebra_Image))
 
                 // create a new instance of the image transformation class
-                $this->Zebra_Image = new Zebra_Image();
+//                $this->Zebra_Image = new Zebra_Image();
+                $this->Zebra_Image = new Image();
 
             // set the file permissions as per Zebra_Form's settings
             $this->Zebra_Image->chmod_value = $this->file_upload_permissions;
