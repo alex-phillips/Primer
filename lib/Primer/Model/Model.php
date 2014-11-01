@@ -149,7 +149,7 @@ abstract class Model extends Object
     {
         $class = $class ?: get_called_class();
 
-        return Inflector::pluralize(strtolower($class));
+        return Inflector::tableize($class);
     }
 
     /**
