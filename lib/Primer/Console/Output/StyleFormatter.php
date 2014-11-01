@@ -71,6 +71,7 @@ class StyleFormatter
 
             $buildNewMessage = str_replace($valueReplaced, $valueResult, $buildNewMessage);
         }
+
         return $buildNewMessage;
     }
 
@@ -79,6 +80,7 @@ class StyleFormatter
         $colors = $this->getBgColorCode() . ';' . $this->getFgColorCode();
         $effects = $this->getParsedToStringEffects();
         $effectsCodeString = $effects ? ';' . $effects : '';
+
         return sprintf("\033[%sm%s\033[0m", $colors . $effectsCodeString, $text);
     }
 
