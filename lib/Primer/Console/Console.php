@@ -51,79 +51,78 @@ class Console extends ConsoleObject
         ),
     );
 
-    public function __construct($applicationName = '', $applicationVersion = '', $argv = null)
+    public function __construct($applicationName = '', $argv = null)
     {
         if (!$argv) {
             $argv = $_SERVER['argv'];
         }
 
         $this->_applicationName = $applicationName;
-        $this->_applicationVersion = $applicationVersion;
         $this->_userPassedArgv = $argv;
 
         parent::__construct();
     }
 
-    public function addCommand($command, Array $aliases)
+    public function addCommand(BaseCommand $instance)
     {
-        if (is_string($command)) {
-            $this->_commands[$command] = $aliases;
-        }
-        else {
-            $this->_commands[get_class($command)] = $aliases;
-        }
+        $instance->configure();
+        $this->_commands[$instance->getName()] = $instance;
     }
 
     public function run()
     {
         $parsedArgv = $this->getParseInputArgv();
 
-        $command = null;
-        if (isset($parsedArgv[0])) {
-            $command = $parsedArgv[0];
-            unset($parsedArgv[0]);
-        }
+        $applicationOptions = $parsedArgv['application_options'];
+        $parsedArgv = $parsedArgv['args'];
 
-        $applicationOptions = array();
-        foreach ($this->_applicationOptions as $option => $info) {
-            foreach ($info['aliases'] as $param) {
-                if (isset($parsedArgv[$param])) {
-                    $applicationOptions[$param] = $parsedArgv[$param];
-                    unset($parsedArgv[$param]);
-                }
-            }
-        }
+        $command = array_shift($parsedArgv);
 
-        $this->_callApplication($command, $parsedArgv, $applicationOptions);
+        if ($command) {
+            $this->_callApplication($command, $parsedArgv, $applicationOptions);
+        }
+        else {
+            $this->_listCommands();
+        }
     }
 
     public function getParseInputArgv(array $argv = array())
     {
         $paramsToParse = (!empty($argv) ? $argv : $this->_userPassedArgv);
-        $parser = new ArgumentParser($paramsToParse);
 
-        return $parser->parseArgs();
-    }
-
-    private function _callApplication($applicationName, $commandParameters, $applicationParameters)
-    {
-        $commandAvailable = false;
-        foreach ($this->_commands as $className => $aliases) {
-            if (in_array($applicationName, $aliases)) {
-                $commandAvailable = true;
+        $applicationOptions = array();
+        foreach ($paramsToParse as $index => $param) {
+            if ($param == $_SERVER['SCRIPT_NAME']) {
+                continue;
+            }
+            if (preg_match('#\A-#', $param)) {
+                $applicationOptions[] = ltrim($param, '-');
+                unset($paramsToParse[$index]);
+            }
+            else {
                 break;
             }
         }
 
-        if (!$commandAvailable) {
+        $parser = new ArgumentParser($paramsToParse);
+
+        return array(
+            'application_options' => $applicationOptions,
+            'args' => $parser->parseArgs(),
+        );
+    }
+
+    private function _callApplication($applicationName, $commandParameters, $applicationParameters)
+    {
+        if (!isset($this->_commands[$applicationName])) {
             $this->_listCommands();
         }
         else {
-            $application = new $className();
-            $application->setup($aliases, $commandParameters, $applicationParameters);
-            $application->configure();
-            $application->verify();
-            $application->run();
+            $command = $this->_commands[$applicationName];
+            $command->setup($commandParameters, $applicationParameters);
+            $command->configure();
+            $command->verify();
+            $command->run();
         }
     }
 
@@ -146,15 +145,12 @@ class Console extends ConsoleObject
         }
 
         $commands = "";
-        foreach ($this->_commands as $command => $aliases) {
-            $command = new $command();
-            $command->configure();
-            $names = implode(', ', $aliases);
-            $description = $command->getDescription();
-            $commands .= "<info>\t$names\t\t$description</info>\n";
+        foreach ($this->_commands as $name => $instance) {
+            $description = $instance->getDescription();
+            $commands .= "<info>\t$name\t\t$description</info>\n";
 
             $params = '';
-            foreach ($command->getDefinedParameters() as $parameter) {
+            foreach ($instance->getDefinedParameters() as $parameter) {
                 $names = array();
                 if ($parameter->getShortName()) {
                     $names[] = '-' . $parameter->getShortName();
@@ -177,10 +173,7 @@ class Console extends ConsoleObject
         // Build application and version information
         $applicationInformation = array();
         if ($this->_applicationName) {
-            $applicationInformation[] = "<info>$this->_applicationName</info>";
-        }
-        if ($this->_applicationVersion) {
-            $applicationInformation[] = "version <warning>$this->_applicationVersion</warning>";
+            $applicationInformation[] = "$this->_applicationName";
         }
         if (!empty($applicationInformation)) {
             $applicationInformation = implode(' ', $applicationInformation) . "\n";
