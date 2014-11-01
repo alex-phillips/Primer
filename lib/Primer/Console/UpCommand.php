@@ -13,6 +13,7 @@ class UpCommand extends BaseCommand
 {
     public function configure()
     {
+        $this->setName('up');
         $this->setDescription("Bring the server out of maintenance mode");
     }
 
