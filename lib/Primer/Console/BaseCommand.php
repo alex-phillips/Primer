@@ -55,7 +55,7 @@ abstract class BaseCommand extends ConsoleObject implements CommandInterface
 
     private function _isVerboseSet()
     {
-        return array_key_exists('verbose', $this->_applicationOptions);
+        return (in_array('verbose', $this->_applicationOptions) || in_array('v', $this->_applicationOptions));
     }
 
     private function _isQuietSet()
