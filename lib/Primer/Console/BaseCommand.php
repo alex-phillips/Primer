@@ -16,6 +16,7 @@ use Primer\Console\Exception\DefinedInputException;
 abstract class BaseCommand extends ConsoleObject implements CommandInterface
 {
     public $parsedArgv;
+    protected $_name = '';
     protected $_description = '';
     private $_applicationOptions = array();
     /**
@@ -30,9 +31,8 @@ abstract class BaseCommand extends ConsoleObject implements CommandInterface
 
     abstract public function run();
 
-    public function setup($aliases, $args, $applicationOptions)
+    public function setup($args, $applicationOptions)
     {
-        $this->_aliases = $aliases;
         $this->parsedArgv = $args;
         $this->_applicationOptions = $applicationOptions;
         $this->_setOutputSystemVerbosity();
@@ -60,7 +60,7 @@ abstract class BaseCommand extends ConsoleObject implements CommandInterface
 
     private function _isQuietSet()
     {
-        return (array_key_exists('quiet', $this->_applicationOptions) || array_key_exists('q', $this->_applicationOptions));
+        return (in_array('quiet', $this->_applicationOptions) || in_array('q', $this->_applicationOptions));
     }
 
     public function verify()
@@ -195,6 +195,16 @@ __USAGE__;
     public function getHelper($helperName)
     {
         return Helper::loadHelper($helperName);
+    }
+
+    public function getName()
+    {
+        return $this->_name;
+    }
+
+    public function setName($name)
+    {
+        $this->_name = $name;
     }
 
     public function getDescription()
