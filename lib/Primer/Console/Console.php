@@ -132,22 +132,24 @@ class Console extends ConsoleObject
         foreach ($this->_applicationOptions as $name => $info) {
             $aliases = array();
             foreach ($info['aliases'] as $alias) {
-                if (strlen($alias) === 1) {
-                    $aliases[] = "-$alias";
-                }
-                else {
-                    $aliases[] = "--$alias";
+                switch (strlen($alias)) {
+                    case 1:
+                        $aliases[] = "-$alias";
+                        break;
+                    default:
+                        $aliases[] = "--$alias";
+                        break;
                 }
             }
 
             $aliases = implode(', ', $aliases);
-            $options .= "<info>\t$aliases\t\t{$info['description']}</info>\n";
+            $options .= "<info>    $aliases\t\t{$info['description']}</info>\n";
         }
 
         $commands = "";
         foreach ($this->_commands as $name => $instance) {
             $description = $instance->getDescription();
-            $commands .= "<info>\t$name\t\t$description</info>\n";
+            $commands .= "<info>    $name\t\t$description</info>\n";
 
             $params = '';
             foreach ($instance->getDefinedParameters() as $parameter) {
@@ -188,7 +190,7 @@ $applicationInformation
     [options] command [arguments]
 
 <warning>Available Options:</warning>
-    $options
+$options
 <warning>Available Commands:</warning>
 $commands
 
