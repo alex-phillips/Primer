@@ -11,6 +11,7 @@ class DownCommand extends BaseCommand
 {
     public function configure()
     {
+        $this->setName('down');
         $this->setDescription("Bring the server down for maintenance mode");
     }
 
