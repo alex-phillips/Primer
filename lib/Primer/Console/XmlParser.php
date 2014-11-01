@@ -17,7 +17,7 @@ class XmlParser
 
     public static function getValueBetweenTags($tag, $stringToParse)
     {
-        $regexp = '#<' . $tag . '>(.+?)</' . $tag . '>#';
+        $regexp = '#<' . $tag . '>(.+?)</' . $tag . '>#s';
         preg_match_all($regexp, $stringToParse, $valuesMatched);
         return $valuesMatched[1];
     }
