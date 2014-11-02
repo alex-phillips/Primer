@@ -56,6 +56,38 @@ abstract class Model extends Object
     public $errors = array();
 
     /**
+     * Variable that contains information regarding the models 'has one'
+     * relationships.
+     *
+     * @var string|array
+     */
+    public static $hasOne = '';
+
+    /**
+     * Variable that contains information regarding the models 'has many'
+     * relationships.
+     *
+     * @var string|array
+     */
+    public static $hasMany = '';
+
+    /**
+     * Variable that contains information regarding the models 'belongs to'
+     * relationships.
+     *
+     * @var string|array
+     */
+    public static $belongsTo = '';
+
+    /**
+     * Variable that contains information regarding the models 'has and belongs to many'
+     * relationships.
+     *
+     * @var string|array
+     */
+    public static $hasAndBelongsToMany = '';
+
+    /**
      * This is the ID field in the database for the object. This is stored so
      * we know what the primary key for the table is for each model.
      *
@@ -88,9 +120,9 @@ abstract class Model extends Object
      */
     protected function __construct($params = array())
     {
-        $this->_idField = static::getIdField();
-        $this->_tableName = static::getTableName();
-        $this->_className = static::getClassName();
+        $this->_idField = $this->getIdField();
+        $this->_tableName = $this->getTableName();
+        $this->_className = $this->getModelName();
 
         static::getSchema();
         if (!empty($params)) {
@@ -134,7 +166,7 @@ abstract class Model extends Object
      *
      * @return string
      */
-    public static function getIdField()
+    public static function getIdField($class = null)
     {
         return 'id';
     }
@@ -153,23 +185,6 @@ abstract class Model extends Object
     }
 
     /**
-     * Getter function for retrieving a model's name
-     * Ex: User model returns 'user'
-     *
-     * @param null $class
-     *
-     * @return string
-     */
-    public static function getClassName($class = null)
-    {
-        if (!$class) {
-            return strtolower(get_called_class());
-        }
-
-        return strtolower(Inflector::singularize($class));
-    }
-
-    /**
      * Function to initialize the parent model class that all models
      * inherit from. Anything that should be executed for all models
      * shbould be added here whether or not a model will be automatically
@@ -182,18 +197,18 @@ abstract class Model extends Object
         }
     }
 
-    public static function getSchema()
+    public static function getSchema($class = null)
     {
-        $className = static::getClassName();
-        $tableName = static::getTableName();
-        if (!isset(static::$_schema[$className])) {
+        $modelName = static::getModelName($class);
+        $tableName = static::getTableName($class);
+        if (!isset(static::$_schema[$modelName])) {
             $query = "DESCRIBE {$tableName};";
             $sth = self::$_db->prepare($query);
             $sth->execute(self::$_bindings);
             $fields = $sth->fetchAll();
 
             foreach ($fields as $info) {
-                static::$_schema[$className][$info->Field] = array(
+                static::$_schema[$modelName][$info->Field] = array(
                     'type' => $info->Type,
                     'null' => $info->Null,
                     'key' => $info->Key,
@@ -203,7 +218,7 @@ abstract class Model extends Object
             }
         }
 
-        return static::$_schema[$className];
+        return static::$_schema[$modelName];
     }
 
     /**
@@ -346,7 +361,7 @@ abstract class Model extends Object
         $params['limit'] = 1;
         $results = static::find($params);
 
-        return (!empty($results)) ? $results[0] : null;
+        return (!empty($results)) ? array_shift($results) : null;
     }
 
     /**
@@ -360,78 +375,64 @@ abstract class Model extends Object
      */
     public static function find($params = array())
     {
-        $className = static::getClassName();
-        $tableName = static::getTableName();
+        $modelName = static::getModelName();
         self::$_bindings = array();
         $returnObjects = true;
 
-        $where = '';
-        if (isset($params['conditions']) && $params['conditions']) {
-            $where = 'WHERE ' . static::_buildFindConditions(
-                    $params['conditions']
-                );
-        }
+        $params = array_merge(
+            array(
+                'conditions' => '',
+                'fields'     => '',
+                'joins'      => array(),
+                'limit'      => '',
+                'offset'     => '',
+                'order'      => '',
+                'count'      => false,
+            ),
+            $params
+        );
 
-        $fields = '*';
-        if (isset($params['fields']) && is_array($params['fields']) && $params['fields']) {
-            foreach ($params['fields'] as $index => $field) {
-                $params['fields'][$index] = static::getTableName() . ".$field";
-            }
-            $fields = implode(', ', $params['fields']);
-        }
-        else {
-            if (isset($params['fields']) && is_string($params['fields']) && $params['fields']) {
-                $fields = static::getTableName() . ".{$params['fields']}";
-            }
-        }
-
-//        $join = '';
-//        if (isset(static::$hasMany)) {
-//            if (is_array(static::$hasMany)) {
-//
-//            }
-//            else {
-//                $foreignTable = static::getTableName(static::$hasMany);
-//                $join = 'LEFT JOIN ' . $foreignTable . ' ON ' . static::getModelName() . '.' . static::getIdField() . ' = ' . static::getModelName(static::$hasMany) . '.'. static::getForeignIdField();
-//            }
-//        }
-
-        if (isset($params['count']) && $params['count'] === true) {
-            $fields = 'COUNT(' . $fields . ')';
+        if ($params['count']) {
             $returnObjects = false;
         }
 
-        $order = '';
-        if (isset($params['order']) && $params['order']) {
-            $order = 'ORDER BY ' . implode(', ', $params['order']);
-        }
-
-        $limit = '';
-        if (isset($params['limit']) && $params['limit']) {
-            $limit = 'LIMIT ' . $params['limit'];
-        }
-
-        $offset = '';
-        if (isset($params['offset']) && $params['offset']) {
-            $offset = 'OFFSET ' . $params['offset'];
-        }
-
-        $query = "SELECT {$fields} FROM {$tableName} {$where} {$order} {$limit} {$offset};";
+        $query = static::buildQuery($params);
 
         $sth = self::$_db->prepare($query);
         $sth->execute(self::$_bindings);
 
         $results = array();
         foreach ($sth->fetchAll() as $result) {
+            $id = null;
             if ($returnObjects) {
-                if ($result->created) {
-                    $result->created = Carbon::createFromTimestampUTC(strtotime($result->created))->setTimezone(date_default_timezone_get());
+                $foreignObjects = static::buildForeignObjects($result);
+
+                $id = $result->{static::getIdField()};
+
+                if (isset($results[$id])) {
+                    $result = $results[$id];
                 }
-                if ($result->modified) {
-                    $result->modified = Carbon::createFromTimestampUTC(strtotime($result->modified))->setTimezone(date_default_timezone_get());
+                else {
+                    $result = new $modelName($result);
                 }
-                $result->created = Carbon::createFromTimestampUTC(strtotime($result->created))->setTimezone(date_default_timezone_get());
-                $results[] = new $className($result);
+
+                foreach ($foreignObjects as $foreignModelName => $object) {
+                    $relationship = static::verifyRelationship($foreignModelName);
+
+                    switch ($relationship) {
+                        case 'hasOne':
+                        case 'belongsTo':
+                            $result->{$foreignModelName} = new $foreignModelName($object);
+                            break;
+                        default:
+                            $foreignId = $object->{static::getIdField($foreignModelName)};
+                            if (!isset($result->{$foreignModelName}[$foreignId])) {
+                                $result->{$foreignModelName}[$foreignId] = new $foreignModelName($object);
+                            }
+                    }
+                }
+
+                $results[$id] = $result;
             }
             else {
                 $results[] = $result;
@@ -439,6 +440,131 @@ abstract class Model extends Object
         }
 
         return $results;
+    }
+
+    protected static function buildForeignObjects($row)
+    {
+        $foreignObjects = array();
+        foreach ($row as $k => $v) {
+            if (!array_key_exists($k, static::getSchema())) {
+                if (preg_match('#\A(.+?)_#', $k, $matches)) {
+                    $foreignModelName = $matches[1];
+                    unset($row->$k);
+                    if (!isset($foreignObjects[$foreignModelName])) {
+                        $foreignObjects[$foreignModelName] = new \stdClass();
+                    }
+                    $k = preg_replace('#' . $matches[1] . '_#', '', $k);
+                    $foreignObjects[$foreignModelName]->$k = $v;
+                }
+            }
+        }
+
+        return $foreignObjects;
+    }
+
+    protected static function buildQuery($params)
+    {
+        $tableName = static::getTableName();
+        $modelName = static::getModelName();
+
+        $params['conditions'] = $params['conditions'] ? 'WHERE ' . static::_buildFindConditions($params['conditions']) : '';
+        $params['limit'] = $params['limit'] ? "LIMIT {$params['limit']}" : '';
+        $params['offset'] = $params['offset'] ? "OFFSET {$params['offset']}" : '';
+
+        if ($params['fields']) {
+            if (is_array($params['fields'])) {
+                $params['fields'] = implode(', ', $params['fields']);
+            }
+        }
+        else {
+            $params['fields'] = static::getModelName() . ".*";
+        }
+
+        if ($params['order']) {
+            if (is_array($params['order'])) {
+                $params['order'] = 'ORDER BY ' . implode(', ', $params['order']);
+            }
+            else {
+                $params['order'] = "ORDER BY {$params['order']}";
+            }
+        }
+
+        if (!$params['joins']) {
+            $params['joins'] = static::buildJoins();
+        }
+
+        if ($params['count'] === true) {
+            $params['joins'] = array();
+            if (!preg_match('#\ADISTINCT#i', $params['fields'])) {
+                $params['fields'] = "COUNT(*)";
+            }
+            else {
+                $params['fields'] = "COUNT({$params['fields']})";
+            }
+        }
+
+        $joins = array();
+        foreach ($params['joins'] as $join) {
+            $default = array(
+                'alias'      => static::getModelName($join['table']),
+                'type'       => 'LEFT',
+                'conditions' => array(),
+            );
+            $join = array_merge($default, $join);
+
+            if (!$join['conditions']) {
+                $join['conditions'] = "{$join['alias']}." . static::getForeignIdField() . " = " . static::getModelName() . "." . static::getIdField();
+            }
+            else if (is_array($join['conditions'])) {
+                $join['conditions'] = implode(' AND ', $join['conditions']);
+            }
+
+            if ($join['alias']) {
+                $join['alias'] = "{$join['alias']}";
+            }
+
+            $joins[] = "{$join['type']} JOIN {$join['table']} AS {$join['alias']} ON {$join['conditions']}";
+            foreach (static::getSchema($join['table']) as $k => $v) {
+                $params['fields'] .= ", {$join['alias']}.$k as {$join['alias']}_$k";
+            }
+        }
+        $joins = implode(', ', $joins);
+
+        return "SELECT {$params['fields']} FROM {$tableName} AS {$modelName} {$joins} {$params['conditions']} {$params['order']} {$params['limit']} {$params['offset']};";
+    }
+
+    protected static function buildJoins()
+    {
+        $joins = array();
+
+        // Build 'hasOne' case
+        if (static::$hasOne) {
+            if (!is_array(static::$hasOne)) {
+                $joins[] = array(
+                    'table' => static::getTableName(static::$hasOne),
+                );
+            }
+            else {
+                // handle array
+            }
+        }
+
+        if (static::$belongsTo) {
+            if (!is_array(static::$belongsTo)) {
+                $joins[] = array(
+                    'table' => static::getTableName(static::$belongsTo),
+                    'alias' => static::getModelName(static::$belongsTo),
+                    'conditions' => array(
+                        static::getModelName() . "." . static::getForeignIdField(static::$belongsTo) . " = " . static::getModelName(static::$belongsTo) . "." . static::getIdField(static::$belongsTo),
+                    ),
+                );
+            }
+            else {
+                // handle array
+            }
+        }
+
+        return $joins;
     }
 
     /**
@@ -473,7 +599,8 @@ abstract class Model extends Object
                 }
                 else {
                     self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
-                    return "$k IS NOT :$v";
+
+                    return static::getModelName() . ".$k IS NOT :$v";
                 }
             }
             else {
@@ -493,10 +620,10 @@ abstract class Model extends Object
                                 $v = "%$v%";
                                 break;
                         }
-                        $retval[] = "$k :$binding" . sizeof(self::$_bindings) . "";
+                        $retval[] = static::getModelName() . ".$k :$binding" . sizeof(self::$_bindings) . "";
                     }
                     else {
-                        $retval[] = "$k = :$binding" . sizeof(self::$_bindings) . "";
+                        $retval[] = static::getModelName() . ".$k = :$binding" . sizeof(self::$_bindings) . "";
                     }
                     self::$_bindings[":$binding" . sizeof(self::$_bindings)] = $v;
                 }
@@ -540,7 +667,7 @@ abstract class Model extends Object
     {
         $class = $class ?: get_called_class();
 
-        return 'id_' . self::getClassName($class);
+        return 'id_' . strtolower(self::getModelName($class));
     }
 
     /**
@@ -582,11 +709,6 @@ abstract class Model extends Object
         }
 
         if ($this->beforeSave() == false) {
-            return false;
-        }
-
-        if (!$this->verifyRelationships()) {
-            $this->errors[] = "Unable to verify relationships";
             return false;
         }
 
@@ -654,20 +776,6 @@ abstract class Model extends Object
             $success = $sth->execute(self::$_bindings);
             $this->{"{$this->_idField}"} = self::$_db->lastInsertId();
         }
-
-        /*
-         * Here is where we handle various relationships
-         */
-//        if (isset($this->hasOne) && $this->hasOne) {
-//            $hasOne = call_user_func(array($this->hasOne, 'findById'), $this->{$this->getForeignIdField($this->hasOne)});
-//            if ($hasOne) {
-//                $hasOne->{$this->getForeignIdField($this->_className)} = $this->{$this->getForeignIdField($this->hasOne)};
-//                if (!$hasOne->save()) {
-//                    self::$_db->rollBack();
-//                    return false;
-//                }
-//            }
-//        }
 
         if ($this->afterSave() == false) {
             self::$_db->rollBack();
@@ -794,40 +902,44 @@ abstract class Model extends Object
 
     // @TODO: move validating to its own class
 
-    private function verifyRelationships()
+    protected static function verifyRelationship($foreignModelName)
     {
-        /*
-         * Verify 'belongs to' relationships
-         */
-        if (isset($this->belongsTo)) {
-            if (is_array($this->belongsTo)) {
+        $relationship = '';
 
+        // Check if model 'hasOne' foreign model
+        if (!$relationship && static::$hasOne) {
+            if (is_array(static::$hasOne)) {
+                foreach (static::$hasOne as $identifier => $info) {
+                    if ($info['className'] == $foreignModelName) {
+                        $relationship = 'hasOne';
+                        break;
+                    }
+                }
             }
             else {
-                if (is_string($this->belongsTo)) {
-                    $ownerModel = $this->getModelName($this->belongsTo);
-                    try {
-                        $ownerId = $this->{$this->getForeignIdField(
-                                $this->belongsTo
-                            )};
-                        $owner = call_user_func(
-                            array(
-                                $ownerModel,
-                                'findById'
-                            ),
-                            $ownerId
-                        );
-                        if (!($owner instanceof $ownerModel)) {
-                            return false;
-                        }
-                    } catch (Exception $e) {
-                        return false;
-                    }
+                if ($foreignModelName == static::$hasOne) {
+                    $relationship = 'hasOne';
                 }
             }
         }
 
-        return true;
+        if (!$relationship && static::$belongsTo) {
+            if (is_array(static::$belongsTo)) {
+                foreach (static::$belongsTo as $identifier => $info) {
+                    if ($info['className'] == $foreignModelName) {
+                        $relationship = 'belongsTo';
+                        break;
+                    }
+                }
+            }
+            else {
+                if ($foreignModelName == static::$belongsTo) {
+                    $relationship = 'belongsTo';
+                }
+            }
+        }
+
+        return $relationship;
     }
 
     /**
