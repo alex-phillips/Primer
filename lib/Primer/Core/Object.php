@@ -26,7 +26,7 @@ abstract class Object
     {
         $string = $string ?: get_called_class();
 
-        return ucfirst(Inflector::singularize($string));
+        return Inflector::classify($string);
     }
 
     public static function logMessage($msg, $filename = 'core.log')
