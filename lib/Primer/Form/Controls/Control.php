@@ -312,11 +312,11 @@ class Control extends XSSClean
                         // iterate through the submitted values
                         foreach ($this->submitted_value as $key => $value)
 
-                            // filter the control's value for XSS injection and/or convert applicable characters to their equivalent HTML entities
-                            $this->submitted_value[$key] = htmlspecialchars(!$attribute['disable_xss_filters'] ? $this->sanitize($value) : $value);
+                            // filter the control's value for XSS injection
+                            $this->submitted_value[$key] = !$attribute['disable_xss_filters'] ? $this->sanitize($value) : $value;
 
-                    // if submitted value is not an array, filter the control's value for XSS injection and/or convert applicable characters to their equivalent HTML entities
-                    else $this->submitted_value = htmlspecialchars(!$attribute['disable_xss_filters'] ? $this->sanitize($this->submitted_value) : $this->submitted_value);
+                    // if submitted value is not an array, filter the control's value for XSS injection
+                    else $this->submitted_value = !$attribute['disable_xss_filters'] ? $this->sanitize($this->submitted_value) : $this->submitted_value;
 
                     // set the respective $_POST/$_GET value to the filtered value
                     $method[$attribute['name']] = $this->submitted_value;
