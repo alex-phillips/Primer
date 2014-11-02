@@ -379,7 +379,7 @@ class Application extends Container
     public function abort($code = 404)
     {
         $this['view']->set('title', 'Page Not Found');
-        $this['response']->set($this['view']->render('error/404'), $code)->send();
+        $this['response']->set($this['view']->render('errors/404'), $code)->send();
         exit(1);
     }
 
