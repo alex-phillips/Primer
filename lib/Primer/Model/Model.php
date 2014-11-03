@@ -467,7 +467,7 @@ abstract class Model extends Object
         $tableName = static::getTableName();
         $modelName = static::getModelName();
 
-        $params['conditions'] = $params['conditions'] ? 'WHERE ' . static::_buildFindConditions($params['conditions']) : '';
+        $params['conditions'] = $params['conditions'] ? 'WHERE ' . static::buildFindConditions($params['conditions']) : '';
         $params['limit'] = $params['limit'] ? "LIMIT {$params['limit']}" : '';
         $params['offset'] = $params['offset'] ? "OFFSET {$params['offset']}" : '';
 
@@ -576,7 +576,7 @@ abstract class Model extends Object
      *
      * @return string
      */
-    protected static function _buildFindConditions($conditions, $conjunction = '')
+    protected static function buildFindConditions($conditions, $conjunction = '')
     {
         // @TODO: $this->User->find( 'all', array(
         //        'conditions' => array("not" => array ( "User.site_url" => null)
@@ -586,7 +586,7 @@ abstract class Model extends Object
         $retval = array();
         foreach ($conditions as $k => $v) {
             if ((strtoupper($k) === 'OR' || strtoupper($k) === 'AND') && is_array($v)) {
-                $retval[] = '(' . static::_buildFindConditions(
+                $retval[] = '(' . static::buildFindConditions(
                         $v,
                         strtoupper($k)
                     ) . ')';
@@ -605,7 +605,7 @@ abstract class Model extends Object
             }
             else {
                 if (is_array($v)) {
-                    $retval[] = static::_buildFindConditions($v);
+                    $retval[] = static::buildFindConditions($v);
                 }
                 else {
                     $binding = $k;
