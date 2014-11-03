@@ -65,6 +65,15 @@ class Paginator extends Object
      */
     public function __construct($params)
     {
+        $params = array_merge(
+            array(
+                'perPage'  => 5,
+                'instance' => 'p',
+                'query'    => 'q',
+            ),
+            $params
+        );
+
         $this->_perPage = $params['perPage'];
         $this->_instance = $params['instance'];
         $this->_queryString = $params['query'];
