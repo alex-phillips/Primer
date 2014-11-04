@@ -2,6 +2,8 @@
 
 namespace Primer\Model;
 
+use stdClass;
+use DateTime;
 use Carbon\Carbon;
 use Primer\Core\Object;
 use Primer\Utility\Inflector;
@@ -787,13 +789,13 @@ abstract class Model extends Object
         return $success;
     }
 
-    private function validate($rules = null)
+    private function validate($ruleSet = null)
     {
-        if (!$rules) {
-            $rules = static::$_validate;
+        if (!$ruleSet) {
+            $ruleSet = static::$_validate;
         }
 
-        foreach ($rules as $field => $rules) {
+        foreach ($ruleSet as $field => $rules) {
             // FIRST, test if field is required
             if ($this->$field == '') {
                 // If not required and
@@ -989,7 +991,7 @@ abstract class Model extends Object
      */
     public function getDBObject()
     {
-        $retval = new stdClass();
+        $retval = new \stdClass();
         foreach ($this as $key => $value) {
             if (array_key_exists($key, $this->getSchema())) {
                 $retval->$key = $value;
@@ -997,5 +999,48 @@ abstract class Model extends Object
         }
 
         return $retval;
+    }
+
+    public static function toStdClass($o)
+    {
+        if ($o instanceof DateTime) {
+            return $o->getTimestamp();
+        }
+
+        if (is_array($o)) {
+            $o_new = array();
+            foreach ($o as $oitem) {
+                $o_new[] = self::toStdClass($oitem);
+            }
+
+            return $o_new;
+        }
+
+        if (!is_object($o)) {
+            if (is_numeric($o)) {
+                $vint = intval($o);
+                $vfloat = floatval($o);
+                $v = ($vfloat != $vint) ? $vfloat : $vint;
+
+                return $v;
+            }
+
+            return $o;
+        }
+
+        $xary = (array)$o;
+        $o_new = new stdClass ();
+        foreach ($xary as $k => $v) {
+            if ($k[0] == "\0") {
+                // private/protected members have null-delimited prefixes
+                // that need to be removed
+                $prefix_length = stripos($k, "\0", 1) + 1;
+                $k = substr($k, $prefix_length, strlen($k) - $prefix_length);
+            }
+
+            $o_new->$k = self::toStdClass($v);
+        }
+
+        return $o_new;
     }
 }
