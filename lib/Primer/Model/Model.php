@@ -2,7 +2,12 @@
 
 namespace Primer\Model;
 
+use IteratorAggregate;
+use Serializable;
+use JsonSerializable;
+use Countable;
 use stdClass;
+use ArrayIterator;
 use DateTime;
 use Carbon\Carbon;
 use Primer\Core\Object;
@@ -16,7 +21,7 @@ use Primer\Datasource\Database;
  * Class in which all models are inherited from. Contains all 'generic' database
  * interactions and validation for models.
  */
-abstract class Model extends Object
+abstract class Model extends Object implements IteratorAggregate, Serializable, JsonSerializable, Countable
 {
     /**
      * Data structure in which all unique variables related to the database-representation
@@ -1075,17 +1080,6 @@ abstract class Model extends Object
     }
 
     /**
-     * Return a JSON serialized instance of the model as it would exists
-     * in the database.
-     *
-     * @return string
-     */
-    public function JSONSerialize()
-    {
-        return json_encode($this->getDBObject());
-    }
-
-    /**
      * Retrieve a representation of the object as it would exist in the database.
      * The returned object is a standard class of only the fields that are in
      * the database schema.
@@ -1151,5 +1145,34 @@ abstract class Model extends Object
         }
 
         return $o_new;
+    }
+
+    public function getIterator() {
+        return new ArrayIterator($this->data);
+    }
+
+    public function serialize()
+    {
+        return serialize($this->data);
+    }
+
+    public function unserialize($data)
+    {
+        $this->data = unserialize($data);
+    }
+
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->data;
+    }
+
+    public function count()
+    {
+        return count($this->data);
     }
 }
