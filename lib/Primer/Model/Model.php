@@ -18,12 +18,14 @@ use Primer\Datasource\Database;
  */
 abstract class Model extends Object
 {
+    public $data = array();
+
     /**
      * Array that contains validation and save error messages
      *
      * @var array
      */
-    public $errors = array();
+    protected $_errors = array();
 
     /**
      * Variable that contains information regarding the models 'has one'
@@ -31,7 +33,7 @@ abstract class Model extends Object
      *
      * @var string|array
      */
-    public static $hasOne = '';
+    protected static $_hasOne = '';
 
     /**
      * Variable that contains information regarding the models 'has many'
@@ -39,7 +41,7 @@ abstract class Model extends Object
      *
      * @var string|array
      */
-    public static $hasMany = '';
+    protected static $_hasMany = '';
 
     /**
      * Variable that contains information regarding the models 'belongs to'
@@ -47,7 +49,7 @@ abstract class Model extends Object
      *
      * @var string|array
      */
-    public static $belongsTo = '';
+    protected static $_belongsTo = '';
 
     /**
      * Variable that contains information regarding the models 'has and belongs to many'
@@ -55,7 +57,7 @@ abstract class Model extends Object
      *
      * @var string|array
      */
-    public static $hasAndBelongsToMany = '';
+    protected static $_hasAndBelongsToMany = '';
 
     /**
      * This is the ID field in the database for the object. This is stored so
@@ -145,29 +147,40 @@ abstract class Model extends Object
         return new static($params);
     }
 
+    public function __get($key)
+    {
+        if (isset($this->data[$key])) {
+            return $this->data[$key];
+        }
+
+        return null;
+    }
+
     public function __set($key, $value)
     {
         /*
          * Make sure that created and modified properties are Carbon objects.
          */
-        if ($key === 'created' || $key === 'modified') {
-            if ($value === null) {
-                $this->$key = null;
-            }
-            else if ($value instanceof Carbon) {
-                $this->$key = $value;
-            }
-            else {
-                if (is_numeric($value)) {
-                    $this->$key = Carbon::createFromTimestamp($value);
+        if (array_key_exists($key, static::getSchema())) {
+            if ($key === 'created' || $key === 'modified') {
+                if ($value === null) {
+                    $this->data[$key] = null;
+                }
+                else if ($value instanceof Carbon) {
+                    $this->data[$key] = $value;
                 }
                 else {
-                    $this->$key = Carbon::createFromTimestamp(strtotime($value));
+                    if (is_numeric($value)) {
+                        $this->data[$key] = Carbon::createFromTimestamp($value);
+                    }
+                    else {
+                        $this->data[$key] = Carbon::createFromTimestamp(strtotime($value));
+                    }
                 }
             }
-        }
-        else {
-            $this->$key = $value;
+            else {
+                $this->data[$key] = $value;
+            }
         }
     }
 
@@ -276,9 +289,14 @@ abstract class Model extends Object
         }
 
         // Always instantiate the ID field even though it is requried
-        if (!isset($this->{$this->_idField})) {
+        if (!$this->{$this->_idField}) {
             $this->{$this->_idField} = null;
         }
+    }
+
+    public function getErrors()
+    {
+        return $this->_errors;
     }
 
     /**
@@ -597,10 +615,10 @@ abstract class Model extends Object
         $joins = array();
 
         // Build 'hasOne' case
-        if (static::$hasOne) {
-            if (!is_array(static::$hasOne)) {
+        if (static::$_hasOne) {
+            if (!is_array(static::$_hasOne)) {
                 $joins[] = array(
-                    'table' => static::getTableName(static::$hasOne),
+                    'table' => static::getTableName(static::$_hasOne),
                 );
             }
             else {
@@ -608,13 +626,13 @@ abstract class Model extends Object
             }
         }
 
-        if (static::$belongsTo) {
-            if (!is_array(static::$belongsTo)) {
+        if (static::$_belongsTo) {
+            if (!is_array(static::$_belongsTo)) {
                 $joins[] = array(
-                    'table' => static::getTableName(static::$belongsTo),
-                    'alias' => static::getModelName(static::$belongsTo),
+                    'table' => static::getTableName(static::$_belongsTo),
+                    'alias' => static::getModelName(static::$_belongsTo),
                     'conditions' => array(
-                        static::getModelName() . "." . static::getForeignIdField(static::$belongsTo) . " = " . static::getModelName(static::$belongsTo) . "." . static::getIdField(static::$belongsTo),
+                        static::getModelName() . "." . static::getForeignIdField(static::$_belongsTo) . " = " . static::getModelName(static::$_belongsTo) . "." . static::getIdField(static::$_belongsTo),
                     ),
                 );
             }
@@ -771,7 +789,7 @@ abstract class Model extends Object
     public function save()
     {
         $this->validate();
-        if (!empty($this->errors)) {
+        if (!empty($this->_errors)) {
             return false;
         }
 
@@ -874,7 +892,7 @@ abstract class Model extends Object
                     else {
                         $message = $rules['required']['message'];
                     }
-                    $this->errors[] = $message;
+                    $this->_errors[] = $message;
                 }
             }
 
@@ -902,7 +920,7 @@ abstract class Model extends Object
                         if (!empty($results)) {
                             foreach ($results as $result) {
                                 if ($result->{$this->_idField} != $this->{$this->_idField}) {
-                                    $this->errors[] = $message;
+                                    $this->_errors[] = $message;
                                 }
                             }
                         }
@@ -910,43 +928,43 @@ abstract class Model extends Object
                     // Validate e-mail
                     case 'email':
                         if (!filter_var($this->$field, FILTER_VALIDATE_EMAIL)) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                     // Validate alpha-numeric field
                     case 'alphaNumeric':
                         if (!ctype_alnum($this->$field)) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                     // Validate numeric field
                     case 'numeric':
                         if (!is_numeric($this->$field)) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                     // Validate max length
                     case 'max_length':
                         if (strlen($this->$field) > $info['size']) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                     // Validate min length
                     case 'min_length':
                         if (strlen($this->$field) < $info['size']) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                     // Validate list of options
                     case 'in_list':
                         if (!in_array($this->$field, $info['list'])) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                     // Validate custom regex
                     case 'regex':
                         if (!preg_match($info['rule'], $this->$field)) {
-                            $this->errors[] = $message;
+                            $this->_errors[] = $message;
                         }
                         break;
                 }
@@ -982,9 +1000,9 @@ abstract class Model extends Object
         $relationship = '';
 
         // Check if model 'hasOne' foreign model
-        if (!$relationship && static::$hasOne) {
-            if (is_array(static::$hasOne)) {
-                foreach (static::$hasOne as $identifier => $info) {
+        if (!$relationship && static::$_hasOne) {
+            if (is_array(static::$_hasOne)) {
+                foreach (static::$_hasOne as $identifier => $info) {
                     if ($info['className'] == $foreignModelName) {
                         $relationship = 'hasOne';
                         break;
@@ -992,15 +1010,15 @@ abstract class Model extends Object
                 }
             }
             else {
-                if ($foreignModelName == static::$hasOne) {
+                if ($foreignModelName == static::$_hasOne) {
                     $relationship = 'hasOne';
                 }
             }
         }
 
-        if (!$relationship && static::$belongsTo) {
-            if (is_array(static::$belongsTo)) {
-                foreach (static::$belongsTo as $identifier => $info) {
+        if (!$relationship && static::$_belongsTo) {
+            if (is_array(static::$_belongsTo)) {
+                foreach (static::$_belongsTo as $identifier => $info) {
                     if ($info['className'] == $foreignModelName) {
                         $relationship = 'belongsTo';
                         break;
@@ -1008,7 +1026,7 @@ abstract class Model extends Object
                 }
             }
             else {
-                if ($foreignModelName == static::$belongsTo) {
+                if ($foreignModelName == static::$_belongsTo) {
                     $relationship = 'belongsTo';
                 }
             }
