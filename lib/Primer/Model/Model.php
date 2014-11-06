@@ -18,6 +18,13 @@ use Primer\Datasource\Database;
  */
 abstract class Model extends Object
 {
+    /**
+     * Data structure in which all unique variables related to the database-representation
+     * of the object are stored. These are accessed like normal, public class
+     * variables through magic __get and __set methods.
+     *
+     * @var array
+     */
     public $data = array();
 
     /**
