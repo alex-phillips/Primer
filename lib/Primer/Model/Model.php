@@ -19,38 +19,6 @@ use Primer\Datasource\Database;
 abstract class Model extends Object
 {
     /**
-     * Schema variable is built from the table in the database for the Model.
-     * This is used to determine what values to set, default values, and what
-     * to insert and update in the database when the save() method is called.
-     *
-     * @var array
-     */
-    protected static $_schema = array();
-
-    /**
-     * Validation array contains rules to check on each model field.
-     * This is not validation for forms or client-side validation, but
-     * validation before a model is created or updated in the database.
-     *
-     * @var array
-     */
-    protected static $_validate = array();
-
-    /**
-     * Database variable to handle all query creations and executions.
-     *
-     * @var
-     */
-    protected static $_db;
-
-    /**
-     * Array of variables to pass to PDO to bind in preparing DB queries
-     *
-     * @var array
-     */
-    protected static $_bindings = array();
-
-    /**
      * Array that contains validation and save error messages
      *
      * @var array
@@ -114,6 +82,38 @@ abstract class Model extends Object
     protected $_className;
 
     /**
+     * Schema variable is built from the table in the database for the Model.
+     * This is used to determine what values to set, default values, and what
+     * to insert and update in the database when the save() method is called.
+     *
+     * @var array
+     */
+    protected static $_schema = array();
+
+    /**
+     * Validation array contains rules to check on each model field.
+     * This is not validation for forms or client-side validation, but
+     * validation before a model is created or updated in the database.
+     *
+     * @var array
+     */
+    protected static $_validate = array();
+
+    /**
+     * Database variable to handle all query creations and executions.
+     *
+     * @var
+     */
+    protected static $_db;
+
+    /**
+     * Array of variables to pass to PDO to bind in preparing DB queries
+     *
+     * @var array
+     */
+    protected static $_bindings = array();
+
+    /**
      * Constructor for every model class. This is protected as every model
      * instantiated outside of this class should use the static function
      * 'create'.
@@ -132,6 +132,14 @@ abstract class Model extends Object
         }
     }
 
+    /**
+     * Publicly accessible function used to create a new instance of the model
+     * with the passed params used to set necessary variables.
+     *
+     * @param array $params
+     *
+     * @return static
+     */
     public static function create($params = array())
     {
         return new static($params);
@@ -199,6 +207,16 @@ abstract class Model extends Object
         }
     }
 
+    /**
+     * This function queries the database for the structure of a given class
+     * and returns the structure. It is 'cached' and stored in a data structure
+     * so that each model's schema is queried from the database only once per
+     * active request.
+     *
+     * @param null $class
+     *
+     * @return mixed
+     */
     public static function getSchema($class = null)
     {
         $modelName = static::getModelName($class);
@@ -274,6 +292,14 @@ abstract class Model extends Object
         return static::$_validate;
     }
 
+    /**
+     * Given an array of params to build a query with, this function returns
+     * the count found in the database.
+     *
+     * @param array $params
+     *
+     * @return mixed
+     */
     public static function findCount($params = array())
     {
         $params['count'] = true;
@@ -282,6 +308,13 @@ abstract class Model extends Object
         return $results[0]->{"COUNT(*)"};
     }
 
+    /**
+     * Delete a model with the given ID.
+     *
+     * @param $id
+     *
+     * @return mixed
+     */
     public static function deleteById($id)
     {
         $idField = static::getIdField();
@@ -358,6 +391,13 @@ abstract class Model extends Object
         }
     }
 
+    /**
+     * Call the 'find' method with an automatic limit of 1.
+     *
+     * @param array $params
+     *
+     * @return mixed|null
+     */
     public static function findFirst($params = array())
     {
         $params['limit'] = 1;
@@ -444,6 +484,15 @@ abstract class Model extends Object
         return $results;
     }
 
+    /**
+     * Given a database row, this function takes each variable that does not exist
+     * in the current model and builds and returns an array of other objects that
+     * were retrieved in the row.
+     *
+     * @param $row
+     *
+     * @return array
+     */
     protected static function buildForeignObjects($row)
     {
         $foreignObjects = array();
@@ -464,6 +513,14 @@ abstract class Model extends Object
         return $foreignObjects;
     }
 
+    /**
+     * Given a params array, this function builds and returns a SQL query used
+     * to retrieve data from a MySQL database.
+     *
+     * @param $params
+     *
+     * @return string
+     */
     protected static function buildQuery($params)
     {
         $tableName = static::getTableName();
@@ -635,7 +692,15 @@ abstract class Model extends Object
         return implode(" $conjunction ", $retval);
     }
 
-    public function getRelatedModels($relatedModel)
+    /**
+     * Retrieve and returns the models that are related to the current model
+     * object based on current ID and foreign ID fields.
+     *
+     * @param $relatedModel
+     *
+     * @return array|mixed
+     */
+    protected function getRelatedModels($relatedModel)
     {
         $retval = array();
         $relatedModel = $this->getModelName($relatedModel);
@@ -904,6 +969,14 @@ abstract class Model extends Object
 
     // @TODO: move validating to its own class
 
+    /**
+     * Determines and returns the relationship of the passed model name
+     * to the current model object.
+     *
+     * @param $foreignModelName
+     *
+     * @return string
+     */
     protected static function verifyRelationship($foreignModelName)
     {
         $relationship = '';
@@ -955,6 +1028,11 @@ abstract class Model extends Object
         return true;
     }
 
+    /**
+     * Delete the object from the database
+     *
+     * @return bool
+     */
     public function delete()
     {
         $sth = self::$_db->prepare(
@@ -1001,6 +1079,14 @@ abstract class Model extends Object
         return $retval;
     }
 
+    /**
+     * Function used to convert any variable into a form that can be JSON
+     * serialized.
+     *
+     * @param $o
+     *
+     * @return array|stdClass
+     */
     public static function toStdClass($o)
     {
         if ($o instanceof DateTime) {
