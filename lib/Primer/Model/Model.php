@@ -1095,10 +1095,8 @@ abstract class Model extends Object
     public function getDBObject()
     {
         $retval = new \stdClass();
-        foreach ($this as $key => $value) {
-            if (array_key_exists($key, $this->getSchema())) {
-                $retval->$key = $value;
-            }
+        foreach ($this->data as $key => $value) {
+            $retval->$key = $value;
         }
 
         return $retval;
