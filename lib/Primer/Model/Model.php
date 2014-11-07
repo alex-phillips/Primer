@@ -30,7 +30,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      *
      * @var array
      */
-    public $data = array();
+    protected $_data = array();
 
     /**
      * Array that contains validation and save error messages
@@ -161,8 +161,8 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
 
     public function __get($key)
     {
-        if (isset($this->data[$key])) {
-            return $this->data[$key];
+        if (isset($this->_data[$key])) {
+            return $this->_data[$key];
         }
 
         return null;
@@ -176,22 +176,22 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         if (array_key_exists($key, static::getSchema())) {
             if ($key === 'created' || $key === 'modified') {
                 if ($value === null) {
-                    $this->data[$key] = null;
+                    $this->_data[$key] = null;
                 }
                 else if ($value instanceof Carbon) {
-                    $this->data[$key] = $value;
+                    $this->_data[$key] = $value;
                 }
                 else {
                     if (is_numeric($value)) {
-                        $this->data[$key] = Carbon::createFromTimestamp($value);
+                        $this->_data[$key] = Carbon::createFromTimestamp($value);
                     }
                     else {
-                        $this->data[$key] = Carbon::createFromTimestamp(strtotime($value));
+                        $this->_data[$key] = Carbon::createFromTimestamp(strtotime($value));
                     }
                 }
             }
             else {
-                $this->data[$key] = $value;
+                $this->_data[$key] = $value;
             }
         }
     }
@@ -1088,12 +1088,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      */
     public function getDBObject()
     {
-        $retval = new \stdClass();
-        foreach ($this->data as $key => $value) {
-            $retval->$key = $value;
-        }
-
-        return $retval;
+        return $this->toStdClass($this->_data);
     }
 
     /**
@@ -1148,31 +1143,31 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     }
 
     public function getIterator() {
-        return new ArrayIterator($this->data);
+        return new ArrayIterator($this->_data);
     }
 
     public function serialize()
     {
-        return serialize($this->data);
+        return serialize($this->_data);
     }
 
     public function unserialize($data)
     {
-        $this->data = unserialize($data);
+        $this->_data = unserialize($data);
     }
 
     public function getData()
     {
-        return $this->data;
+        return $this->_data;
     }
 
     public function jsonSerialize()
     {
-        return $this->data;
+        return $this->_data;
     }
 
     public function count()
     {
-        return count($this->data);
+        return count($this->_data);
     }
 }
