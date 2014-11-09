@@ -88,14 +88,6 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     protected $_tableName;
 
     /**
-     * Name of the current instance's model. Used for automatically creating
-     * new instances when returning objects. Ex: user, post
-     *
-     * @var string
-     */
-    protected $_className;
-
-    /**
      * Schema variable is built from the table in the database for the Model.
      * This is used to determine what values to set, default values, and what
      * to insert and update in the database when the save() method is called.
@@ -138,7 +130,6 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     {
         $this->_idField = $this->getIdField();
         $this->_tableName = $this->getTableName();
-        $this->_className = $this->getModelName();
 
         static::getSchema();
         if (!empty($params)) {
@@ -481,6 +472,12 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
 
                 $id = $result->{static::getIdField()};
 
+                foreach (static::getSchema($modelName) as $k => $v) {
+                    if ($v['type'] == 'datetime' && isset($result->$k)) {
+                        $result->$k = $result->$k ? Carbon::createFromFormat('Y-m-d H:i:s', $result->$k, 'GMT')->setTimezone(date_default_timezone_get()) : $result->$k;
+                    }
+                }
+
                 if (isset($results[$id])) {
                     $result = $results[$id];
                 }
@@ -735,7 +732,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         $retval = array();
         $relatedModel = $this->getModelName($relatedModel);
 
-        if (array_key_exists($this->getForeignIdField($this->_className), $relatedModel::getSchema())) {
+        if (array_key_exists($this->getForeignIdField(static::getModelName()), $relatedModel::getSchema())) {
             $retval = call_user_func(
                 array(
                     $relatedModel,
@@ -743,7 +740,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
                 ),
                 array(
                     'conditions' => array(
-                        $this->getForeignIdField($this->_className) => $this->id
+                        $this->getForeignIdField(static::getModelName()) => $this->id
                     )
                 )
             );
