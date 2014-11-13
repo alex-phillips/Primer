@@ -472,6 +472,10 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
 
                 $id = $result->{static::getIdField()};
 
+                /*
+                 * Format and handle any necessary columns to convert the database
+                 * object to a model. i.e. Convert UTC dates to current timezone.
+                 */
                 foreach (static::getSchema($modelName) as $k => $v) {
                     if ($v['type'] == 'datetime' && isset($result->$k)) {
                         $result->$k = $result->$k ? Carbon::createFromFormat('Y-m-d H:i:s', $result->$k, 'GMT')->setTimezone(date_default_timezone_get()) : $result->$k;
@@ -810,22 +814,23 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         $columns = array();
         $set = array();
 
+        $schema = static::getSchema();
         foreach ($this as $col => $val) {
-            if ($col == 'created' || $col == 'modified') {
-                if ($this->$col !== null) {
-                    $this->$col = $this->$col->setTimezone('UTC')->toDateTimeString();
-                }
+            if ($schema[$col]['type'] == 'datetime' && $this->$col !== null) {
+                $val = $this->$col->setTimezone('UTC')->toDateTimeString();
             }
-            else {
-                if (array_key_exists($col, static::getSchema())) {
-                    self::$_bindings[":$col"] = $val;
 
-                    // @TODO: try and get rid of $set and $columns by using array walk. i.e. - this might not be any more efficient.
-                    // Columns are used for INSERT
-                    $columns[] = $col;
-                    // Set array is used for UPDATE
-                    $set[] = "$col = :$col";
-                }
+            if ($col == 'created' || $col == 'modified') {
+                continue;
+            }
+
+            if (array_key_exists($col, $schema)) {
+                self::$_bindings[":$col"] = $val;
+
+                // Columns are used for INSERT
+                $columns[] = $col;
+                // Set array is used for UPDATE
+                $set[] = "$col = :$col";
             }
         }
 
@@ -837,8 +842,9 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         if ($this->{"{$this->_idField}"}) {
             // Update query
             if (array_key_exists('modified', static::getSchema())) {
+                $this->modified = Carbon::now();
                 $set[] = "modified = :modified";
-                self::$_bindings[':modified'] = date("Y-m-d H:i:s");
+                self::$_bindings[':modified'] = $this->modified->setTimezone('UTC')->toDateTimeString();
             }
 
             $query = "UPDATE {$this->_tableName} SET " . implode(
@@ -854,7 +860,8 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
             // Insert query
             if (array_key_exists('created', static::getSchema())) {
                 $columns[] = 'created';
-                self::$_bindings[':created'] = date("Y-m-d H:i:s");
+                $this->created = Carbon::now();
+                self::$_bindings[':created'] = $this->created->setTimezone('UTC')->toDateTimeString();
             }
 
             $query = "INSERT INTO {$this->_tableName} (" . implode(
@@ -1139,7 +1146,8 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         return $o_new;
     }
 
-    public function getIterator() {
+    public function getIterator()
+    {
         return new ArrayIterator($this->_data);
     }
 
