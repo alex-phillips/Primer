@@ -1,6 +1,6 @@
 <?php
 
-namespace Primer\Model;
+namespace Primer\Data;
 
 use IteratorAggregate;
 use Serializable;
@@ -12,7 +12,6 @@ use DateTime;
 use Carbon\Carbon;
 use Primer\Core\Object;
 use Primer\Utility\Inflector;
-use Primer\Datasource\Database;
 
 /**
  * Class Model
@@ -97,6 +96,14 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     protected static $_schema = array();
 
     /**
+     * Data structure to store a 'meta instance' of each model object for
+     * reference of properties, schema, etc.
+     *
+     * @var array
+     */
+    protected static $_metaInstanceCache = array();
+
+    /**
      * Validation array contains rules to check on each model field.
      * This is not validation for forms or client-side validation, but
      * validation before a model is created or updated in the database.
@@ -108,9 +115,14 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     /**
      * Database variable to handle all query creations and executions.
      *
-     * @var
+     * @var Database
      */
     protected static $_db;
+
+    /**
+     * @var Query
+     */
+    protected static $_query;
 
     /**
      * Array of variables to pass to PDO to bind in preparing DB queries
@@ -123,17 +135,14 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      * Constructor for every model class. This is protected as every model
      * instantiated outside of this class should use the static function
      * 'create'.
-     *
-     * @param array $params
      */
-    protected function __construct($params = array())
+    protected function __construct()
     {
         $this->_idField = $this->getIdField();
         $this->_tableName = $this->getTableName();
 
-        static::getSchema();
-        if (!empty($params)) {
-            $this->set($params);
+        if (!static::$_db) {
+            static::$_db = Database::getInstance();
         }
     }
 
@@ -147,7 +156,13 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      */
     public static function create($params = array())
     {
-        return new static($params);
+        $model = new static();
+        static::getSchema();
+        if (!empty($params)) {
+            $model->set($params);
+        }
+
+        return $model;
     }
 
     public function __get($key)
@@ -162,10 +177,11 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     public function __set($key, $value)
     {
         /*
-         * Make sure that created and modified properties are Carbon objects.
+         * Handle special cases for database properties
          */
-        if (array_key_exists($key, static::getSchema())) {
-            if ($key === 'created' || $key === 'modified') {
+        $schema = static::getSchema();
+        if (array_key_exists($key, $schema)) {
+            if ($schema[$key]['type'] == 'datetime') {
                 if ($value === null) {
                     $this->_data[$key] = null;
                 }
@@ -211,19 +227,6 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
     }
 
     /**
-     * Function to initialize the parent model class that all models
-     * inherit from. Anything that should be executed for all models
-     * shbould be added here whether or not a model will be automatically
-     * loaded or not.
-     */
-    public static function init(Database $db)
-    {
-        if (!self::$_db) {
-            self::$_db = $db;
-        }
-    }
-
-    /**
      * This function queries the database for the structure of a given class
      * and returns the structure. It is 'cached' and stored in a data structure
      * so that each model's schema is queried from the database only once per
@@ -238,19 +241,26 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         $modelName = static::getModelName($class);
         $tableName = static::getTableName($class);
         if (!isset(static::$_schema[$modelName])) {
-            $query = "DESCRIBE {$tableName};";
-            $sth = self::$_db->prepare($query);
-            $sth->execute(self::$_bindings);
-            $fields = $sth->fetchAll();
-
-            foreach ($fields as $info) {
-                static::$_schema[$modelName][$info->Field] = array(
-                    'type' => $info->Type,
-                    'null' => $info->Null,
-                    'key' => $info->Key,
-                    'default' => $info->Default,
-                    'extra' => $info->Extra
-                );
+            $result = static::queryBuilder()->describe($tableName)->executeAndFetchAll();
+            foreach ($result as $info) {
+                switch (static::$_db->getType()) {
+                    case 'mysql':
+                        static::$_schema[$modelName][$info->Field] = array(
+                            'type' => $info->Type,
+                            'null' => $info->Null,
+                            'key' => $info->Key,
+                            'default' => $info->Default,
+                        );
+                        break;
+                    case 'sqlite3':
+                        static::$_schema[$modelName][$info->name] = array(
+                            'type' => $info->type,
+                            'null' => $info->notnull ? false : true,
+                            'key' => $info->pk ? true : false,
+                            'default' => $info->dflt_value,
+                        );
+                        break;
+                }
             }
         }
 
@@ -323,10 +333,12 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      */
     public static function findCount($params = array())
     {
-        $params['count'] = true;
-        $results = static::find($params);
+        $result = static::queryBuilder()->count()->where($params)->executeAndFetch();
+        if (!$result) {
+            return null;
+        }
 
-        return $results[0]->{"COUNT(*)"};
+        return $result[0];
     }
 
     /**
@@ -338,18 +350,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      */
     public static function deleteById($id)
     {
-        $idField = static::getIdField();
-        $tableName = static::getTableName();
-        $sth = self::$_db->prepare(
-            "DELETE FROM {$tableName} WHERE {$idField} = :id;"
-        );
-        $success = $sth->execute(
-            array(
-                ':id' => $id,
-            )
-        );
-
-        return $success;
+        return static::queryBuilder()->delete()->where(array('id' => $id))->execute();
     }
 
     /**
@@ -427,6 +428,26 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         return (!empty($results)) ? array_shift($results) : null;
     }
 
+    protected static function queryBuilder()
+    {
+        return new ModelQueryBuilder(static::metaInstance());
+    }
+
+    protected static function metaInstance()
+    {
+        return static::getMetaInstance(get_called_class());
+    }
+
+    public static function getMetaInstance($class)
+    {
+        $class = static::getModelName($class);
+        if (!isset(static::$_metaInstanceCache[$class])) {
+            static::$_metaInstanceCache[$class] = new $class();
+        }
+
+        return static::$_metaInstanceCache[$class];
+    }
+
     /**
      * This is the master find function for all models. All find functions
      * are essentially calling this function with certain parameters set.
@@ -455,17 +476,10 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
             $params
         );
 
-        if ($params['count']) {
-            $returnObjects = false;
-        }
-
-        $query = static::buildQuery($params);
-
-        $sth = self::$_db->prepare($query);
-        $sth->execute(self::$_bindings);
+        $rows = static::queryBuilder()->select($params['fields'])->where($params['conditions'])->limit($params['limit'])->executeAndFetchAll();
 
         $results = array();
-        foreach ($sth->fetchAll() as $result) {
+        foreach ($rows as $result) {
             $id = null;
             if ($returnObjects) {
                 $foreignObjects = static::buildForeignObjects($result);
@@ -486,7 +500,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
                     $result = $results[$id];
                 }
                 else {
-                    $result = new $modelName($result);
+                    $result = $modelName::create($result);
                 }
 
                 foreach ($foreignObjects as $foreignModelName => $object) {
@@ -544,85 +558,6 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         return $foreignObjects;
     }
 
-    /**
-     * Given a params array, this function builds and returns a SQL query used
-     * to retrieve data from a MySQL database.
-     *
-     * @param $params
-     *
-     * @return string
-     */
-    protected static function buildQuery($params)
-    {
-        $tableName = static::getTableName();
-        $modelName = static::getModelName();
-
-        $params['conditions'] = $params['conditions'] ? 'WHERE ' . static::buildFindConditions($params['conditions']) : '';
-        $params['limit'] = $params['limit'] ? "LIMIT {$params['limit']}" : '';
-        $params['offset'] = $params['offset'] ? "OFFSET {$params['offset']}" : '';
-
-        if ($params['fields']) {
-            if (is_array($params['fields'])) {
-                $params['fields'] = implode(', ', $params['fields']);
-            }
-        }
-        else {
-            $params['fields'] = static::getModelName() . ".*";
-        }
-
-        if ($params['order']) {
-            if (is_array($params['order'])) {
-                $params['order'] = 'ORDER BY ' . implode(', ', $params['order']);
-            }
-            else {
-                $params['order'] = "ORDER BY {$params['order']}";
-            }
-        }
-
-        if (!$params['joins']) {
-            $params['joins'] = static::buildJoins();
-        }
-
-        if ($params['count'] === true) {
-            $params['joins'] = array();
-            if (!preg_match('#\ADISTINCT#i', $params['fields'])) {
-                $params['fields'] = "COUNT(*)";
-            }
-            else {
-                $params['fields'] = "COUNT({$params['fields']})";
-            }
-        }
-
-        $joins = array();
-        foreach ($params['joins'] as $join) {
-            $default = array(
-                'alias'      => static::getModelName($join['table']),
-                'type'       => 'LEFT',
-                'conditions' => array(),
-            );
-            $join = array_merge($default, $join);
-
-            if (!$join['conditions']) {
-                $join['conditions'] = "{$join['alias']}." . static::getForeignIdField() . " = " . static::getModelName() . "." . static::getIdField();
-            }
-            else if (is_array($join['conditions'])) {
-                $join['conditions'] = implode(' AND ', $join['conditions']);
-            }
-
-            if ($join['alias']) {
-                $join['alias'] = "{$join['alias']}";
-            }
-
-            $joins[] = "{$join['type']} JOIN {$join['table']} AS {$join['alias']} ON {$join['conditions']}";
-            foreach (static::getSchema($join['table']) as $k => $v) {
-                $params['fields'] .= ", {$join['alias']}.$k as {$join['alias']}_$k";
-            }
-        }
-        $joins = implode(', ', $joins);
-
-        return "SELECT {$params['fields']} FROM {$tableName} AS {$modelName} {$joins} {$params['conditions']} {$params['order']} {$params['limit']} {$params['offset']};";
-    }
-
     protected static function buildJoins()
     {
         $joins = array();
@@ -655,72 +590,6 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         }
 
         return $joins;
-    }
-
-    /**
-     * This is a recursive function that will traverse an array to build the find
-     * conditions for a query.
-     *
-     * @param $conditions
-     * @param string $conjunction
-     *
-     * @return string
-     */
-    protected static function buildFindConditions($conditions, $conjunction = '')
-    {
-        // @TODO: $this->User->find( 'all', array(
-        //        'conditions' => array("not" => array ( "User.site_url" => null)
-        //    ))
-        //
-        // Add 'not' functionality
-        $retval = array();
-        foreach ($conditions as $k => $v) {
-            if ((strtoupper($k) === 'OR' || strtoupper($k) === 'AND') && is_array($v)) {
-                $retval[] = '(' . static::buildFindConditions(
-                        $v,
-                        strtoupper($k)
-                    ) . ')';
-            }
-            else if ($conjunction == 'NOT') {
-                // @TODO: need to fully test this - not ready for production
-                if (is_array($v)) {
-//                    $v = implode(',', $v);
-//                    return ""
-                }
-                else {
-                    self::$_bindings[":$k" . sizeof(self::$_bindings)] = $v;
-
-                    return static::getModelName() . ".$k IS NOT :$v";
-                }
-            }
-            else {
-                if (is_array($v)) {
-                    $retval[] = static::buildFindConditions($v);
-                }
-                else {
-                    $binding = $k;
-                    $operators = array(
-                        'LIKE',
-                        '!=',
-                    );
-                    if (preg_match('#\s+(' . implode('|', $operators) . ')\s*$#', $k, $matches)) {
-                        $binding = preg_replace("#{$matches[0]}#", '', $k);
-                        switch ($matches[1]) {
-                            case 'LIKE':
-                                $v = "%$v%";
-                                break;
-                        }
-                        $retval[] = static::getModelName() . ".$k :$binding" . sizeof(self::$_bindings) . "";
-                    }
-                    else {
-                        $retval[] = static::getModelName() . ".$k = :$binding" . sizeof(self::$_bindings) . "";
-                    }
-                    self::$_bindings[":$binding" . sizeof(self::$_bindings)] = $v;
-                }
-            }
-        }
-
-        return implode(" $conjunction ", $retval);
     }
 
     /**
@@ -810,11 +679,8 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
             return false;
         }
 
-        self::$_bindings = array();
-        $columns = array();
-        $set = array();
-
         $schema = static::getSchema();
+        $saveValues = array();
         foreach ($this as $col => $val) {
             if ($schema[$col]['type'] == 'datetime' && $this->$col !== null) {
                 $val = $this->$col->setTimezone('UTC')->toDateTimeString();
@@ -825,17 +691,8 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
             }
 
             if (array_key_exists($col, $schema)) {
-                self::$_bindings[":$col"] = $val;
-
-                // Columns are used for INSERT
-                $columns[] = $col;
-                // Set array is used for UPDATE
-                $set[] = "$col = :$col";
+                $saveValues[$col] = $val;
             }
-        }
-
-        if (!self::$_db->inTransaction()) {
-            self::$_db->beginTransaction();
         }
 
         // If ID is not null, then UPDATE row in the database, else INSERT new row
@@ -843,47 +700,26 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
             // Update query
             if (array_key_exists('modified', static::getSchema())) {
                 $this->modified = Carbon::now();
-                $set[] = "modified = :modified";
-                self::$_bindings[':modified'] = $this->modified->setTimezone('UTC')->toDateTimeString();
+                $saveValues['modified'] = $this->modified->setTimezone('UTC')->toDateTimeString();
             }
 
-            $query = "UPDATE {$this->_tableName} SET " . implode(
-                    ', ',
-                    $set
-                ) . " WHERE {$this->_idField} = :id_val";
-            self::$_bindings[':id_val'] = $this->{"{$this->_idField}"};
-
-            $sth = self::$_db->prepare($query);
-            $success = $sth->execute(self::$_bindings);
+            $success = static::queryBuilder()->update($saveValues)->where(array('id' => $this->{$this->_idField}))->execute();
         }
         else {
             // Insert query
             if (array_key_exists('created', static::getSchema())) {
-                $columns[] = 'created';
                 $this->created = Carbon::now();
-                self::$_bindings[':created'] = $this->created->setTimezone('UTC')->toDateTimeString();
+                $saveValues['created'] = $this->created->setTimezone('UTC')->toDateTimeString();
             }
 
-            $query = "INSERT INTO {$this->_tableName} (" . implode(
-                    ', ',
-                    $columns
-                ) . ") VALUES (" . implode(
-                    ', ',
-                    array_keys(self::$_bindings)
-                ) . ")";
+            $success = static::queryBuilder()->insert($saveValues)->execute();
 
-            $sth = self::$_db->prepare($query);
-
-            $success = $sth->execute(self::$_bindings);
             $this->{"{$this->_idField}"} = self::$_db->lastInsertId();
         }
 
         if ($this->afterSave() == false) {
-            self::$_db->rollBack();
             return false;
         }
-
-        self::$_db->commit();
 
         return $success;
     }
@@ -1069,18 +905,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      */
     public function delete()
     {
-        $sth = self::$_db->prepare(
-            "DELETE FROM {$this->_tableName} WHERE {$this->_idField} = :id;"
-        );
-        $success = $sth->execute(
-            array(
-                ':id' => $this->{$this->_idField},
-            )
-        );
-
-        unset($this);
-
-        return $success;
+        return static::queryBuilder()->delete()->where(array('id' => $this->{$this->_idField}))->execute();
     }
 
     /**

@@ -94,6 +94,7 @@ class Application extends Container
 
         $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
         $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
+        $this['config']['database'] = $this['config']['database'][$this['config']['app']['environment']];
 
         if ($this['config']['app.debug'] === true || $this->isRunningInConsole()) {
             error_reporting(E_ALL);
@@ -190,7 +191,7 @@ class Application extends Container
             'Primer\\Datasource\\Database',
             function () {
                 try {
-                    return new \Primer\Datasource\Database($this['config']['database'][$this['config']->get('app.environment')]);
+                    \Primer\Datasource\Database::getInstance();
                 } catch (PDOException $e) {
                     die('Database connection could not be established.');
                 }
@@ -226,8 +227,6 @@ class Application extends Container
             $this['response']->set($this['view']->render('errors/maintenance'))->send();
             exit(1);
         }
-
-        Model::init($this->make('Primer\\Datasource\\Database'));
 
         $this->_auth = $this->make('Primer\\Security\\Auth');
         $this->_router = $this->make('Primer\\Routing\\Router');
