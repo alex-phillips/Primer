@@ -14,9 +14,9 @@
 
 namespace Primer\Session;
 
-use Primer\Utility\ParameterContainer;
+use Primer\Utility\ParameterBag;
 
-class SessionContainer extends ParameterContainer
+class SessionBag extends ParameterBag
 {
     public function __construct(&$parameters)
     {

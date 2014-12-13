@@ -8,9 +8,9 @@
 
 namespace Primer\Http;
 
-use Primer\Utility\ParameterContainer;
+use Primer\Utility\ParameterBag;
 
-class Cookie extends ParameterContainer
+class Cookie extends ParameterBag
 {
     private $_name;
     private $_value;

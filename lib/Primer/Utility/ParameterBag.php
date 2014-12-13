@@ -17,7 +17,7 @@ use Primer\Core\Object;
 /**
  * Class ParameterContainer
  */
-class ParameterContainer extends Object implements ArrayAccess, IteratorAggregate, Serializable, JsonSerializable, Countable
+class ParameterBag extends Object implements ArrayAccess, IteratorAggregate, Serializable, JsonSerializable, Countable
 
 {
     /*
@@ -60,15 +60,15 @@ class ParameterContainer extends Object implements ArrayAccess, IteratorAggregat
      *
      * @return array|null
      */
-    public function get($key)
+    public function get($key, $default = null)
     {
         $path = explode('.', $key);
-        $ary = & $this->_parameters;
+        $ary = &$this->_parameters;
         foreach ($path as $p) {
             if (!isset ($ary[$p])) {
-                return null;
+                return $default;
             }
-            $ary = & $ary[$p];
+            $ary = &$ary[$p];
         }
 
         return $ary;
@@ -104,12 +104,12 @@ class ParameterContainer extends Object implements ArrayAccess, IteratorAggregat
     public function set($key, $value)
     {
         $path = explode('.', $key);
-        $ary = & $this->_parameters;
+        $ary = &$this->_parameters;
         foreach ($path as $p) {
             if (!isset ($ary[$p])) {
                 $ary[$p] = array();
             }
-            $ary = & $ary[$p];
+            $ary = &$ary[$p];
         }
 
         $ary = $value;
@@ -117,7 +117,7 @@ class ParameterContainer extends Object implements ArrayAccess, IteratorAggregat
 
     public function offsetUnset($key)
     {
-        $this->delete($key);
+        $this->clear($key);
     }
 
     public function getIterator()
@@ -131,7 +131,7 @@ class ParameterContainer extends Object implements ArrayAccess, IteratorAggregat
      *
      * @param $key
      */
-    public function delete($key)
+    public function clear($key)
     {
         $path = explode('.', $key);
         $ary = & $this->_parameters;
@@ -144,6 +144,11 @@ class ParameterContainer extends Object implements ArrayAccess, IteratorAggregat
         }
 
         unset($key[$p]);
+    }
+
+    public function clearAll()
+    {
+        $this->_parameters = array();
     }
 
     public function serialize()

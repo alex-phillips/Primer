@@ -8,9 +8,9 @@
 
 namespace Primer\Http;
 
-use Primer\Utility\ParameterContainer;
+use Primer\Utility\ParameterBag;
 
-class HeaderContainer extends ParameterContainer
+class HeaderBag extends ParameterBag
 {
     private $_headers = array();
 
