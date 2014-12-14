@@ -1,176 +1,207 @@
 <?php
-/**
- * @author Alex Phillips
- * Date: 3/8/14
- * Time: 2:38 PM
- */
 
 namespace Primer\Routing;
 
-use Primer\Core\Object;
+use Exception;
 
-class Router extends Object
+/**
+ * Routing class to match request URL's against given routes and map them to a controller action.
+ */
+class Router
 {
-    /////////////////////////////////////////////////
-    // PROPERTIES, PRIVATE AND PROTECTED
-    /////////////////////////////////////////////////
-
-    private $_url = array();
+    /**
+     * Array that holds all Route objects
+     * @var array
+     */
     private $_routes = array();
 
-    private $_controller = 'pages';
-    private $_action = 'index';
-    private $_args = array();
+    /**
+     * Array to store named routes in, used for reverse routing.
+     * @var array
+     */
+    private $_namedRoutes = array();
 
-    public function __construct()
+    /**
+     * The base REQUEST_URI. Gets prepended to all route _url's.
+     * @var string
+     */
+    private $_basePath = '';
+
+    /**
+     * Holds controller name of the route that has been matched
+     *
+     * @var
+     */
+    private $_controller;
+
+    /**
+     * Holds action name of the route that has been matched
+     *
+     * @var
+     */
+    private $_action;
+
+    /**
+     * @param RouteCollection $collection
+     */
+    public function __construct(RouteCollection $collection = null)
     {
-        $this->_url = $this->parseUrl();
-    }
-
-    private function parseUrl($url = null)
-    {
-        if (!$url) {
-            $url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : null;
+        if (!$collection) {
+            $collection = new RouteCollection();
         }
-        $components = parse_url($url);
-        $url = trim($components['path'], '/');
-        $url = filter_var($url, FILTER_SANITIZE_URL);
-        if ($url) {
-            return explode('/', $url);
-        }
-        return array();
-    }
-
-    public function dispatch()
-    {
-        foreach ($this->_routes as $path => $route) {
-            $path = $this->parseUrl($path);
-
-            /*
-             * This handles the case of the root path
-             */
-            if ($path === $this->_url && empty($path)) {
-                $this->_controller = $route['controller'];
-                $this->_action = $route['action'];
-                $this->_args = array_slice($route, 2);
-
-                $route['args'] = $this->_args;
-
-                return $route;
-            }
-
-            $tmp = array();
-
-            if (isset($path[0])) {
-                if (!isset($this->_url[0])) {
-                    continue;
-                }
-                if (preg_match('#\A:#', $path[0], $matches)) {
-                    $tmp[str_replace(':', '', $matches[0])] = $this->_url[0];
-                }
-                else {
-                    if ($path[0] !== $this->_url[0]) {
-                        continue;
-                    }
-                }
-            }
-            else {
-                if (isset($this->_url[0])) {
-                    continue;
-                }
-            }
-
-            if (isset($path[1])) {
-                if (!isset($this->_url[1])) {
-                    continue;
-                }
-                if (preg_match('#:.*#', $path[1], $matches)) {
-                    $tmp[str_replace(':', '', $matches[0])] = $this->_url[1];
-                }
-                else {
-                    if ($path[1] !== $this->_url[1]) {
-                        continue;
-                    }
-                }
-            }
-            else {
-                if (isset($this->_url[1])) {
-                    continue;
-                }
-            }
-
-            if (is_array($route)) {
-                $args = array();
-                foreach (array_keys($route) as $key) {
-                    if (is_int($key)) {
-                        if (array_key_exists($route[$key], $tmp)) {
-                            $args[] = $tmp[$route[$key]];
-                        }
-                        else {
-                            $args[] = $route[$key];
-                        }
-                    }
-                }
-
-                $this->_controller = $route['controller'];
-                $this->_action = $route['action'];
-                $this->_args = $args;
-                $route['args'] = $args;
-            }
-
-            return $route;
-        }
-
-        if ($this->_url) {
-            $this->_controller = $this->_url[0];
-            if (sizeof($this->_url) === 1 || preg_match('#\?.+#', $this->_url[1]) || preg_match('#.+:.+#', $this->_url[1])) {
-                $this->_action = 'index';
-                $args = array_slice($this->_url, 1);
-            }
-            else {
-                $this->_action = $this->_url[1];
-                $args = array_slice($this->_url, 2);
-            }
-            /*
-             * Check for arguments. If an argument is passed with a colon,
-             * ex: page:1, then match it as a key-value pair. Otherwise, add
-             * it as an index.
-             */
-            foreach ($args as $arg) {
-                if (preg_match('#.+:.+#', $arg)) {
-                    // @TODO: why isn't this setting any significant varialbes? Check this out.
-                    list($key, $value) = explode(':', $arg);
-                }
-                else {
-                    $this->_args[] = $arg;
-                }
-            }
-        }
-
-        return array(
-            'controller' => $this->_controller,
-            'action'     => $this->_action,
-            'args'       => $this->_args,
-        );
-    }
-
-    public function route($path, $params)
-    {
-        $this->_routes[$path] = $params;
+        $this->_routes = $collection;
     }
 
     /**
-     * Control browser redirects
-     *
-     * @param $location
+     * Set the base _url - gets prepended to all route _url's.
+     * @param $basePath
      */
-    public function redirect($location)
+    public function setBasePath($basePath)
     {
-        if ($location === 'referrer') {
-            $location = isset($_SERVER['HTTP_REFERRER']) ? $_SERVER['HTTP_REFERRER'] : '/';
+        $this->_basePath = (string) $basePath;
+    }
+
+    /**
+     * Matches the current request against mapped routes
+     */
+    public function matchCurrentRequest()
+    {
+        $requestMethod = (isset($_POST['_method']) && ($_method = strtoupper($_POST['_method'])) && in_array($_method,array('PUT','DELETE'))) ? $_method : $_SERVER['REQUEST_METHOD'];
+        $requestUrl = $_SERVER['REQUEST_URI'];
+
+        // strip GET variables from URL
+        if (($pos = strpos($requestUrl, '?')) !== false) {
+            $requestUrl =  substr($requestUrl, 0, $pos);
         }
-        header("Location: " . $location);
-        exit;
+
+        return $this->match($requestUrl, $requestMethod);
+    }
+
+    /**
+     * Match given request _url and request method and see if a route has been defined for it
+     * If so, return route's target
+     * If called multiple times
+     *
+     * @param string $requestUrl
+     * @param string $requestMethod
+     * @return bool
+     */
+    public function match($requestUrl, $requestMethod = 'GET')
+    {
+        if (substr($requestUrl, -1) !== '/') {
+            $requestUrl .= '/';
+        }
+
+        foreach ($this->_routes->all() as $routes) {
+            // compare server request method with route's allowed http methods
+            if (! in_array($requestMethod, (array) $routes->getMethods())) {
+                continue;
+            }
+
+            // check if request _url matches route regex. if not, return false.
+            $regex = $this->_basePath . $routes->getRegex();
+            if (! preg_match("@^".$regex."$@i", $requestUrl, $matches)) {
+                continue;
+            }
+
+            $params = array();
+
+            if (preg_match_all("/(:[\w-%]+|\*)/", $routes->getUrl(), $argument_keys)) {
+
+                // grab array with matches
+                $argument_keys = $argument_keys[1];
+
+                // loop trough parameter names, store matching value in $params array
+                foreach ($argument_keys as $key => $name) {
+                    $name = ltrim($name, ':');
+                    if (isset($matches[$key + 1])) {
+                        $params[$name] = $matches[$key + 1];
+                    }
+                }
+
+            }
+
+            if ($params) {
+                $routes->addParameters($params);
+            }
+//            $routes->dispatch();
+
+            return $routes;
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Reverse route a named route
+     *
+     * @param $routeName
+     * @param array $params Optional array of parameters to use in URL
+     * @throws Exception
+     *
+     * @internal param string $route_name The name of the route to reverse route.
+     * @return string The url to the route
+     */
+    public function generate($routeName, array $params = array())
+    {
+        // Check if route exists
+        if (! isset($this->_namedRoutes[$routeName])) {
+            throw new Exception("No route with the name $routeName has been found.");
+        }
+
+        $route = $this->_namedRoutes[$routeName];
+        $url = $route->getUrl();
+
+        // replace route url with given parameters
+        if ($params && preg_match_all("/:(\w+)/", $url, $param_keys))
+        {
+
+            // grab array with matches
+            $param_keys = $param_keys[1];
+
+            // loop trough parameter names, store matching value in $params array
+            foreach ($param_keys as $key) {
+                if (isset($params[$key]))
+                    $url = preg_replace("/:(\w+)/", $params[$key], $url, 1);
+            }
+        }
+
+        return $url;
+    }
+
+
+    /**
+     * Create routes by array, and return a Router object
+     *
+     * @param array $config provide by Config::loadFromFile()
+     * @return Router
+     */
+    public static function parseConfig(array $config)
+    {
+        $collection = new RouteCollection();
+        foreach ($config['routes'] as $name => $route) {
+            $collection->attach(
+                new Route(
+                    $route[0], array(
+                        '_controller' => str_replace('.', '::', $route[1]),
+                        'methods'     => $route[2]
+                    )
+                )
+            );
+        }
+
+        $router = new Router($collection);
+        if (isset($config['base_path'])) {
+            $router->setBasePath($config['base_path']);
+        }
+
+        return $router;
+    }
+
+    public function route($path, $params = array())
+    {
+        $this->_routes->attach(new Route($path, $params));
     }
 
     public function getController()
@@ -181,10 +212,5 @@ class Router extends Object
     public function getAction()
     {
         return $this->_action;
-    }
-
-    public function getArgs()
-    {
-        return $this->_args;
     }
 }
