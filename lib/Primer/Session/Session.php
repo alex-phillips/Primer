@@ -27,7 +27,7 @@ class Session extends Object
             session_start();
         }
 
-        $this->_sessionContainer = new SessionContainer($_SESSION);
+        $this->_sessionContainer = new SessionBag($_SESSION);
     }
 
     /**
@@ -50,7 +50,7 @@ class Session extends Object
      */
     public function delete($key)
     {
-        $this->_sessionContainer->delete($key);
+        $this->_sessionContainer->clear($key);
     }
 
     /**
@@ -71,6 +71,27 @@ class Session extends Object
             $this->_flashMessages[$messages] = $class;
         }
         $this->write('flash_messages', $this->_flashMessages);
+    }
+
+    /**
+     * Function to format and return system messages to display in the view
+     *
+     * @return string
+     */
+    public function flash()
+    {
+        $markup = '';
+        if ($this->read('flash_messages')) {
+            foreach ($this->read(
+                'flash_messages'
+            ) as $error => $class) {
+                $markup .= "<div class='system-message $class'>" . $error . "</div>";
+            }
+        }
+
+        $this->delete('flash_messages');
+
+        return $markup;
     }
 
     /**

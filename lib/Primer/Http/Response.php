@@ -367,7 +367,7 @@ class Response extends Object
     {
         $this->setContent($content);
         $this->_status = $status;
-        $this->_headers = new HeaderContainer($headers);
+        $this->_headers = new HeaderBag($headers);
 
         return $this;
     }
