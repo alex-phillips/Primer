@@ -3,14 +3,13 @@
 namespace Primer\Data;
 
 use IteratorAggregate;
+use Primer\Utility\ParameterBag;
 use Serializable;
 use JsonSerializable;
 use Countable;
 use stdClass;
-use ArrayIterator;
 use DateTime;
 use Carbon\Carbon;
-use Primer\Core\Object;
 use Primer\Utility\Inflector;
 
 /**
@@ -20,16 +19,23 @@ use Primer\Utility\Inflector;
  * Class in which all models are inherited from. Contains all 'generic' database
  * interactions and validation for models.
  */
-abstract class Model extends Object implements IteratorAggregate, Serializable, JsonSerializable, Countable
+abstract class Model extends ParameterBag implements IteratorAggregate, Serializable, JsonSerializable, Countable
 {
     /**
-     * Data structure in which all unique variables related to the database-representation
-     * of the object are stored. These are accessed like normal, public class
-     * variables through magic __get and __set methods.
+     * This is the ID field in the database for the object. This is stored so
+     * we know what the primary key for the table is for each model.
      *
-     * @var array
+     * @var string
      */
-    protected $_data = array();
+    protected $_idField;
+
+    /**
+     * Name of the model's table in the database. This is set automatically
+     * unless overridden.
+     *
+     * @var string
+     */
+    protected $_tableName;
 
     /**
      * Array that contains validation and save error messages
@@ -69,22 +75,6 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      * @var string|array
      */
     protected static $_hasAndBelongsToMany = '';
-
-    /**
-     * This is the ID field in the database for the object. This is stored so
-     * we know what the primary key for the table is for each model.
-     *
-     * @var string
-     */
-    protected $_idField;
-
-    /**
-     * Name of the model's table in the database. This is set automatically
-     * unless overridden.
-     *
-     * @var string
-     */
-    protected $_tableName;
 
     /**
      * Schema variable is built from the table in the database for the Model.
@@ -136,7 +126,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      * instantiated outside of this class should use the static function
      * 'create'.
      */
-    protected function __construct()
+    public function __construct()
     {
         $this->_idField = $this->getIdField();
         $this->_tableName = $this->getTableName();
@@ -159,7 +149,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         $model = new static();
         static::getSchema();
         if (!empty($params)) {
-            $model->set($params);
+            $model->setProperties($params);
         }
 
         return $model;
@@ -167,11 +157,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
 
     public function __get($key)
     {
-        if (isset($this->_data[$key])) {
-            return $this->_data[$key];
-        }
-
-        return null;
+        return $this->get($key);
     }
 
     public function __set($key, $value)
@@ -183,22 +169,22 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         if (array_key_exists($key, $schema)) {
             if ($schema[$key]['type'] == 'datetime') {
                 if ($value === null) {
-                    $this->_data[$key] = null;
+                    $this[$key] = null;
                 }
                 else if ($value instanceof Carbon) {
-                    $this->_data[$key] = $value;
+                    $this[$key] = $value;
                 }
                 else {
                     if (is_numeric($value)) {
-                        $this->_data[$key] = Carbon::createFromTimestamp($value);
+                        $this[$key] = Carbon::createFromTimestamp($value);
                     }
                     else {
-                        $this->_data[$key] = Carbon::createFromTimestamp(strtotime($value));
+                        $this[$key] = Carbon::createFromTimestamp(strtotime($value));
                     }
                 }
             }
             else {
-                $this->_data[$key] = $value;
+                $this->set($key, $value);
             }
         }
     }
@@ -276,7 +262,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      *
      * @param $params
      */
-    public function set($params)
+    public function setProperties($params)
     {
         $params = (array)$params;
         foreach (static::getSchema() as $variable => $info) {
@@ -917,7 +903,7 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
      */
     public function getDBObject()
     {
-        return $this->toStdClass($this->_data);
+        return $this->toStdClass($this->getAll());
     }
 
     /**
@@ -969,35 +955,5 @@ abstract class Model extends Object implements IteratorAggregate, Serializable, 
         }
 
         return $o_new;
-    }
-
-    public function getIterator()
-    {
-        return new ArrayIterator($this->_data);
-    }
-
-    public function serialize()
-    {
-        return serialize($this->_data);
-    }
-
-    public function unserialize($data)
-    {
-        $this->_data = unserialize($data);
-    }
-
-    public function getData()
-    {
-        return $this->_data;
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->_data;
-    }
-
-    public function count()
-    {
-        return count($this->_data);
     }
 }
