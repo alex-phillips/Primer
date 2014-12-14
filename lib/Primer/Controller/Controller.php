@@ -37,21 +37,9 @@ class Controller
             'query'    => 'q',
         );
 
-    /////////////////////////////////////////////////
-    // PROPERTIES, PRIVATE AND PROTECTED
-    /////////////////////////////////////////////////
-
-    /**
-     * Variable of the model name of the controller
-     * i.e. 'User' model for UsersController
-     *
-     * @var string
-     */
-    protected $_modelName;
-
     public function __construct()
     {
-        $this->_modelName = ucfirst(
+        $modelName = ucfirst(
             strtolower(
                 Inflector::singularize(
                     str_replace('Controller', '', get_class($this))
@@ -59,8 +47,10 @@ class Controller
             )
         );
 
-        // Load Model (if controller's model exists)
-        $this->loadModel();
+        // @TODO: Clean this up - we should instantiate a default model.
+        if (class_exists($modelName)) {
+            $this->{$modelName} = new $modelName;
+        }
     }
 
     public function __set($key, $value)
@@ -118,16 +108,6 @@ class Controller
         return false;
     }
 
-    /**
-     * Loads the controllers associated model
-     */
-    public function loadModel()
-    {
-        if (class_exists($this->_modelName)) {
-            $this->{$this->_modelName} = call_user_func(array($this->_modelName, 'create'));
-        }
-    }
-
     public function setRequest(Request $request)
     {
         $this->request = $request;
@@ -143,7 +123,7 @@ class Controller
         $this->view = implode('.', $this->view);
     }
 
-    protected function render($view = null, $template = null)
+    protected function render($view = null, $template = 'default')
     {
         $viewObject = $this->_getViewObject();
         $view = $view ?: $this->view;
