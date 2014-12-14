@@ -8,19 +8,35 @@
 namespace Primer\Http;
 
 use Primer\Core\Object;
-use Primer\Utility\ParameterContainer;
+use Primer\Routing\Route;
+use Primer\Utility\ParameterBag;
 
 class Request extends Object
 {
     public $post = array();
     public $query = array();
     public $files = array();
+    public $params = array();
+    public $controller;
+    public $action;
     private $_requestMethod;
 
-    public function __construct()
+    public function __construct(Route $route)
     {
-        $this->post = new ParameterContainer($_POST);
-        $this->query = new ParameterContainer($_GET);
+        $this->params = $route->getParameters();
+        $this->params['pass'] = array();
+
+        foreach ($this->params as $key => $value) {
+            if (property_exists($this, $key)) {
+                $this->$key = $value;
+            }
+            else {
+                $this->params['pass'][$key] = $value;
+            }
+        }
+
+        $this->post = new ParameterBag($_POST);
+        $this->query = new ParameterBag($_GET);
 
         if (isset($_FILES) && !empty($_FILES)) {
             foreach ($_FILES as $name => $info) {
@@ -53,5 +69,15 @@ class Request extends Object
     public function files()
     {
         return $this->files;
+    }
+
+    public function getController()
+    {
+        return $this->controller;
+    }
+
+    public function getAction()
+    {
+        return $this->action;
     }
 }

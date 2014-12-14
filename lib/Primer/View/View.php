@@ -2,8 +2,10 @@
 
 namespace Primer\View;
 
-use Primer\Session\Session;
+use Primer\Controller\Controller;
 use Primer\Core\Object;
+use Primer\Utility\Paginator;
+use Whoops\Example\Exception;
 
 /**
  * Class View
@@ -56,14 +58,19 @@ class View extends Object
      */
     public $template = 'default';
 
+    public $viewVars = array();
+
     public $rendered = false;
 
     /**
      * Constructor
      */
-    public function __construct(Session $session)
+    public function __construct(Controller $controller)
     {
-        $this->Session = $session;
+        $this->paginationConfig = $controller->paginationConfig;
+
+        $this->paginator = new Paginator($this->paginationConfig);
+        $this->viewVars = $controller->viewVars;
     }
 
     /**
@@ -141,7 +148,7 @@ class View extends Object
      *
      * @return mixed|string
      */
-    public function render($view)
+    public function render($view, $template)
     {
         // @TODO: modify code to use a proper reponse class
         if (ob_get_contents()) {
@@ -149,43 +156,60 @@ class View extends Object
         }
         ob_start();
 
-        if ($this->filename) {
-            $view = $this->filename;
-        }
-
         $view = str_replace('.', '/', $view);
         $this->filename = 'Views/' . $view . '.php';
 
+        extract($this->viewVars);
         require_once("Views/templates/$this->template.php");
 
-        $this->Session->delete('messages');
-
-        $response = '';
         if ($response = ob_get_contents()) {
             ob_end_clean();
         }
 
+        $this->rendered = true;
+
         return $response;
     }
 
-    /**
-     * Function to format and return system messages to display in the view
-     *
-     * @return string
-     */
-    public function flash()
+    public function fetch($partial, $default = '')
     {
-        $markup = '';
-        if ($this->Session->read('flash_messages')) {
-            foreach ($this->Session->read(
-                'flash_messages'
-            ) as $error => $class) {
-                $markup .= "<div class='system-message $class'>" . $error . "</div>";
+        if ($partial === 'content') {
+            $partial = $this->filename;
+        }
+        else {
+            if (!preg_match('#\.php$#', $partial)) {
+                $partial .= '.php';
             }
+            $partial = APP_ROOT . '/Views/' . $partial;
         }
 
-        $this->Session->delete('flash_messages');
-        return $markup;
+        try {
+            extract($this->viewVars);
+            require_once($partial);
+        }
+        catch (Exception $e) {
+            echo $default;
+        }
+    }
+
+    public function build($partial, $default = '')
+    {
+        if (!preg_match('#\.php$#', $partial)) {
+            $partial .= '.php';
+        }
+
+        if (preg_match('#([^\/]*?)\.php$#', $partial, $matches)) {
+            try {
+                require_once(APP_ROOT . '/Views/' . $partial);
+                $className = $matches[1];
+                $partial = new \ReflectionClass($className);
+                $renderer = $partial->getMethod('render');
+                return $renderer->invokeArgs($partial, $this->viewVars);
+            }
+            catch (Exception $e) {
+                return $default;
+            }
+        }
     }
 
     /**
@@ -234,14 +258,5 @@ class View extends Object
             ),
             $params
         );
-    }
-
-    /**
-     * This function requires the correct view to be rendered inside of the
-     * template
-     */
-    protected function getContents()
-    {
-        require_once("{$this->filename}");
     }
 }

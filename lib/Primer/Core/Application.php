@@ -10,16 +10,10 @@ use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Primer\Console\Console;
-use Primer\Http\Response;
-use Primer\Security\Auth;
-use Primer\Session\Session;
-use Primer\Mail\Mail;
-use Primer\Model\Model;
+use Primer\Http\Request;
 use Primer\Proxy\Proxy;
-use Primer\Routing\Router;
-use Primer\Utility\ParameterContainer;
-use Primer\View\Form;
-use Primer\View\View;
+use Primer\Routing\Dispatcher;
+use Primer\Utility\ParameterBag;
 use Primer\Utility\Paginator;
 use Whoops\Exception\ErrorException;
 use Whoops\Handler\PrettyPageHandler;
@@ -27,9 +21,6 @@ use Whoops\Run;
 
 class Application extends Container
 {
-    private $_router;
-    private $_controller = null;
-
     /*
      * Contains values that may be accessible throughout the framework
      */
@@ -63,12 +54,12 @@ class Application extends Container
     private function _bootstrap()
     {
         $this->instance('Primer\\Core\\Application', $this);
-        $this->instance('config', new ParameterContainer());
+        $this->instance('config', new ParameterBag());
 
-        $this->_readConfigs();
         $this->_registerAliases();
         $this->_registerProxies();
         $this->_registerSingletons();
+        $this->_readConfigs();
 
         $this->bind(
             'Primer\\Mail\\Mail',
@@ -85,15 +76,18 @@ class Application extends Container
             $domain = str_replace('www.', '', $_SERVER['SERVER_NAME']);
         }
 
-        if (file_exists(APP_ROOT . '/Config/' . $domain . '.php')) {
-            $this['config']['app'] = require_once(APP_ROOT . '/Config/' . $domain . '.php');
-        }
-        else {
-            $this['config']['app'] = require_once(APP_ROOT . '/Config/config.php');
+        $files = scandir(APP_ROOT . DS . 'Config' . DS);
+        foreach ($files as $file) {
+            if (preg_match("#$domain.php$#", $file)) {
+                $this['config']['app'] = require(APP_ROOT . '/Config/' . $file . '.php');
+                continue;
+            }
+
+            if (preg_match('#(.+?)\.php$#', $file, $matches)) {
+                $this['config'][$matches[1]] = require_once(APP_ROOT . DS . 'Config' . DS . $file);
+            }
         }
 
-        $this['config']['email'] = require_once(APP_ROOT . DS . 'Config/email.php');
-        $this['config']['database'] = require_once(APP_ROOT . DS . 'Config/database.php');
         $this['config']['database'] = $this['config']['database'][$this['config']['app']['environment']];
 
         if ($this['config']['app.debug'] === true || $this->isRunningInConsole()) {
@@ -186,7 +180,9 @@ class Application extends Container
         $this->singleton('Primer\\Session\\Session');
         $this->singleton('Primer\\Security\\Auth');
         $this->singleton('Primer\\Routing\\Router');
-        $this->singleton('Primer\\Http\\Request');
+        $this->singleton('Primer\\Http\\Request', function($app) {
+                return new Request($app['router']->matchCurrentRequest());
+            });
         $this->singleton(
             'Primer\\Datasource\\Database',
             function () {
@@ -197,7 +193,6 @@ class Application extends Container
                 }
             }
         );
-        $this->singleton('Primer\\View\\View');
         $this->singleton('Monolog\\Logger', function ($app) {
             $logger = new Logger('primer');
 
@@ -215,8 +210,6 @@ class Application extends Container
 
     public function run()
     {
-        $this->_session = $this->make('Primer\\Session\\Session');
-
         /*
          * If the server is down for maintenance, only instantiate necessary
          * objects to send response.
@@ -228,9 +221,6 @@ class Application extends Container
             exit(1);
         }
 
-        $this->_auth = $this->make('Primer\\Security\\Auth');
-        $this->_router = $this->make('Primer\\Routing\\Router');
-
         require_once(APP_ROOT . '/Config/routes.php');
 
         if ($this->isRunningInConsole()) {
@@ -238,56 +228,8 @@ class Application extends Container
             $console->run();
         }
         else {
-            $dispatch = $this->_router->dispatch();
-
-            $body = null;
-            if (is_array($dispatch)) {
-                $this->setValue('conroller', $this->_router->getController());
-                $this->setValue('action', $this->_router->getAction());
-
-                /*
-                 * Check if chosen controller exists, otherwise, 404
-                 *
-                 * We don't want to call Primer::getControllerName here because we don't
-                 * want /pages/index and /page/index to both work. That function will
-                 * properly pluralize and format regardless if that controller exists.
-                 */
-                if (class_exists($this->getControllerName($this->_router->getController()))) {
-                    $controllerName = $this->getControllerName(
-                        $this->_router->getController()
-                    );
-                    $this->_controller = new $controllerName();
-
-                    foreach ($this->_controller->components as $component) {
-                        $this->_controller->$component = $this->make(strtolower($component));
-                    }
-
-                    $this['view']->paginator = new Paginator($this->_controller->paginationConfig);
-                    $this['view']->paginationConfig = $this->_controller->paginationConfig;
-                    $this->_callControllerMethod();
-
-                    if ($this['view']->rendered === false) {
-                        $body = $this['view']->render(
-                            $this->_router->getController() . DS . $this->_router->getAction()
-                        );
-                    }
-                }
-                else {
-                    $this->abort();
-                }
-            }
-            else {
-                if (is_callable($dispatch)) {
-                    $body = call_user_func($dispatch);
-                }
-            }
-
-            if (!$body) {
-                $this->abort();
-            }
-            else {
-                $this['response']->set($body)->send();
-            }
+            $dispatcher = new Dispatcher($this['request']);
+            $this['response']->set($dispatcher->dispatch())->send();
         }
     }
 
@@ -314,65 +256,6 @@ class Application extends Container
         }
 
         $o->$key = $value;
-    }
-
-    /**
-     * If a method is passed in the GET url parameter
-     *
-     * http://localhost/controller/method/(param)/(param)/(param)
-     * url[0] = Controller
-     * url[1] = Method
-     * url[...] = Params
-     */
-    private function _callControllerMethod()
-    {
-        if (!method_exists($this->_controller, $this->_router->getAction())) {
-            $this->abort(404);
-        }
-        else {
-            if ($this->_router->getAction()[0] === '_') {
-                $this->abort(404);
-            }
-        }
-
-        call_user_func_array(
-            array(
-                $this->_controller,
-                'beforeFilter',
-            ),
-            $this->_router->getArgs()
-        );
-
-        $authorized = $this->_auth->run($this->_router->getAction());
-        if (!$authorized) {
-            $this->_session->setFlash(
-                'You are not authorized to do that',
-                'notice'
-            );
-            $referrer = $_SERVER['REQUEST_URI'];
-            $this->_router->redirect(
-                '/login/?forward_to=' . htmlspecialchars(
-                    $referrer,
-                    ENT_QUOTES,
-                    'utf-8'
-                )
-            );
-        }
-
-        call_user_func_array(
-            array(
-                $this->_controller,
-                $this->_router->getAction(),
-            ),
-            $this->_router->getArgs()
-        );
-        call_user_func_array(
-            array(
-                $this->_controller,
-                'afterFilter',
-            ),
-            $this->_router->getArgs()
-        );
     }
 
     public function abort($code = 404)
