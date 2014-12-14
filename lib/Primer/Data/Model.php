@@ -260,8 +260,6 @@ abstract class Model extends ParameterBag implements IteratorAggregate, Serializ
                 $modelName,
                 $tableName,
             ));
-
-//        return static::$_schema[$modelName];
     }
 
     /**
