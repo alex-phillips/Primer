@@ -20,17 +20,21 @@ abstract class Container extends Object implements ArrayAccess
     public function bind($key, $o)
     {
         if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
+            throw new \RuntimeException(
+                sprintf(
+                    'Cannot override service "%s"',
+                    $key
+                )
+            );
         }
 
         if (!is_callable($o)) {
-            throw new \RuntimeException(sprintf(
-                'Binding is not a valid callable for "%s"',
-                $key
-            ));
+            throw new \RuntimeException(
+                sprintf(
+                    'Binding is not a valid callable for "%s"',
+                    $key
+                )
+            );
         }
 
         $this->_bindings[$key] = $o;
@@ -39,10 +43,12 @@ abstract class Container extends Object implements ArrayAccess
     public function instance($key, $o)
     {
         if (array_key_exists($key, $this->_bindings)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
+            throw new \RuntimeException(
+                sprintf(
+                    'Cannot override service "%s"',
+                    $key
+                )
+            );
         }
 
         $this->_instances[$key] = $o;
@@ -51,10 +57,12 @@ abstract class Container extends Object implements ArrayAccess
     public function singleton($key, $o = null)
     {
         if (array_key_exists($key, $this->_instances)) {
-            throw new \RuntimeException(sprintf(
-                'Cannot override service "%s"',
-                $key
-            ));
+            throw new \RuntimeException(
+                sprintf(
+                    'Cannot override service "%s"',
+                    $key
+                )
+            );
         }
 
         $this->_instances[$key] = $o;
@@ -74,7 +82,9 @@ abstract class Container extends Object implements ArrayAccess
 
         if (array_key_exists($key, $this->_instances)) {
             if (is_callable($this->_instances[$key])) {
-                $this->_instances[$key] = call_user_func($this->_instances[$key], $this);
+                $this->_instances[$key] = call_user_func(
+                    $this->_instances[$key], $this
+                );
             }
             else {
                 if ($this->_instances[$key] === null) {
@@ -140,19 +150,11 @@ abstract class Container extends Object implements ArrayAccess
         return $reflector->newInstanceArgs($dependencies);
     }
 
-    public function offsetExists($key)
-    {
-    }
+    abstract public function offsetExists($key);
 
-    public function offsetGet($key)
-    {
-    }
+    abstract public function offsetGet($key);
 
-    public function offsetSet($key, $value)
-    {
-    }
+    abstract public function offsetSet($key, $value);
 
-    public function offsetUnset($key)
-    {
-    }
+    abstract public function offsetUnset($key);
 }
