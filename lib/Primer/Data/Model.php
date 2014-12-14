@@ -3,6 +3,7 @@
 namespace Primer\Data;
 
 use IteratorAggregate;
+use Primer\Utility\Cache;
 use Primer\Utility\ParameterBag;
 use Serializable;
 use JsonSerializable;
@@ -83,7 +84,7 @@ abstract class Model extends ParameterBag implements IteratorAggregate, Serializ
      *
      * @var array
      */
-    protected static $_schema = array();
+    protected static $_schema;
 
     /**
      * Data structure to store a 'meta instance' of each model object for
@@ -133,6 +134,10 @@ abstract class Model extends ParameterBag implements IteratorAggregate, Serializ
 
         if (!static::$_db) {
             static::$_db = Database::getInstance();
+        }
+
+        if (!static::$_schema) {
+            static::$_schema = new Cache();
         }
     }
 
@@ -226,31 +231,37 @@ abstract class Model extends ParameterBag implements IteratorAggregate, Serializ
     {
         $modelName = static::getModelName($class);
         $tableName = static::getTableName($class);
-        if (!isset(static::$_schema[$modelName])) {
-            $result = static::queryBuilder()->describe($tableName)->executeAndFetchAll();
-            foreach ($result as $info) {
-                switch (static::$_db->getType()) {
-                    case 'mysql':
-                        static::$_schema[$modelName][$info->Field] = array(
-                            'type' => $info->Type,
-                            'null' => $info->Null,
-                            'key' => $info->Key,
-                            'default' => $info->Default,
-                        );
-                        break;
-                    case 'sqlite3':
-                        static::$_schema[$modelName][$info->name] = array(
-                            'type' => $info->type,
-                            'null' => $info->notnull ? false : true,
-                            'key' => $info->pk ? true : false,
-                            'default' => $info->dflt_value,
-                        );
-                        break;
+        return static::$_schema->get($modelName, function($modelName, $tableName) {
+                $result = $modelName::queryBuilder()->describe($tableName)->executeAndFetchAll();
+                $schema = array();
+                foreach ($result as $info) {
+                    switch (static::$_db->getType()) {
+                        case 'mysql':
+                            $schema[$info->Field] = array(
+                                'type'    => $info->Type,
+                                'null'    => $info->Null,
+                                'key'     => $info->Key,
+                                'default' => $info->Default,
+                            );
+                            break;
+                        case 'sqlite3':
+                            $schema[$info->name] = array(
+                                'type'    => $info->type,
+                                'null'    => $info->notnull ? false : true,
+                                'key'     => $info->pk ? true : false,
+                                'default' => $info->dflt_value,
+                            );
+                            break;
+                    }
                 }
-            }
-        }
 
-        return static::$_schema[$modelName];
+                return $schema;
+            }, array(
+                $modelName,
+                $tableName,
+            ));
+
+//        return static::$_schema[$modelName];
     }
 
     /**
