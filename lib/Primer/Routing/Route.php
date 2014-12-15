@@ -2,9 +2,7 @@
 
 namespace Primer\Routing;
 
-use Primer\Core\Object;
-
-class Route extends Object
+class Route
 {
     /**
      * URL of this Route
@@ -166,23 +164,6 @@ class Route extends Object
     {
         $this->_parameters = array_merge($this->_parameters, $parameters);
     }
-
-//    public function dispatch()
-//    {
-//        $this->_controller = $this->getControllerName($this->_controller);
-//        $instance = new $this->_controller;
-//        call_user_func_array(array($instance, $this->_action), $this->_parameters);
-//    }
-
-//    public function getController()
-//    {
-//        return $this->_controller;
-//    }
-//
-//    public function getAction()
-//    {
-//        return $this->_action;
-//    }
 
     public function getParams()
     {
