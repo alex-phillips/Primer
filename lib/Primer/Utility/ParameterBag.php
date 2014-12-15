@@ -1,8 +1,8 @@
 <?php
 /**
  * @author Alex Phillips
- * @date 6/28/14
- * @time 2:22 PM
+ * @date   6/28/14
+ * @time   2:22 PM
  */
 
 namespace Primer\Utility;
@@ -18,7 +18,6 @@ use Primer\Core\Object;
  * Class ParameterContainer
  */
 class ParameterBag extends Object implements ArrayAccess, IteratorAggregate, Serializable, JsonSerializable, Countable
-
 {
     /*
      * Parameters array that contains all accessible values
@@ -45,7 +44,7 @@ class ParameterBag extends Object implements ArrayAccess, IteratorAggregate, Ser
      */
     public function has($key)
     {
-        if ($this->get($key)) {
+        if ($this->get($key) !== null) {
             return true;
         }
 
@@ -77,6 +76,11 @@ class ParameterBag extends Object implements ArrayAccess, IteratorAggregate, Ser
     public function getAll()
     {
         return $this->_parameters;
+    }
+
+    public function replace($params)
+    {
+        $this->_parameters = $params;
     }
 
     public function offsetExists($key)
@@ -134,13 +138,13 @@ class ParameterBag extends Object implements ArrayAccess, IteratorAggregate, Ser
     public function clear($key)
     {
         $path = explode('.', $key);
-        $ary = & $this->_parameters;
+        $ary = &$this->_parameters;
         foreach ($path as $p) {
             if (!isset ($ary[$p])) {
                 $ary[$p] = array();
             }
-            $key = & $ary;
-            $ary = & $ary[$p];
+            $key = &$ary;
+            $ary = &$ary[$p];
         }
 
         unset($key[$p]);
