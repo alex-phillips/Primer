@@ -19,11 +19,16 @@ class UpCommand extends BaseCommand
 
     public function run()
     {
-        if (unlink(APP_ROOT . '/Config/down')) {
-            $this->out("Server has been brought up.");
+        if (file_exists(APP_ROOT . '/Config/down')) {
+            if (unlink(APP_ROOT . '/Config/down')) {
+                $this->out("Server has been brought up.");
+            }
+            else {
+                $this->out("There was a problem bringing the server out of maintenance mode. Please check file permissions.");
+            }
         }
         else {
-            $this->out("There was a problem bringing the server out of maintenance mode. Please check file permissions.");
+            $this->out("Application is already running");
         }
     }
 }
