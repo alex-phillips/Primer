@@ -19,8 +19,10 @@ use Primer\Core\Object;
  */
 class ParameterBag extends Object implements ArrayAccess, IteratorAggregate, Serializable, JsonSerializable, Countable
 {
-    /*
+    /**
      * Parameters array that contains all accessible values
+     *
+     * @var array
      */
     protected $_parameters = array();
 
