@@ -34,10 +34,27 @@ abstract class BaseCommand extends ConsoleObject
         $this->_userDefinedInput = new ArgumentBag();
     }
 
+    /**
+     * Any setup necessary prior for the command to run, i.e. setting the name,
+     * description, and any necessary arguments
+     *
+     * @return mixed
+     */
     abstract public function configure();
 
+    /**
+     * All main logic of the command to be executed
+     *
+     * @return mixed
+     */
     abstract public function run();
 
+    /**
+     * This function passes the arguments parsed from the main application to be
+     * accessible by the command
+     *
+     * @param $args
+     */
     public function setup($args)
     {
         $this->args->addFlags($args->getFlags());
@@ -66,44 +83,24 @@ abstract class BaseCommand extends ConsoleObject
         }
     }
 
+    /**
+     * Function to determine if the 'verbosity' flag has been set
+     *
+     * @return bool
+     */
     private function _isVerboseSet()
     {
         return ($this->args['verbose'] || $this->args['v']);
     }
 
+    /**
+     * Function to determine if the 'quiet' flag has been set
+     *
+     * @return bool
+     */
     private function _isQuietSet()
     {
         return ($this->args['quiet'] || $this->args['q']);
-    }
-
-    public function verify()
-    {
-        return true;
-
-        // Make sure passed arguments match value requirements
-        $this->args->addCommand($this->getName());
-        $this->args->parse();
-        foreach ($this->_userDefinedInput as $name => $argument) {
-            switch ($argument->getValueRequirement()) {
-                case DefinedInput::VALUE_REQUIRED:
-                    $value = $this->args->getParsedOption($name);
-                    if (!$value || is_bool($value->getValue())) {
-                        // @TODO: throw exception (and properly handle exception output)
-                        return false;
-                    }
-                    break;
-                case DefinedInput::VALUE_NONE:
-                    if (!$this->args->getParsedFlag($name)) {
-                        // @TODO: throw exception (and properly handle exception output)
-                        return false;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        return true;
     }
 
     public function getParameterValue($input)
@@ -180,14 +177,14 @@ __USAGE__;
         return $message;
     }
 
-    public function addFlag($name, $aliases = array(), $description = '', $stackable = false)
+    public function addFlag()
     {
-        $this->args->addFlag($name, $aliases, $description, $stackable);
+        call_user_func_array(array($this->args, 'addFlag'), func_get_args());
     }
 
-    public function addOption($name, $aliases = array(), $default = null, $description = '')
+    public function addOption()
     {
-        $this->args->addOption($name, $aliases, $default, $description);
+        call_user_func_array(array($this->args, 'addOption'), func_get_args());
     }
 
     public function getFlag($flag)
