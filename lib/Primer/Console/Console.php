@@ -7,47 +7,57 @@
 
 namespace Primer\Console;
 
-use Primer\Console\Input\ArgumentParser;
+use Primer\Console\Command\BaseCommand;
+use Primer\Console\Arguments\Arguments;
 
 class Console extends ConsoleObject
 {
-    /*
+    /**
+     * Application instance used for content injection, exception handling, etc.
+     *
+     * @var
+     */
+    private $_app;
+
+    /**
      * Name of the application.
+     *
+     * @var string
      */
     private $_applicationName;
 
-    /*
-     * Version of the application.
+    /**
+     * Object that holds all possible arguments as well as parsed arguments
+     *
+     * @var Arguments
      */
-    private $_applicationVersion;
+    private $_arguments;
 
-    /*
-     * Array of parsed arguments passed in the command line.
-     */
-    private $_userPassedArgv = array();
-
-    /*
-     * Available commands created and passed in with aliases to call each command.
+    /**
+     * Data structure to hold all avaiable command instances
+     *
+     * @var array
      */
     private $_commands = array();
 
-    /*
-     * These are options global to all commands for the application.
+    /**
+     * All available flags that can be used application-wide
+     *
+     * @var array
      */
-    private $_applicationOptions = array(
+    private $_flags = array(
+        'help'    => array(
+            'description' => 'Display this help message',
+            'aliases'     => array('h'),
+        ),
         'quiet'   => array(
-            'aliases'     => array(
-                'quiet',
-                'q'
-            ),
-            'description' => "Don't output any messages",
+            'description' => 'Suppress output',
+            'aliases'     => array('q'),
         ),
         'verbose' => array(
-            'aliases'     => array(
-                'verbose',
-                'v'
-            ),
-            'description' => 'Output all application information',
+            'description' => 'Set level of output verbosity',
+            'aliases'     => array('v'),
+            'stackable'   => true,
         ),
     );
 
@@ -60,142 +70,59 @@ class Console extends ConsoleObject
         $this->_applicationName = $applicationName;
         $this->_userPassedArgv = $argv;
 
+        $this->_arguments = new Arguments(array(
+            'flags' => $this->_flags,
+        ));
+
         parent::__construct();
     }
 
     public function addCommand(BaseCommand $instance)
     {
+        $instance->setup($this->_arguments);
         $instance->configure();
         $this->_commands[$instance->getName()] = $instance;
+        $this->_arguments->addCommand($instance->getName(), $instance->getDescription());
     }
 
     public function run()
     {
-        $parsedArgv = $this->getParseInputArgv();
-
-        $applicationOptions = $parsedArgv['application_options'];
-        $parsedArgv = $parsedArgv['args'];
-
-        $command = array_shift($parsedArgv);
-
-        if ($command) {
-            $this->_callApplication($command, $parsedArgv, $applicationOptions);
+        $this->_arguments->parse();
+        $parsedCommands = $this->_arguments->getParsedArguments();
+        if (count($parsedCommands) === 1) {
+            $this->_callApplication($parsedCommands[0]);
         }
         else {
-            $this->_listCommands();
+            $this->_buildHelpScreen();
         }
     }
 
-    public function getParseInputArgv(array $argv = array())
+    private function _callApplication($applicationName)
     {
-        $paramsToParse = (!empty($argv) ? $argv : $this->_userPassedArgv);
-
-        $applicationOptions = array();
-        foreach ($paramsToParse as $index => $param) {
-            if ($param == $_SERVER['SCRIPT_NAME']) {
-                continue;
-            }
-            if (preg_match('#\A-#', $param)) {
-                $applicationOptions[] = ltrim($param, '-');
-                unset($paramsToParse[$index]);
-            }
-            else {
-                break;
-            }
-        }
-
-        $parser = new ArgumentParser($paramsToParse);
-
-        return array(
-            'application_options' => $applicationOptions,
-            'args' => $parser->parseArgs(),
-        );
-    }
-
-    private function _callApplication($applicationName, $commandParameters, $applicationParameters)
-    {
-        if (!isset($this->_commands[$applicationName])) {
-            $this->_listCommands();
+        if (!array_key_exists($applicationName, $this->_commands)) {
+            $this->_buildHelpScreen();
         }
         else {
             $command = $this->_commands[$applicationName];
-            $command->setup($commandParameters, $applicationParameters);
-            $command->configure();
-            $command->verify();
-            $command->run();
+
+            if ($this->_arguments->getParsedFlag('h')) {
+                $command->renderHelpScreen();
+            }
+            else {
+                $command->run();
+            }
         }
     }
 
-    private function _listCommands()
+    private function _buildHelpScreen()
     {
-        $options = "";
-        foreach ($this->_applicationOptions as $name => $info) {
-            $aliases = array();
-            foreach ($info['aliases'] as $alias) {
-                switch (strlen($alias)) {
-                    case 1:
-                        $aliases[] = "-$alias";
-                        break;
-                    default:
-                        $aliases[] = "--$alias";
-                        break;
-                }
-            }
+        $helpScreen = new HelpScreen($this->_arguments);
+        $this->out($this->_applicationName . "\n\n");
+        $this->out($helpScreen->render());
+    }
 
-            $aliases = implode(', ', $aliases);
-            $options .= "<info>    $aliases\t\t{$info['description']}</info>\n";
-        }
-
-        $commands = "";
-        foreach ($this->_commands as $name => $instance) {
-            $description = $instance->getDescription();
-            $commands .= "<info>    $name\t\t$description</info>\n";
-
-            $params = '';
-            foreach ($instance->getDefinedParameters() as $parameter) {
-                $names = array();
-                if ($parameter->getShortName()) {
-                    $names[] = '-' . $parameter->getShortName();
-                }
-                if ($parameter->getLongName()) {
-                    $names[] = '--' . $parameter->getLongName();
-                }
-                $params .= "\t" . implode(', ', $names);
-
-                if ($parameter->getDescription()) {
-                    $params .= ": " . $parameter->getDescription();
-                }
-            }
-
-            if ($params) {
-                $commands .= "<info>\t\t\t$params</info>\n";
-            }
-        }
-
-        // Build application and version information
-        $applicationInformation = array();
-        if ($this->_applicationName) {
-            $applicationInformation[] = "$this->_applicationName";
-        }
-        if (!empty($applicationInformation)) {
-            $applicationInformation = implode(' ', $applicationInformation) . "\n";
-        }
-        else {
-            $applicationInformation = '';
-        }
-
-        $usage = <<<__USAGE__
-$applicationInformation
-<warning>Usage:</warning>
-    [options] command [arguments]
-
-<warning>Available Options:</warning>
-$options
-<warning>Available Commands:</warning>
-$commands
-
-__USAGE__;
-
-        $this->out($usage);
+    public function setApp($app)
+    {
+        $this->_app = $app;
     }
 }

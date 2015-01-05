@@ -7,7 +7,7 @@
  * @time 7:45 PM
  */
 
-namespace Primer\Console;
+namespace Primer\Console\Command;
 
 class UpCommand extends BaseCommand
 {

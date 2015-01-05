@@ -9,59 +9,57 @@ namespace Primer\Console\Input;
 
 use Primer\Console\Exception\DefinedInputException;
 
-class DefinedInput
+abstract class DefinedInput
 {
     const VALUE_NONE = 1;
     const VALUE_REQUIRED = 2;
     const VALUE_OPTIONAL = 3;
 
-    private $_shortName;
-    private $_longName;
-    private $_valueRequirement;
-    private $_description = '';
+    protected $_name;
+    protected $_aliases = array();
+//    protected $_valueRequirement;
+    protected $_description = '';
+    protected $_default = false;
+    protected $_value = null;
 
-    public function addParameter($shortName = null, $longName = null, $valueRequirement = self::VALUE_NONE, $description = '')
+    public function getName()
     {
-        if (!$shortName && !$longName) {
-            throw new DefinedInputException();
-        }
-
-        $this->_shortName = $shortName;
-        $this->_longName = $longName;
-        $this->_valueRequirement = $valueRequirement;
-        $this->_description = $description;
-    }
-
-    public function getValidName()
-    {
-        if (!$this->_shortName) {
-            return $this->_longName;
-        }
-
-        return $this->_shortName;
+        return $this->_name;
     }
 
     public function getShortName()
     {
-        return $this->_shortName;
+        if (strlen($this->_name) === 1) {
+            return $this->_name;
+        }
+
+        foreach ($this->_aliases as $alias) {
+            if (strlen($alias) === 1) {
+                return $alias;
+            }
+        }
+
+        return null;
     }
 
     public function getLongName()
     {
-        return $this->_longName;
+        if (strlen($this->_name) > 1) {
+            return $this->_name;
+        }
+
+        foreach ($this->_aliases as $alias) {
+            if (strlen($alias) > 1) {
+                return $alias;
+            }
+        }
+
+        return null;
     }
 
     public function getNames()
     {
-        $names = array();
-        if ($this->_shortName) {
-            $names[] = $this->_shortName;
-        }
-        if ($this->_longName) {
-            $names[] = $this->_longName;
-        }
-
-        return $names;
+        return array_merge(array($this->_name), $this->_aliases);
     }
 
     public function getDescription()
@@ -69,31 +67,43 @@ class DefinedInput
         return $this->_description;
     }
 
-    public function getValueRequirement()
+//    public function getValueRequirement()
+//    {
+//        return $this->_valueRequirement;
+//    }
+
+    public function getDefault()
     {
-        return $this->_valueRequirement;
+        return $this->_default;
     }
 
     public function isFitAnyParameter($parameterName)
     {
-        switch ($parameterName) {
-            case $this->_longName:
-            case $this->_shortName: {
-                return true;
-            }
-                break;
+        if ($parameterName === $this->_name || in_array($parameterName, $this->_aliases)) {
+            return true;
         }
 
         return false;
     }
 
-    public function getOppositeParameter($actualParameter)
+    public function getSettings()
     {
-        if ($actualParameter == $this->_longName) {
-            return $this->_shortName;
+        $settings = array();
+        foreach ($this as $k => $v) {
+            $k = ltrim($k, '_');
+            $settings[$k] = $v;
         }
-        else {
-            return $this->_longName;
-        }
+
+        return $settings;
+    }
+
+    public function getValue()
+    {
+        return $this->_value;
+    }
+
+    public function setValue($value)
+    {
+        $this->_value = $value;
     }
 }

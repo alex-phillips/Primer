@@ -1,7 +1,10 @@
 Primer Console Framework
 ===================
 
-This framework can be used to creating fully shell scripts. Originally forked from https://github.com/piotrooo/php-shell-framework.
+This framework can be used to creating fully shell scripts. Originally code from   https://github.com/piotrooo/php-shell-framework and https://github.com/wp-cli/php-cli-tools, it
+has been modified to be integraded and run as a 'framework' with the best parts of both repos.
+
+This has been tied into the Primer PHP Framework but can be used independently without any dependencies.
 
 Creating new application
 ------------------------
@@ -30,13 +33,14 @@ called before running the command.
 So created command should looks like:
 ```php
 <?php
-class HelloCommand extends \Primer\Console\BaseCommand
+class HelloCommand extends \Primer\Console\Command\BaseCommand
 {
     public function configure()
     {
+        $this->setName('hello');
     }
 
-    public function main()
+    public function run()
     {
         $this->out("Hello world");
     }
@@ -55,7 +59,7 @@ the command, we want run it from our console.
 
 ```php
 <?php
-$app->addCommand(new HelloCommand(), array('hello'));
+$app->addCommand(new HelloCommand());
 ```
 
 ### Basicly call from shell

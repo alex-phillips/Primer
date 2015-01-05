@@ -1,27 +1,28 @@
 <?php
 /**
- * ArgumentParser
- *
- * @author Alex Phillips <exonintrendo@gmail.com>
+ * @author Alex Phillips <aphillips@cbcnewmedia.com>
+ * Date: 1/5/15
+ * Time: 12:07 PM
  */
 
-namespace Primer\Console\Input;
-
-use Primer\Utility\ParameterBag;
-
-class ArgumentParser extends ParameterBag
+class ArgumentParser implements ArrayAccess
 {
-    public $commands;
-    public $options = array();
-
-    protected $_parameters;
-
+    public $args;
     private $_rawArguments;
+    private $_availableArguments;
 
-    public function __construct($arguments)
+    public function __construct($arguments = null)
     {
+        if (!$arguments) {
+            $arguments = array_slice($_SERVER['argv'], 1);
+        }
+
         $this->_rawArguments = $arguments;
-        $this->commands = new ParameterBag();
+    }
+
+    public function addAvailableArguments($arguments)
+    {
+        $this->_availableArguments = $arguments;
     }
 
     /**
@@ -110,7 +111,7 @@ class ArgumentParser extends ParameterBag
             }
 
             // -k=value -abc
-            else if (substr($arg, 0, 1) === '-') {
+            else {
                 if (substr($arg, 0, 1) === '-') {
                     // -k=value
                     if (substr($arg, 2, 1) === '=') {
@@ -137,15 +138,12 @@ class ArgumentParser extends ParameterBag
                 // plain-arg
                 else {
                     $value = $arg;
-                    $out[] = $value;
+                    $out[$value] = true;
                 }
-            }
-            else {
-                $this->commands[count($this->commands)] = $arg;
             }
         }
 
-        $this->_parameters = $out;
+        $this->args = $out;
 
         return $out;
     }
@@ -155,10 +153,10 @@ class ArgumentParser extends ParameterBag
      */
     public function getBoolean($key, $default = false)
     {
-        if (!isset($this->_parameters[$key])) {
+        if (!isset($this->args[$key])) {
             return $default;
         }
-        $value = $this->_parameters[$key];
+        $value = $this->args[$key];
 
         if (is_bool($value)) {
             return $value;
@@ -188,5 +186,30 @@ class ArgumentParser extends ParameterBag
         }
 
         return $default;
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        if (is_null($offset)) {
+            $this->args[] = $value;
+        }
+        else {
+            $this->args[$offset] = $value;
+        }
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->args[$offset]);
+    }
+
+    public function offsetUnset($offset)
+    {
+        unset($this->args[$offset]);
+    }
+
+    public function offsetGet($offset)
+    {
+        return isset($this->args[$offset]) ? $this->args[$offset] : null;
     }
 }
