@@ -12,6 +12,7 @@
 
 namespace Primer\Console;
 
+use cli\arguments\Argument;
 use Primer\Console\Arguments\Arguments;
 use Primer\Console\Arguments\ArgumentBag;
 
@@ -62,10 +63,14 @@ class HelpScreen
      */
     protected $_commandMax = 0;
 
+    protected $_arguments = array();
+
+    protected $_argumentMax = 0;
+
     public function __construct(Arguments $arguments = null)
     {
         if ($arguments) {
-            $this->setArguments($arguments);
+            $this->set($arguments);
         }
     }
 
@@ -84,11 +89,26 @@ class HelpScreen
      *
      * @param Arguments $arguments
      */
-    public function setArguments(Arguments $arguments)
+    public function set(Arguments $arguments)
     {
+        $this->setArguments($arguments->getArguments());
         $this->setFlags($arguments->getFlags());
         $this->setOptions($arguments->getOptions());
         $this->setCommands($arguments->getCommands());
+    }
+
+    public function setArguments(ArgumentBag $arguments)
+    {
+        $max = 0;
+        $out = array();
+
+        foreach ($arguments as $name => $argument) {
+            $max = max(strlen($name), $max);
+            $out[$name] = $argument->getSettings();
+        }
+
+        $this->_arguments = $out;
+        $this->_argumentMax = $max;
     }
 
     /**
@@ -146,10 +166,15 @@ class HelpScreen
      *
      * @return string
      */
-    public function render($flags = true, $options = true, $commands = true)
+    public function render($arguments = true, $flags = true, $options = true, $commands = true)
     {
         $help = array();
 
+        if ($arguments) {
+            if ($output = $this->_renderArguments()) {
+                array_push($help, $output);
+            }
+        }
         if ($flags) {
             if ($output = $this->_renderFlags()) {
                 array_push($help, $output);
@@ -167,6 +192,15 @@ class HelpScreen
         }
 
         return join($help, "\n\n") . "\n";
+    }
+
+    private function _renderArguments()
+    {
+        if (empty($this->_arguments)) {
+            return null;
+        }
+
+        return "<warning>Arguments</warning>\n" . $this->_renderScreen($this->_arguments, $this->_argumentMax);
     }
 
     private function _renderFlags()

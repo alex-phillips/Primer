@@ -59,7 +59,6 @@ abstract class BaseCommand extends ConsoleObject
     {
         $this->args->addFlags($args->getFlags());
         $this->args->addOptions($args->getOptions());
-        $this->args->addCommand($this->getName());
     }
 
     public function prepare()
@@ -260,16 +259,13 @@ __USAGE__;
 
     public function renderHelpScreen()
     {
-        $helpScreen = new HelpScreen();
-        $helpScreen->setFlags($this->args->getFlags());
-        $helpScreen->setOptions($this->_userDefinedInput);
-
         $this->displayUsage();
         $this->line();
         $this->out("<warning>Description</warning>");
         $this->out("  <info>{$this->getDescription()}</info>");
         $this->line();
-        $this->out($helpScreen->render(true, true, false));
+        $helpScreen = new HelpScreen($this->args);
+        $this->out($helpScreen->render());
     }
 
     protected function displayUsage()
