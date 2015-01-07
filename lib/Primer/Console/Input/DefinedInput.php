@@ -11,13 +11,12 @@ use Primer\Console\Exception\DefinedInputException;
 
 abstract class DefinedInput
 {
-    const VALUE_NONE = 1;
     const VALUE_REQUIRED = 2;
     const VALUE_OPTIONAL = 3;
 
     protected $_name;
     protected $_aliases = array();
-//    protected $_valueRequirement;
+    protected $_mode;
     protected $_description = '';
     protected $_default = false;
     protected $_value = null;
@@ -67,11 +66,6 @@ abstract class DefinedInput
         return $this->_description;
     }
 
-//    public function getValueRequirement()
-//    {
-//        return $this->_valueRequirement;
-//    }
-
     public function getDefault()
     {
         return $this->_default;
@@ -105,5 +99,10 @@ abstract class DefinedInput
     public function setValue($value)
     {
         $this->_value = $value;
+    }
+
+    public function getMode()
+    {
+        return $this->_mode;
     }
 }
