@@ -16,6 +16,8 @@ class DownCommand extends BaseCommand
         $this->setName('down');
         $this->setDescription("Bring the server down for maintenance mode");
         $this->addOption('when', array('w'), null, 'Specify time in seconds to delay until bringing down the application');
+
+        $this->addArgument('when');
     }
 
     public function run()

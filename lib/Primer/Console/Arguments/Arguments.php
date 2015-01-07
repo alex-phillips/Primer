@@ -39,10 +39,7 @@ class Arguments implements ArrayAccess
     protected $_input = array();
     protected $_invalid = array();
     protected $_parsed;
-    protected $_parsedFlags;
-    protected $_parsedOptions;
     protected $_parsedCommands;
-    protected $_parsedArguments;
     protected $_lexer;
 
     /**
@@ -301,7 +298,13 @@ class Arguments implements ArrayAccess
             $flag = $flag->value;
         }
 
-        return $this->_flags[$flag];
+        $flag = $this->_flags[$flag];
+
+        if ($flag instanceof DefinedInput) {
+            return $flag;
+        }
+
+        return null;
     }
 
     public function getFlags()
@@ -312,6 +315,15 @@ class Arguments implements ArrayAccess
     public function hasFlags()
     {
         return !empty($this->_flags);
+    }
+
+    public function flagExists($flag)
+    {
+        if ($this->_flags[$flag] && $this->_flags[$flag]->getExists()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -325,11 +337,6 @@ class Arguments implements ArrayAccess
     public function isFlag($argument)
     {
         return (null !== $this->getFlag($argument));
-    }
-
-    public function getParsedFlags()
-    {
-        return $this->_parsedFlags;
     }
 
     /**
@@ -374,6 +381,15 @@ class Arguments implements ArrayAccess
         return !empty($this->_options);
     }
 
+    public function optionExists($option)
+    {
+        if ($this->_options[$option] && $this->_options[$option]->getExists()) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Returns true if the given argument is defined as an option.
      *
@@ -385,11 +401,6 @@ class Arguments implements ArrayAccess
     public function isOption($argument)
     {
         return (null != $this->getOption($argument));
-    }
-
-    public function getParsedOptions()
-    {
-        return $this->_parsedOptions;
     }
 
     /**
@@ -473,10 +484,10 @@ class Arguments implements ArrayAccess
     {
         $this->_invalid = array();
         $this->_parsed = array();
-        $this->_parsedFlags = new ArgumentBag();
-        $this->_parsedOptions = new ArgumentBag();
+//        $this->_parsedFlags = new ArgumentBag();
+//        $this->_parsedOptions = new ArgumentBag();
         $this->_parsedCommands = array();
-        $this->_parsedArguments = array();
+//        $this->_parsedArguments = array();
         $this->_lexer = new Lexer($this->_input);
 
         foreach ($this->_lexer as $argument) {
@@ -501,19 +512,6 @@ class Arguments implements ArrayAccess
         }
     }
 
-    public function getArgumentValue($argument)
-    {
-        if (($val = $this->_parsedFlags->get($argument)) !== null) {
-            return $val->getValue();
-        }
-
-        if (($val = $this->_parsedOptions->get($argument)) !== null) {
-            return $val->getValue();
-        }
-
-        return null;
-    }
-
     private function _warn($message)
     {
         trigger_error('[' . __CLASS__ . '] ' . $message, E_USER_WARNING);
@@ -534,12 +532,11 @@ class Arguments implements ArrayAccess
             $this->_flags[$argument->key]->increaseValue();
         }
         else {
-            $this[$argument->key] = true;
+            $this[$argument->key] = $this->_flags[$argument->key]->getValue();
             $this->_flags[$argument->key]->setValue(true);
         }
 
-        $this->_parsedFlags[$argument->key] = $this->_flags[$argument->key];
-        $this->_parsedFlags[$argument->key]->setValue($this->_flags[$argument->key]->getValue());
+        $this->_flags[$argument->key]->setExists(true);
 
         return true;
     }
@@ -555,7 +552,7 @@ class Arguments implements ArrayAccess
             // Oops! Got no value, throw a warning and continue.
             $this->_warn('no value given for ' . $option->raw);
             $this[$option->key] = null;
-            $this->_parsedOptions[$option->key] = null;
+            $this->_options->setExists(true);
             return true;
         }
 
@@ -578,8 +575,6 @@ class Arguments implements ArrayAccess
 
         $this[$option->key] = $value;
         $this->_options[$option->key]->setValue($value);
-        $this->_parsedOptions[$option->key] = $this->_options[$option->key];
-        $this->_parsedOptions[$option->key]->setValue($value);
 
         return true;
     }
@@ -591,7 +586,9 @@ class Arguments implements ArrayAccess
         }
 
         $this->_parsedCommands[] = $argument->key;
-        $this[$argument->key] = true;
+        $this->_commands[$argument->key]->setExists(true);
+        $this->_commands[$argument->key]->setValue(true);
+        $this[$argument->key] = $this->_commands[$argument->key]->getValue();
 
         return true;
     }
@@ -604,48 +601,9 @@ class Arguments implements ArrayAccess
             }
 
             $arg->setValue($argument);
-            $this->_parsedArguments[$arg->getName()] = $arg;
         }
 
         return true;
-    }
-
-    public function getParsedFlag($flag)
-    {
-        if (isset($this->_parsedFlags[$flag])) {
-            return $this->_parsedFlags[$flag];
-        }
-
-        foreach ($this->_flags as $master => $settings) {
-            if (in_array($flag, $settings->getNames())) {
-                if (isset($this->_parsedFlags[$master])) {
-                    return $this->_parsedFlags[$master];
-                }
-
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    public function getParsedOption($option)
-    {
-        if (isset($this->_parsedOptions[$option])) {
-            return $this->_parsedOptions[$option];
-        }
-
-        foreach ($this->_parsedOptions as $master => $settings) {
-            if (in_array($option, (array)$settings['aliases'])) {
-                if (isset($this->_parsedOptions[$master])) {
-                    return $this->_parsedOptions[$master];
-                }
-
-                return false;
-            }
-        }
-
-        return false;
     }
 
     public function getParsedCommand($command)

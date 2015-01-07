@@ -187,25 +187,25 @@ __USAGE__;
         return $message;
     }
 
-    public function addFlag()
+    public function addFlag($flag, $aliases = array(), $description = '', $stackable = false)
     {
         call_user_func_array(array($this->args, 'addFlag'), func_get_args());
     }
 
-    public function addOption()
+    public function addOption($option, $aliases = array(), $default = null, $description = '')
     {
         call_user_func_array(array($this->args, 'addOption'), func_get_args());
     }
 
-    public function addArgument()
+    public function addArgument($name, $mode = DefinedInput::VALUE_REQUIRED, $description = '')
     {
         call_user_func_array(array($this->args, 'addArgument'), func_get_args());
     }
 
     public function getFlag($flag)
     {
-        if ($val = $this->args->getParsedFlag($flag)) {
-            return $val->getValue();
+        if ($this->args->flagExists($flag)) {
+            return $this->args->getFlag($flag)->getValue();
         }
 
         return null;
@@ -213,8 +213,8 @@ __USAGE__;
 
     public function getOption($option)
     {
-        if ($val = $this->args->getParsedOption($option)->getValue()) {
-            return $val->getValue();
+        if ($this->args->optionExists($option)) {
+            $this->args->getOption($option)->getValue();
         }
 
         return null;

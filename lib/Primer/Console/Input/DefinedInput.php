@@ -20,6 +20,7 @@ abstract class DefinedInput
     protected $_description = '';
     protected $_default = false;
     protected $_value = null;
+    protected $_exists = false;
 
     public function getName()
     {
@@ -104,5 +105,15 @@ abstract class DefinedInput
     public function getMode()
     {
         return $this->_mode;
+    }
+
+    public function getExists()
+    {
+        return $this->_exists;
+    }
+
+    public function setExists($exists)
+    {
+        $this->_exists = $exists;
     }
 }
