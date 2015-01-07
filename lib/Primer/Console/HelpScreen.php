@@ -238,7 +238,7 @@ class HelpScreen
     {
         $help = array();
         foreach ($options as $option => $settings) {
-            $formatted = '  ' . str_pad($option, $max);
+            $formatted = '  <info>' . str_pad($option, $max) . '</info>';
 
             $dlen = 80 - 4 - $max;
 
@@ -256,7 +256,7 @@ class HelpScreen
                 $formatted .= "\n${pad}${desc}";
             }
 
-            $formatted = "<info>$formatted</info>";
+            $formatted = "$formatted";
 
             array_push($help, $formatted);
         }
