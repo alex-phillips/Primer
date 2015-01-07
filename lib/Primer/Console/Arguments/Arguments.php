@@ -19,10 +19,10 @@
 namespace Primer\Console\Arguments;
 
 use ArrayAccess;
-use League\CLImate\TerminalObject\Dynamic\Input;
 use Primer\Console\HelpScreen;
 use Primer\Console\Input\DefinedInput;
 use Primer\Console\Input\InputArgument;
+use Primer\Console\Input\InputCommand;
 use Primer\Console\Input\InputFlag;
 use Primer\Console\Input\InputOption;
 
@@ -33,6 +33,7 @@ class Arguments implements ArrayAccess
 {
     protected $_flags = array();
     protected $_options = array();
+    protected $_commands = array();
     protected $_arguments = array();
     protected $_strict = false;
     protected $_input = array();
@@ -40,6 +41,7 @@ class Arguments implements ArrayAccess
     protected $_parsed;
     protected $_parsedFlags;
     protected $_parsedOptions;
+    protected $_parsedCommands;
     protected $_parsedArguments;
     protected $_lexer;
 
@@ -64,6 +66,7 @@ class Arguments implements ArrayAccess
 
         $this->_options = new ArgumentBag();
         $this->_flags = new ArgumentBag();
+        $this->_commands = new ArgumentBag();
         $this->_arguments = new ArgumentBag();
 
         if (isset($options['flags'])) {
@@ -235,12 +238,24 @@ class Arguments implements ArrayAccess
 
     public function addCommand($command, $description = '')
     {
-        if (isset($this->_arguments[$command])) {
+        if (isset($this->_commands[$command])) {
             $this->_warn('command already exists: ' . $command);
             return $this;
         }
 
-        $this->_arguments[$command] = new InputArgument($command, $description);
+        $this->_commands[$command] = new InputCommand($command, $description);
+
+        return $this;
+    }
+
+    public function addArgument($name, $mode = DefinedInput::VALUE_REQUIRED, $description = '')
+    {
+        if (isset($this->_arguments[$name])) {
+            $this->_warn('argument already exists: ' . $name);
+            return $this;
+        }
+
+        $this->_arguments[$name] = new InputArgument($name, $mode, $description);
 
         return $this;
     }
@@ -387,22 +402,21 @@ class Arguments implements ArrayAccess
      */
     public function getCommand($command)
     {
-        if ($command instanceOf Argument) {
-            $obj = $command;
+        if ($command instanceof Argument) {
             $command = $command->value;
         }
 
-        return $this->_arguments[$command];
+        return $this->_commands[$command];
     }
 
-    public function getArguments()
+    public function getCommands()
     {
-        return $this->_arguments;
+        return $this->_commands;
     }
 
     public function hasCommands()
     {
-        return !empty($this->_arguments);
+        return !empty($this->_commands);
     }
 
     /**
@@ -418,9 +432,33 @@ class Arguments implements ArrayAccess
         return (null != $this->getCommand($argument));
     }
 
-    public function getParsedArguments()
+    public function getParsedCommands()
     {
-        return $this->_parsedArguments;
+        return $this->_parsedCommands;
+    }
+
+    public function getArgument($argument)
+    {
+        if ($argument instanceof Argument) {
+            $argument = $argument->value;
+        }
+
+        return $this->_arguments[$argument];
+    }
+
+    public function getArguments()
+    {
+        return $this->_arguments;
+    }
+
+    public function hasArguments()
+    {
+        return !empty($this->_arguments);
+    }
+
+    public function isArgument($argument)
+    {
+        return (null !== $this->getArgument($argument));
     }
 
     /**
@@ -437,6 +475,7 @@ class Arguments implements ArrayAccess
         $this->_parsed = array();
         $this->_parsedFlags = new ArgumentBag();
         $this->_parsedOptions = new ArgumentBag();
+        $this->_parsedCommands = array();
         $this->_parsedArguments = array();
         $this->_lexer = new Lexer($this->_input);
 
@@ -448,6 +487,9 @@ class Arguments implements ArrayAccess
                 continue;
             }
             if ($this->_parseCommand($argument)) {
+                continue;
+            }
+            if ($this->_parseArgument($argument)) {
                 continue;
             }
 
@@ -548,8 +590,22 @@ class Arguments implements ArrayAccess
             return false;
         }
 
-        $this->_parsedArguments[] = $argument->key;
+        $this->_parsedCommands[] = $argument->key;
         $this[$argument->key] = true;
+
+        return true;
+    }
+
+    private function _parseArgument($argument)
+    {
+        foreach ($this->_arguments as $name => $arg) {
+            if ($arg->getValue()) {
+                continue;
+            }
+
+            $arg->setValue($argument);
+            $this->_parsedArguments[$arg->getName()] = $arg;
+        }
 
         return true;
     }
@@ -594,8 +650,8 @@ class Arguments implements ArrayAccess
 
     public function getParsedCommand($command)
     {
-        if (isset($this->_parsedArguments[$command])) {
-            return $this->_parsedArguments[$command];
+        if (isset($this->_parsedCommands[$command])) {
+            return $this->_parsedCommands[$command];
         }
 
         return false;
