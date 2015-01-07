@@ -657,6 +657,15 @@ class Arguments implements ArrayAccess
         return false;
     }
 
+    public function getParsedArgument($argument)
+    {
+        if (isset($this->_arguments[$argument])) {
+            return $this->_arguments[$argument];
+        }
+
+        return null;
+    }
+
     /**
      * Returns true if a given argument was parsed.
      *

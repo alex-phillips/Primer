@@ -220,6 +220,15 @@ __USAGE__;
         return null;
     }
 
+    public function getArgument($name)
+    {
+        if ($val = $this->args->getParsedArgument($name)) {
+            return $val->getValue();
+        }
+
+        return null;
+    }
+
     public function getName()
     {
         return $this->_name;
