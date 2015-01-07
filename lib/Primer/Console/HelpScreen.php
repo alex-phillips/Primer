@@ -88,7 +88,7 @@ class HelpScreen
     {
         $this->setFlags($arguments->getFlags());
         $this->setOptions($arguments->getOptions());
-        $this->setCommands($arguments->getArguments());
+        $this->setCommands($arguments->getCommands());
     }
 
     /**
