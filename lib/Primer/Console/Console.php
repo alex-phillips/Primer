@@ -79,8 +79,8 @@ class Console extends ConsoleObject
 
     public function addCommand(BaseCommand $instance)
     {
-        $instance->setup($this->_arguments);
         $instance->configure();
+        $instance->setup($this->_arguments);
         $this->_commands[$instance->getName()] = $instance;
         $this->_arguments->addCommand($instance->getName(), $instance->getDescription());
     }
@@ -88,7 +88,7 @@ class Console extends ConsoleObject
     public function run()
     {
         $this->_arguments->parse();
-        $parsedCommands = $this->_arguments->getParsedArguments();
+        $parsedCommands = $this->_arguments->getParsedCommands();
         if (count($parsedCommands) === 1) {
             $this->_callApplication($parsedCommands[0]);
         }
@@ -109,6 +109,7 @@ class Console extends ConsoleObject
                 $command->renderHelpScreen();
             }
             else {
+                $command->prepare();
                 $command->run();
             }
         }
@@ -117,7 +118,7 @@ class Console extends ConsoleObject
     private function _buildHelpScreen()
     {
         $helpScreen = new HelpScreen($this->_arguments);
-        $this->out($this->_applicationName . "\n\n");
+        $this->out($this->_applicationName . "\n");
         $this->out($helpScreen->render());
     }
 

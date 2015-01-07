@@ -65,7 +65,17 @@ abstract class BaseCommand extends ConsoleObject
     public function prepare()
     {
         $this->args->parse();
+        $this->checkArguments();
         $this->_setOutputSystemVerbosity();
+    }
+
+    private function checkArguments()
+    {
+        foreach ($this->args->getArguments() as $name => $argument) {
+            if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && $argument->getValue() === null) {
+                throw new \InvalidArgumentException;
+            }
+        }
     }
 
     private function _setOutputSystemVerbosity()
@@ -187,6 +197,11 @@ __USAGE__;
         call_user_func_array(array($this->args, 'addOption'), func_get_args());
     }
 
+    public function addArgument()
+    {
+        call_user_func_array(array($this->args, 'addArgument'), func_get_args());
+    }
+
     public function getFlag($flag)
     {
         if ($val = $this->args->getParsedFlag($flag)) {
@@ -253,8 +268,15 @@ __USAGE__;
         $this->out("<warning>Usage</warning>");
 
         $usage = array($this->getName());
-        foreach ($this->_userDefinedInput as $argument) {
-
+        foreach ($this->args->getArguments() as $name => $argument) {
+            switch ($argument->getMode()) {
+                case DefinedInput::VALUE_OPTIONAL:
+                    $usage[] = "[{$argument->getName()}]";
+                    break;
+                case DefinedInput::VALUE_REQUIRED:
+                    $usage[] = $argument->getName();
+                    break;
+            }
         }
         $usage = implode(" ", $usage);
 
