@@ -104,18 +104,17 @@ class Arguments implements ArrayAccess
     }
 
     /**
-     * Adds a flag (boolean argument) to the argument list.
+     * Adds a flag (boolean) to the argument list
      *
-     * @param mixed $flag     A string representing the flag, or an array of strings.
-     * @param array $settings An array of settings for this flag.
+     * @param        $flag String representation of the flag
+     * @param array  $aliases Optional array of alternate ways to specify the flag
+     * @param null   $mode The flag's mode
+     * @param string $description Text description used in the help screen
+     * @param bool   $stackable Boolean if you can increase the value of the flag by repeating it
      *
-     * @setting string  description  A description to be shown in --help.
-     * @setting bool    default  The default value for this flag.
-     * @setting bool    stackable  Whether the flag is repeatable to increase the value.
-     * @setting array   aliases  Other ways to trigger this flag.
      * @return $this
      */
-    public function addFlag($flag, $aliases = array(), $description = '', $stackable = false)
+    public function addFlag($flag, $aliases = array(), $mode = null, $description = '', $stackable = false)
     {
         if (!($flag instanceof InputFlag)) {
             if (isset($this->_flags[$flag])) {
@@ -124,7 +123,7 @@ class Arguments implements ArrayAccess
                 return $this;
             }
 
-            $flag = new InputFlag($flag, $aliases, $description, $stackable);
+            $flag = new InputFlag($flag, $aliases, $mode, $description, $stackable);
         }
 
         $this->_flags[$flag->getName()] = $flag;
@@ -154,12 +153,12 @@ class Arguments implements ArrayAccess
             }
             else {
                 $settings += array(
-                    'aliases' => array(),
+                    'aliases'     => array(),
+                    'mode'        => null,
                     'description' => '',
-                    'default' => false,
-                    'stackable' => false,
+                    'stackable'   => false,
                 );
-                $this->addFlag($flag, $settings['aliases'], $settings['description'], $settings['stackable']);
+                $this->addFlag($flag, $settings['aliases'], $settings['mode'], $settings['description'], $settings['stackable']);
             }
         }
 
@@ -167,17 +166,15 @@ class Arguments implements ArrayAccess
     }
 
     /**
-     * Adds an option (string argument) to the argument list.
+     * @param        $option String representation of the option
+     * @param array  $aliases Optional array of aliases you can call the option by
+     * @param null   $mode The option's mode
+     * @param string $description A text description of the option used in the help screen
+     * @param null   $default The default value of the option if not provided
      *
-     * @param mixed $option   A string representing the option, or an array of strings.
-     * @param array $settings An array of settings for this option.
-     *
-     * @setting string  description  A description to be shown in --help.
-     * @setting bool    default  The default value for this option.
-     * @setting array   aliases  Other ways to trigger this option.
      * @return $this
      */
-    public function addOption($option, $aliases = array(), $default = null, $description = '')
+    public function addOption($option, $aliases = array(), $mode = null, $description = '', $default = null)
     {
         if (!($option instanceof InputOption)) {
             if (isset($this->_options[$option])) {
@@ -191,7 +188,7 @@ class Arguments implements ArrayAccess
                 );
             }
 
-            $option = new InputOption($option, $aliases, $default, $description);
+            $option = new InputOption($option, $aliases, $mode, $description, $default);
         }
 
         $this->_options[$option->getName()] = $option;
@@ -484,10 +481,7 @@ class Arguments implements ArrayAccess
     {
         $this->_invalid = array();
         $this->_parsed = array();
-//        $this->_parsedFlags = new ArgumentBag();
-//        $this->_parsedOptions = new ArgumentBag();
         $this->_parsedCommands = array();
-//        $this->_parsedArguments = array();
         $this->_lexer = new Lexer($this->_input);
 
         foreach ($this->_lexer as $argument) {
