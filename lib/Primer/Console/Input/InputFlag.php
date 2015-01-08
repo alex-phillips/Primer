@@ -13,7 +13,7 @@ class InputFlag extends DefinedInput
 {
     protected $_stackable = false;
 
-    public function __construct($name, $aliases = array(), $description = '', $stackable = false)
+    public function __construct($name, $aliases = array(), $mode = null, $description = '', $stackable = false)
     {
         if (!$name) {
             throw new DefinedInputException();
@@ -34,9 +34,14 @@ class InputFlag extends DefinedInput
         }
         $this->_aliases = array_unique($aliases);
 
-        $this->_default = false;
+        if (!$mode) {
+            $mode = DefinedInput::VALUE_OPTIONAL;
+        }
+
+        $this->_mode = $mode;
         $this->_description = $description;
         $this->_stackable = $stackable;
+        $this->_default = false;
     }
 
     public function isStackable()

@@ -9,8 +9,12 @@ namespace Primer\Console\Input;
 
 class InputArgument extends DefinedInput
 {
-    public function __construct($name, $mode = DefinedInput::VALUE_REQUIRED, $description = '', $default = null)
+    public function __construct($name, $mode = null, $description = '', $default = null)
     {
+        if (!$mode) {
+            $mode = DefinedInput::VALUE_OPTIONAL;
+        }
+
         $this->_name = $name;
         $this->_mode = $mode;
         $this->_description = $description;

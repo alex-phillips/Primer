@@ -11,7 +11,7 @@ use Primer\Console\Exception\DefinedInputException;
 
 class InputOption extends DefinedInput
 {
-    public function __construct($name, $aliases = array(), $default = null, $description = '')
+    public function __construct($name, $aliases = array(), $mode = null, $description = '', $default = null)
     {
         if (!$name) {
             throw new DefinedInputException();
@@ -32,7 +32,12 @@ class InputOption extends DefinedInput
         }
         $this->_aliases = array_unique($aliases);
 
-        $this->_default = $default;
+        if (!$mode) {
+            $mode = DefinedInput::VALUE_OPTIONAL;
+        }
+
+        $this->_mode = $mode;
         $this->_description = $description;
+        $this->_default = $default;
     }
 }
