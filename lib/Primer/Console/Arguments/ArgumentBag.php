@@ -9,6 +9,7 @@ namespace Primer\Console\Arguments;
 
 use ArrayAccess;
 use IteratorAggregate;
+use Primer\Console\Exception\DefinedInputException;
 use Primer\Console\Input\DefinedInput;
 use Serializable;
 use JsonSerializable;
@@ -21,9 +22,18 @@ use ArrayIterator;
 class ArgumentBag implements ArrayAccess, IteratorAggregate, Serializable, JsonSerializable, Countable
 {
     /**
+     * Data structure holding the objects
+     *
      * @var array
      */
     protected $_arguments = array();
+
+    /**
+     * The class type of the containing values
+     *
+     * @var null
+     */
+    protected $_type = null;
 
     /**
      * Set the class's parameters to an passed in array
@@ -33,6 +43,22 @@ class ArgumentBag implements ArrayAccess, IteratorAggregate, Serializable, JsonS
     public function __construct($parameters = array())
     {
         $this->_arguments = $parameters;
+    }
+
+    /**
+     * @param bool $full Return the full namespace classname
+     *
+     * @return null
+     */
+    public function getType($full = false)
+    {
+        if ($full) {
+            return $this->_type;
+        }
+
+        $retval = explode('\\', $this->_type);
+
+        return array_pop($retval);
     }
 
     /**
@@ -104,11 +130,20 @@ class ArgumentBag implements ArrayAccess, IteratorAggregate, Serializable, JsonS
      * Set a value in the class's parameters given a key.
      * The key can be a '.' delimited array path.
      *
-     * @param $key
-     * @param $value
+     * @param              $key
+     * @param DefinedInput $value
+     *
+     * @throws DefinedInputException
      */
-    public function set($key, DefinedInput $value = null)
+    public function set($key, DefinedInput $value)
     {
+        if (!$this->_type) {
+            $this->_type = get_class($value);
+        }
+        else if (get_class($value) !== $this->_type) {
+            throw new DefinedInputException;
+        }
+
         unset($this[$key]);
 
         if ($key instanceof DefinedInput) {
