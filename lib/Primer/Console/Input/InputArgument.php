@@ -16,4 +16,17 @@ class InputArgument extends DefinedInput
         $this->_description = $description;
         $this->_default = $default;
     }
+
+    /**
+     * Overridden function since we don't need '-' or '--' prepended
+     * to arguments
+     *
+     * @param null $name
+     *
+     * @return mixed
+     */
+    public function getFormattedName($name = null)
+    {
+        return $this->_name;
+    }
 }

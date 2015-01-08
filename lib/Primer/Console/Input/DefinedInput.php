@@ -62,6 +62,24 @@ abstract class DefinedInput
         return array_merge(array($this->_name), $this->_aliases);
     }
 
+    public function getFormattedName($name = null)
+    {
+        if (!$name) {
+            $name = $this->_name;
+        }
+
+        switch (strlen($name)) {
+            case 1:
+                $name = "-$name";
+                break;
+            default:
+                $name = "--$name";
+                break;
+        }
+
+        return $name;
+    }
+
     public function getDescription()
     {
         return $this->_description;
