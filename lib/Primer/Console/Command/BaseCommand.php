@@ -23,15 +23,16 @@ abstract class BaseCommand extends ConsoleObject
     /**
      * @var DefinedInput[]
      */
-    private $_userDefinedInput;
-    private $_aliases = array();
+    private $_userDefinedFlags;
+    private $_userDefinedOptions;
 
     public function __construct()
     {
         parent::__construct();
 
         $this->args = new Arguments();
-        $this->_userDefinedInput = new ArgumentBag();
+        $this->_userDefinedFlags = new ArgumentBag();
+        $this->_userDefinedOptions = new ArgumentBag();
     }
 
     /**
@@ -59,6 +60,7 @@ abstract class BaseCommand extends ConsoleObject
     {
         $this->args->addFlags($args->getFlags());
         $this->args->addOptions($args->getOptions());
+        $this->args->addCommand($this->getName());
     }
 
     public function prepare()
@@ -112,88 +114,22 @@ abstract class BaseCommand extends ConsoleObject
         return ($this->args['quiet'] || $this->args['q']);
     }
 
-    public function getParameterValue($input)
-    {
-        if ($input instanceof DefinedInput) {
-            if (isset($this->args[$input->getShortName()])) {
-                return $this->args[$input->getShortName()];
-            }
-
-            if (isset($this->args[$input->getLongName()])) {
-                return $this->args[$input->getLongName()];
-            }
-        }
-        else {
-            if ($this->_isParameterFitUserDefined($input)) {
-                if (isset($this->args[$input])) {
-                    return $this->args[$input];
-                }
-
-                return $this->args[$this->_fitParameterName($input)];
-            }
-        }
-
-        return null;
-    }
-
-    private function _isParameterFitUserDefined($parameterName)
-    {
-        foreach ($this->_userDefinedInput as $singleUserDefinedInput) {
-            if ($singleUserDefinedInput->isFitAnyParameter($parameterName)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function _fitParameterName($originalParameter)
-    {
-        foreach ($this->_userDefinedInput as $singleUserDefinedInput) {
-            if ($singleUserDefinedInput->isFitAnyParameter($originalParameter)) {
-                return $singleUserDefinedInput->getOppositeParameter($originalParameter);
-            }
-        }
-    }
-
-    public function getUsage()
-    {
-        $applicationName = implode(', ', $this->_aliases);
-
-        $arguments = '';
-        foreach ($this->_userDefinedInput as $input) {
-            $names = array();
-            if ($input->getShortName()) {
-                $names[] = "-" . $input->getShortName();
-            }
-            if ($input->getLongName()) {
-                $names[] = "--" . $input->getLongName();
-            }
-
-            $names = implode(', ', $names);
-
-            $arguments .= "\t$names\n\t\t$this->_description";
-        }
-
-        $message = <<<__USAGE__
-NAME
-    {$applicationName}
-
-DESCRIPTION
-    {$this->_description}
-__USAGE__;
-
-        return $message;
-    }
-
     public function addFlag($flag, $aliases = array(), $description = '', $stackable = false)
     {
         call_user_func_array(array($this->args, 'addFlag'), func_get_args());
+        if ($flag instanceof DefinedInput) {
+            $flag = $flag->getName();
+        }
+        $this->_userDefinedFlags[$flag] = $this->args->getFlag($flag);
     }
 
-    public function addOption($option, $aliases = array(), $default = null, $description = '')
+    public function addOption($option, $aliases = array(), $mode = null, $description = '', $default = null)
     {
         call_user_func_array(array($this->args, 'addOption'), func_get_args());
+        if ($option instanceof DefinedInput) {
+            $option = $option->getName();
+        }
+        $this->_userDefinedOptions[$option] = $this->args->getOption($option);
     }
 
     public function addArgument($name, $mode = DefinedInput::VALUE_REQUIRED, $description = '')
@@ -252,39 +188,21 @@ __USAGE__;
         return $this;
     }
 
-    public function getDefinedParameters()
+    public function getUserDefinedFlags()
     {
-        return $this->_userDefinedInput;
+        return $this->_userDefinedFlags;
+    }
+
+    public function getUserDefinedOptions()
+    {
+        return $this->_userDefinedOptions;
     }
 
     public function renderHelpScreen()
     {
-        $this->displayUsage();
-        $this->line();
-        $this->out("<warning>Description</warning>");
-        $this->out("  <info>{$this->getDescription()}</info>");
-        $this->line();
         $helpScreen = new HelpScreen($this->args);
-        $this->out($helpScreen->render());
-    }
-
-    protected function displayUsage()
-    {
-        $this->out("<warning>Usage</warning>");
-
-        $usage = array($this->getName());
-        foreach ($this->args->getArguments() as $name => $argument) {
-            switch ($argument->getMode()) {
-                case DefinedInput::VALUE_OPTIONAL:
-                    $usage[] = "[{$argument->getName()}]";
-                    break;
-                case DefinedInput::VALUE_REQUIRED:
-                    $usage[] = $argument->getName();
-                    break;
-            }
-        }
-        $usage = implode(" ", $usage);
-
-        $this->out("  <info>$usage</info>");
+        $this->out($helpScreen->render($this));
+        $this->out("<warning>Help</warning>");
+        $this->out("  {$this->getDescription()}");
     }
 }
