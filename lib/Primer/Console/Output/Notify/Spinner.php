@@ -24,9 +24,6 @@ class Spinner extends Notify
         '\\',
         '|',
         '/',
-        '.',
-        '..',
-        '...',
     );
     protected $_format = '{:msg} {:char}  ({:elapsed}, {:speed}/s)';
     protected $_iteration = 0;
