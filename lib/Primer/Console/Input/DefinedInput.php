@@ -62,7 +62,7 @@ abstract class DefinedInput
     public function getFormattedName($name = null)
     {
         if (!$name) {
-            $name = $this->_name;
+            return $name;
         }
 
         switch (strlen($name)) {
