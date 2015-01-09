@@ -112,7 +112,11 @@ abstract class DefinedInput
 
     public function getValue()
     {
-        return $this->_value;
+        if ($this->_exists) {
+            return $this->_value;
+        }
+
+        return $this->_default;
     }
 
     public function setValue($value)
