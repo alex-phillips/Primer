@@ -105,7 +105,7 @@ class Console extends ConsoleObject
         else {
             $command = $this->_commands[$applicationName];
 
-            if ($this->_arguments->flagExists('h')) {
+            if ($this->_arguments->flags['h']) {
                 $command->renderHelpScreen();
             }
             else {
