@@ -17,6 +17,7 @@ use Primer\Console\Arguments\ArgumentBag;
 use Primer\Console\Command\BaseCommand;
 use Primer\Console\Input\DefinedInput;
 use Primer\Console\Input\InputArgument;
+use Primer\Console\Input\InputCommand;
 use Primer\Console\Input\InputOption;
 
 /**
@@ -186,7 +187,9 @@ class HelpScreen
 
             $dlen = 80 - 4 - $max;
 
-            $description = str_split($arg->getDescription(), $dlen);
+            $description = wordwrap($arg->getDescription(), $dlen, "{{BREAK}}");
+            $description = explode('{{BREAK}}', $description);
+
             $formatted .= '  ' . array_shift($description);
 
             if ($val = $arg->getDefault()) {
@@ -210,20 +213,6 @@ class HelpScreen
         }
 
         return join($help, "\n");
-    }
-
-    private function _consume($options)
-    {
-        $max = 0;
-        $out = array();
-
-        foreach ($options as $name => $argument) {
-            $names = $this->getFormattedNames($argument);
-            $max = max(strlen($names), $max);
-            $out[$names] = $argument;
-        }
-
-        return array($out, $max);
     }
 
     private function _renderUsage()
@@ -294,7 +283,7 @@ class HelpScreen
         $first = true;
 
         foreach ($arg->getNames() as $name) {
-            if (!($arg instanceof InputArgument)) {
+            if (!($arg instanceof InputArgument) && !($arg instanceof InputCommand)) {
                 $name = $arg->getFormattedName($name);
 
                 if (!$first) {
