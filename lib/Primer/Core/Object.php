@@ -28,12 +28,4 @@ abstract class Object
 
         return Inflector::classify($string);
     }
-
-    public static function logMessage($msg, $filename = 'core.log')
-    {
-        $pid = getmypid();
-        $dt = date("Y-m-d H:i:s (T)");
-        $fullpath = LOG_PATH . $filename;
-        error_log("$dt\t$pid\t$msg\n", 3, $fullpath);
-    }
 }
