@@ -38,6 +38,10 @@ class InputFlag extends DefinedInput
             $mode = DefinedInput::VALUE_OPTIONAL;
         }
 
+        if ($stackable) {
+            $description = trim($description . " (stackable)");
+        }
+
         $this->_mode = $mode;
         $this->_description = $description;
         $this->_stackable = $stackable;
