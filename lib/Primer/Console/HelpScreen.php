@@ -256,14 +256,23 @@ class HelpScreen
 
     private function formatArgUsage(DefinedInput $arg)
     {
-        $names = $arg->getNames();
+        $names = array_filter(array_reverse($arg->getNames()), function($var) {
+            return ($var);
+        });
         foreach ($names as &$name) {
             $name = $arg->getFormattedName($name);
         }
         $val = implode('|', $names);
 
+        if ($arg->getLongName()) {
+            $val .= "=";
+        }
+        else {
+            $val .= " ";
+        }
+
         if ($arg instanceof InputOption) {
-            $val .= '="..."';
+            $val .= '"..."';
         }
 
         switch ($arg->getMode()) {
