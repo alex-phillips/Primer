@@ -187,8 +187,7 @@ class HelpScreen
 
             $dlen = 80 - 4 - $max;
 
-            $description = wordwrap($arg->getDescription(), $dlen, "{{BREAK}}");
-            $description = explode('{{BREAK}}', $description);
+            $description = explode('{{BREAK}}', wordwrap($arg->getDescription(), $dlen, "{{BREAK}}"));
 
             $formatted .= '  ' . array_shift($description);
 
