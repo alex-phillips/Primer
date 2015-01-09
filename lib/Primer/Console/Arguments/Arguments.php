@@ -89,11 +89,6 @@ class Arguments implements ArrayAccess
         return $this->_parsed;
     }
 
-    public function getHelpScreen()
-    {
-        return new HelpScreen($this);
-    }
-
     /**
      * Encodes the parsed arguments as JSON.
      *
@@ -309,15 +304,6 @@ class Arguments implements ArrayAccess
         return !empty($this->flags);
     }
 
-    public function flagExists($flag)
-    {
-        if ($this->flags[$flag] && $this->flags[$flag]->getExists()) {
-            return true;
-        }
-
-        return false;
-    }
-
     /**
      * Returns true if the given argument is defined as a flag.
      *
@@ -329,21 +315,6 @@ class Arguments implements ArrayAccess
     public function isFlag($argument)
     {
         return isset($this->flags[$argument]);
-    }
-
-    /**
-     * Returns true if the given flag is stackable.
-     *
-     * @param mixed $flag   Either a string representing the flag or an
-     *                      cli\arguments\Argument object.
-     *
-     * @return bool
-     */
-    public function isStackable($flag)
-    {
-        $settings = $this->flags[$flag];
-
-        return $settings->isStackable();
     }
 
     /**
@@ -371,15 +342,6 @@ class Arguments implements ArrayAccess
     public function hasOptions()
     {
         return !empty($this->options);
-    }
-
-    public function optionExists($option)
-    {
-        if ($this->options[$option] && $this->options[$option]->getExists()) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -440,11 +402,6 @@ class Arguments implements ArrayAccess
     public function hasArguments()
     {
         return !empty($this->arguments);
-    }
-
-    public function isArgument($argument)
-    {
-        return (null !== $this->getArgument($argument));
     }
 
     /**
@@ -582,24 +539,6 @@ class Arguments implements ArrayAccess
         }
 
         return true;
-    }
-
-    public function getParsedCommand($command)
-    {
-        if (isset($this->_parsedCommands[$command])) {
-            return $this->_parsedCommands[$command];
-        }
-
-        return false;
-    }
-
-    public function getParsedArgument($argument)
-    {
-        if (isset($this->arguments[$argument])) {
-            return $this->arguments[$argument];
-        }
-
-        return null;
     }
 
     /**
