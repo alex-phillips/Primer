@@ -103,14 +103,14 @@ class Arguments implements ArrayAccess
      * Adds a flag (boolean) to the argument list
      *
      * @param        $flag String representation of the flag
-     * @param array  $aliases Optional array of alternate ways to specify the flag
+     * @param string $alias Optional array of alternate ways to specify the flag
      * @param null   $mode The flag's mode
      * @param string $description Text description used in the help screen
      * @param bool   $stackable Boolean if you can increase the value of the flag by repeating it
      *
      * @return $this
      */
-    public function addFlag($flag, $aliases = array(), $mode = null, $description = '', $stackable = false)
+    public function addFlag($flag, $alias = '', $mode = null, $description = '', $stackable = false)
     {
         if (!($flag instanceof InputFlag)) {
             if (isset($this->flags[$flag])) {
@@ -119,7 +119,7 @@ class Arguments implements ArrayAccess
                 return $this;
             }
 
-            $flag = new InputFlag($flag, $aliases, $mode, $description, $stackable);
+            $flag = new InputFlag($flag, $alias, $mode, $description, $stackable);
         }
 
         $this->flags[$flag->getName()] = $flag;
@@ -149,12 +149,12 @@ class Arguments implements ArrayAccess
             }
             else {
                 $settings += array(
-                    'aliases'     => array(),
+                    'alias'       => '',
                     'mode'        => null,
                     'description' => '',
                     'stackable'   => false,
                 );
-                $this->addFlag($flag, $settings['aliases'], $settings['mode'], $settings['description'], $settings['stackable']);
+                $this->addFlag($flag, $settings['alias'], $settings['mode'], $settings['description'], $settings['stackable']);
             }
         }
 
@@ -163,14 +163,14 @@ class Arguments implements ArrayAccess
 
     /**
      * @param        $option String representation of the option
-     * @param array  $aliases Optional array of aliases you can call the option by
+     * @param string $alias Optional array of aliases you can call the option by
      * @param null   $mode The option's mode
      * @param string $description A text description of the option used in the help screen
      * @param null   $default The default value of the option if not provided
      *
      * @return $this
      */
-    public function addOption($option, $aliases = array(), $mode = null, $description = '', $default = null)
+    public function addOption($option, $alias = '', $mode = null, $description = '', $default = null)
     {
         if (!($option instanceof InputOption)) {
             if (isset($this->options[$option])) {
@@ -178,13 +178,7 @@ class Arguments implements ArrayAccess
                 return $this;
             }
 
-            if (is_string($aliases)) {
-                $aliases = array(
-                    $aliases,
-                );
-            }
-
-            $option = new InputOption($option, $aliases, $mode, $description, $default);
+            $option = new InputOption($option, $alias, $mode, $description, $default);
         }
 
         $this->options[$option->getName()] = $option;
@@ -214,12 +208,12 @@ class Arguments implements ArrayAccess
             }
             else {
                 $settings += array(
-                    'aliases' => array(),
+                    'alias'       => '',
                     'description' => '',
-                    'default' => false,
-                    'stackable' => false,
+                    'default'     => false,
+                    'stackable'   => false,
                 );
-                $this->addOption($option, $settings['aliases'], $settings['default'], $settings['description']);
+                $this->addOption($option, $settings['alias'], $settings['default'], $settings['description']);
             }
         }
 

@@ -114,7 +114,7 @@ abstract class BaseCommand extends ConsoleObject
         return ($this->args['quiet'] || $this->args['q']);
     }
 
-    public function addFlag($flag, $aliases = array(), $description = '', $stackable = false)
+    public function addFlag($flag, $alias = '', $description = '', $stackable = false)
     {
         call_user_func_array(array($this->args, 'addFlag'), func_get_args());
         if ($flag instanceof DefinedInput) {
@@ -123,7 +123,7 @@ abstract class BaseCommand extends ConsoleObject
         $this->_userDefinedFlags[$flag] = $this->args->getFlag($flag);
     }
 
-    public function addOption($option, $aliases = array(), $mode = null, $description = '', $default = null)
+    public function addOption($option, $alias = '', $mode = null, $description = '', $default = null)
     {
         call_user_func_array(array($this->args, 'addOption'), func_get_args());
         if ($option instanceof DefinedInput) {

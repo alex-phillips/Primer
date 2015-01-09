@@ -13,26 +13,20 @@ class InputFlag extends DefinedInput
 {
     protected $_stackable = false;
 
-    public function __construct($name, $aliases = array(), $mode = null, $description = '', $stackable = false)
+    public function __construct($name, $alias = '', $mode = null, $description = '', $stackable = false)
     {
         if (!$name) {
             throw new DefinedInputException();
         }
 
-        if (is_string($aliases)) {
-            $aliases = array(
-                $aliases,
-            );
+        if (strlen($alias) > strlen($name)) {
+            $tmp = $name;
+            $name = $alias;
+            $alias = $tmp;
         }
 
         $this->_name = $name;
-        foreach ($aliases as $index => $alias) {
-            if (strlen($alias) > strlen($this->_name)) {
-                $aliases[$index] = $this->_name;
-                $this->_name = $alias;
-            }
-        }
-        $this->_aliases = array_unique($aliases);
+        $this->_alias = $alias;
 
         if (!$mode) {
             $mode = DefinedInput::VALUE_OPTIONAL;

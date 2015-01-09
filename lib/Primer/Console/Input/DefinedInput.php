@@ -7,15 +7,13 @@
 
 namespace Primer\Console\Input;
 
-use Primer\Console\Exception\DefinedInputException;
-
 abstract class DefinedInput
 {
     const VALUE_REQUIRED = 2;
     const VALUE_OPTIONAL = 3;
 
     protected $_name;
-    protected $_aliases = array();
+    protected $_alias;
     protected $_mode;
     protected $_description = '';
     protected $_default = false;
@@ -33,10 +31,8 @@ abstract class DefinedInput
             return $this->_name;
         }
 
-        foreach ($this->_aliases as $alias) {
-            if (strlen($alias) === 1) {
-                return $alias;
-            }
+        if (strlen($this->_alias) === 1) {
+            return $this->_alias;
         }
 
         return null;
@@ -48,10 +44,8 @@ abstract class DefinedInput
             return $this->_name;
         }
 
-        foreach ($this->_aliases as $alias) {
-            if (strlen($alias) > 1) {
-                return $alias;
-            }
+        if (strlen($this->_alias) > 1) {
+            return $this->_alias;
         }
 
         return null;
@@ -59,7 +53,10 @@ abstract class DefinedInput
 
     public function getNames()
     {
-        return array_merge(array($this->_name), $this->_aliases);
+        return array(
+            $this->_name,
+            $this->_alias,
+        );
     }
 
     public function getFormattedName($name = null)
@@ -88,15 +85,6 @@ abstract class DefinedInput
     public function getDefault()
     {
         return $this->_default;
-    }
-
-    public function isFitAnyParameter($parameterName)
-    {
-        if ($parameterName === $this->_name || in_array($parameterName, $this->_aliases)) {
-            return true;
-        }
-
-        return false;
     }
 
     public function getSettings()

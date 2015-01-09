@@ -48,15 +48,15 @@ class Console extends ConsoleObject
     private $_flags = array(
         'help'    => array(
             'description' => 'Display this help message',
-            'aliases'     => array('h'),
+            'alias'       => 'h',
         ),
         'quiet'   => array(
             'description' => 'Suppress output',
-            'aliases'     => array('q'),
+            'alias'       => 'q',
         ),
         'verbose' => array(
             'description' => 'Set level of output verbosity',
-            'aliases'     => array('v'),
+            'alias'       => 'v',
             'stackable'   => true,
         ),
     );
