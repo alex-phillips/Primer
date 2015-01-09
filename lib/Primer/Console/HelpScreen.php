@@ -12,9 +12,12 @@
 
 namespace Primer\Console;
 
-use cli\arguments\Argument;
 use Primer\Console\Arguments\Arguments;
 use Primer\Console\Arguments\ArgumentBag;
+use Primer\Console\Command\BaseCommand;
+use Primer\Console\Input\DefinedInput;
+use Primer\Console\Input\InputArgument;
+use Primer\Console\Input\InputOption;
 
 /**
  * Arguments help screen renderer
@@ -22,7 +25,7 @@ use Primer\Console\Arguments\ArgumentBag;
 class HelpScreen
 {
     /**
-     * Data structure of available flags to output
+     * Available flags to output
      *
      * @var array
      */
@@ -33,10 +36,10 @@ class HelpScreen
      *
      * @var int
      */
-    protected $_flagMax = 0;
+    protected $_flagsMax = 0;
 
     /**
-     * Data structure of available options to output
+     * Available options to output
      *
      * @var array
      */
@@ -47,10 +50,10 @@ class HelpScreen
      *
      * @var int
      */
-    protected $_optionMax = 0;
+    protected $_optionsMax = 0;
 
     /**
-     * Data structure of available commands to output
+     * Available commands to output
      *
      * @var array
      */
@@ -61,11 +64,29 @@ class HelpScreen
      *
      * @var int
      */
-    protected $_commandMax = 0;
+    protected $_commandsMax = 0;
 
+    /**
+     * Available arguments to output
+     *
+     * @var array
+     */
     protected $_arguments = array();
 
-    protected $_argumentMax = 0;
+    /**
+     * Max length needed for 'arguments' to be displayed before descriptions
+     *
+     * @var int
+     */
+    protected $_argumentsMax = 0;
+
+    /**
+     * Current command the help screen is being rendered for. If none, then
+     * display the general help screen for the framework with available commands.
+     *
+     * @var
+     */
+    protected $_command;
 
     public function __construct(Arguments $arguments = null)
     {
@@ -91,162 +112,85 @@ class HelpScreen
      */
     public function set(Arguments $arguments)
     {
-        $this->setArguments($arguments->getArguments());
-        $this->setFlags($arguments->getFlags());
-        $this->setOptions($arguments->getOptions());
-        $this->setCommands($arguments->getCommands());
+        $this->consume($arguments->getArguments());
+        $this->consume($arguments->getFlags());
+        $this->consume($arguments->getOptions());
+        $this->consume($arguments->getCommands());
     }
 
-    public function setArguments(ArgumentBag $arguments)
+    public function consume(ArgumentBag $args)
     {
+        if (!($val = $args->getType())) {
+            return;
+        }
+
+        // @TODO: really shitty... should use an inflector to make plural,
+        // but I want this package to remain separate from the rest of Primer...
+        $varName = strtolower(str_replace('Input', '', $val)) . 's';
         $max = 0;
         $out = array();
 
-        foreach ($arguments as $name => $argument) {
-            $max = max(strlen($name), $max);
-            $out[$name] = $argument->getSettings();
+        foreach ($args as $name => $arg) {
+            $names = $this->getFormattedNames($arg);
+            $max = max(strlen($names), $max);
+            $out[$names] = $arg;
         }
 
-        $this->_arguments = $out;
-        $this->_argumentMax = $max;
-    }
+        $this->{"_$varName"} = $out;
+        $this->{"_{$varName}Max"} = $max;
 
-    /**
-     * Individually set flags given an ArgumentBag
-     *
-     * @param ArgumentBag $flags
-     */
-    public function setFlags(ArgumentBag $flags)
-    {
-        $data = $this->_consume($flags);
-
-        $this->_flags = $data[0];
-        $this->_flagMax = $data[1];
-    }
-
-    /**
-     * Individually set options given an ArgumentBag
-     *
-     * @param ArgumentBag $options
-     */
-    public function setOptions(ArgumentBag $options)
-    {
-        $data = $this->_consume($options);
-
-        $this->_options = $data[0];
-        $this->_optionMax = $data[1];
-    }
-
-    /**
-     * Individually set commands given an ArgumentBag
-     *
-     * @param ArgumentBag $commands
-     */
-    public function setCommands(ArgumentBag $commands)
-    {
-        $max = 0;
-        $out = array();
-
-        foreach ($commands as $command => $argument) {
-            $max = max(strlen($command), $max);
-            $out[$command] = $argument->getSettings();
-        }
-
-        $this->_commands = $out;
-        $this->_commandMax = $max;
     }
 
     /**
      * Return output for the help screen given the provided flags, options,
      * and commands available
      *
-     * @param bool $flags
-     * @param bool $options
-     * @param bool $commands
-     *
      * @return string
      */
-    public function render($arguments = true, $flags = true, $options = true, $commands = true)
+    public function render(BaseCommand $command = null)
     {
+        if ($command) {
+            $this->_command = $command;
+        }
         $help = array();
 
-        if ($arguments) {
-            if ($output = $this->_renderArguments()) {
-                array_push($help, $output);
-            }
+        array_push($help, $this->_renderUsage());
+
+        array_push($help, $this->_renderScreen('Arguments', $this->_arguments, $this->_argumentsMax));
+        array_push($help, $this->_renderScreen('Flags', $this->_flags, $this->_flagsMax));
+        array_push($help, $this->_renderScreen('Options', $this->_arguments, $this->_argumentsMax));
+
+        if (!$this->_command) {
+            array_push($help, $this->_renderScreen('Commands', $this->_commands, $this->_commandsMax));
         }
-        if ($flags) {
-            if ($output = $this->_renderFlags()) {
-                array_push($help, $output);
-            }
-        }
-        if ($options) {
-            if ($output = $this->_renderOptions()) {
-                array_push($help, $output);
-            }
-        }
-        if ($commands) {
-            if ($output = $this->_renderCommands()) {
-                array_push($help, $output);
-            }
-        }
+
+        $help = array_filter($help, function($var) {
+            return ($var);
+        });
 
         return join($help, "\n\n") . "\n";
     }
 
-    private function _renderArguments()
-    {
-        if (empty($this->_arguments)) {
-            return null;
-        }
-
-        return "<warning>Arguments</warning>\n" . $this->_renderScreen($this->_arguments, $this->_argumentMax);
-    }
-
-    private function _renderFlags()
-    {
-        if (empty($this->_flags)) {
-            return null;
-        }
-
-        return "<warning>Flags</warning>\n" . $this->_renderScreen($this->_flags, $this->_flagMax);
-    }
-
-    private function _renderOptions()
-    {
-        if (empty($this->_options)) {
-            return null;
-        }
-
-        return "<warning>Options</warning>\n" . $this->_renderScreen(
-            $this->_options, $this->_optionMax
-        );
-    }
-
-    private function _renderCommands()
-    {
-        if (empty($this->_commands)) {
-            return null;
-        }
-
-        return "<warning>Commands</warning>\n" . $this->_renderScreen(
-            $this->_commands, $this->_commandMax
-        );
-    }
-
-    private function _renderScreen($options, $max)
+    private function _renderScreen($header, $options, $max)
     {
         $help = array();
-        foreach ($options as $option => $settings) {
-            $formatted = '  <info>' . str_pad($option, $max) . '</info>';
+        foreach ($options as $name => $arg) {
+            $formatted = '  <info>' . str_pad($name, $max) . '</info>';
+            $formatted = str_replace(array(
+                '(',
+                ')',
+            ), array(
+                '</info>(',
+                ')<info>',
+            ), $formatted);
 
             $dlen = 80 - 4 - $max;
 
-            $description = str_split($settings['description'], $dlen);
+            $description = str_split($arg->getDescription(), $dlen);
             $formatted .= '  ' . array_shift($description);
 
-            if (isset($settings['default']) && $settings['default']) {
-                $formatted .= ' [default: ' . $settings['default'] . ']';
+            if ($val = $arg->getDefault()) {
+                $formatted .= ' [default: ' . $val . ']';
             }
 
             // Pad was originally 3, since I'm indenting the lines by default, increased
@@ -261,6 +205,10 @@ class HelpScreen
             array_push($help, $formatted);
         }
 
+        if ($help) {
+            array_unshift($help, "<warning>$header</warning>");
+        }
+
         return join($help, "\n");
     }
 
@@ -270,24 +218,96 @@ class HelpScreen
         $out = array();
 
         foreach ($options as $name => $argument) {
-            $names = array();
-            foreach ($argument->getNames() as $alias) {
-                switch (strlen($alias)) {
-                    case 1:
-                        $alias = "-$alias";
-                        break;
-                    default:
-                        $alias = "--$alias";
-                        break;
-                }
-                array_push($names, $alias);
-            }
-
-            $names = join($names, ', ');
+            $names = $this->getFormattedNames($argument);
             $max = max(strlen($names), $max);
-            $out[$names] = $argument->getSettings();
+            $out[$names] = $argument;
         }
 
         return array($out, $max);
+    }
+
+    private function _renderUsage()
+    {
+        $usage = array();
+        $commands = array_keys($this->_commands);
+
+        if ($this->_command) {
+            $usage[] = "{$commands[0]}";
+            if (count($this->_command->getUserDefinedFlags()) > 0) {
+                foreach ($this->_command->getUserDefinedFlags() as $name => $flag) {
+                    $usage[] = $this->formatArgUsage($flag);
+                }
+            }
+
+            if (count($this->_command->getUserDefinedOptions()) > 0) {
+                foreach ($this->_command->getUserDefinedOptions() as $name => $option) {
+                    $usage[] = $this->formatArgUsage($option);
+                }
+            }
+
+            foreach ($this->_arguments as $name => $settings) {
+                $usage[] = $this->formatArgUsage($settings);
+            }
+        }
+        else {
+            if ($this->_options) {
+                $usage[] = "[options]";
+            }
+            $usage[] = "command";
+            if ($this->_arguments) {
+                $usage[] = "[arguments]";
+            }
+            if ($this->_flags) {
+                $usage[] = "[flags]";
+            }
+        }
+
+        return "<warning>Usage:</warning>\n  " . join(' ', $usage) . "";
+    }
+
+    private function formatArgUsage(DefinedInput $arg)
+    {
+        $names = $arg->getNames();
+        foreach ($names as &$name) {
+            $name = $arg->getFormattedName($name);
+        }
+        $val = implode('|', $names);
+
+        if ($arg instanceof InputOption) {
+            $val .= '="..."';
+        }
+
+        switch ($arg->getMode()) {
+            case DefinedInput::VALUE_OPTIONAL:
+                $val = "[$val]";
+                break;
+            case DefinedInput::VALUE_REQUIRED:
+                break;
+        }
+
+        return $val;
+    }
+
+    private function getFormattedNames(DefinedInput $arg)
+    {
+        $retval = array();
+        $first = true;
+
+        foreach ($arg->getNames() as $name) {
+            if (!($arg instanceof InputArgument)) {
+                $name = $arg->getFormattedName($name);
+
+                if (!$first) {
+                    $name = "($name)";
+                }
+                else {
+                    $first = false;
+                }
+            }
+
+            $retval[] = $name;
+        }
+
+        return implode(' ', $retval);
     }
 }
