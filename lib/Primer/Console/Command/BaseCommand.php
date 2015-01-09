@@ -129,39 +129,12 @@ abstract class BaseCommand extends ConsoleObject
         if ($option instanceof DefinedInput) {
             $option = $option->getName();
         }
-        $this->_userDefinedOptions[$option] = $this->args->getOption($option);
+        $this->_userDefinedOptions[$option] = $this->args->options[$option];
     }
 
     public function addArgument($name, $mode = DefinedInput::VALUE_REQUIRED, $description = '')
     {
         call_user_func_array(array($this->args, 'addArgument'), func_get_args());
-    }
-
-    public function getFlag($flag)
-    {
-        if ($this->args->flagExists($flag)) {
-            return $this->args->getFlag($flag)->getValue();
-        }
-
-        return null;
-    }
-
-    public function getOption($option)
-    {
-        if ($this->args->optionExists($option)) {
-            $this->args->getOption($option)->getValue();
-        }
-
-        return null;
-    }
-
-    public function getArgument($name)
-    {
-        if ($val = $this->args->getParsedArgument($name)) {
-            return $val->getValue();
-        }
-
-        return null;
     }
 
     public function getName()
