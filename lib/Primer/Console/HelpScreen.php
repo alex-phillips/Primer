@@ -159,7 +159,7 @@ class HelpScreen
 
         array_push($help, $this->_renderScreen('Arguments', $this->_arguments, $this->_argumentsMax));
         array_push($help, $this->_renderScreen('Flags', $this->_flags, $this->_flagsMax));
-        array_push($help, $this->_renderScreen('Options', $this->_arguments, $this->_argumentsMax));
+        array_push($help, $this->_renderScreen('Options', $this->_options, $this->_optionsMax));
 
         if (!$this->_command) {
             array_push($help, $this->_renderScreen('Commands', $this->_commands, $this->_commandsMax));
