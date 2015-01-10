@@ -53,10 +53,13 @@ abstract class DefinedInput
 
     public function getNames()
     {
-        return array(
-            $this->_name,
-            $this->_alias,
-        );
+        $retval = array($this->_name);
+
+        if ($this->_alias) {
+            $retval[] = $this->_alias;
+        }
+
+        return $retval;
     }
 
     public function getFormattedName($name = null)
