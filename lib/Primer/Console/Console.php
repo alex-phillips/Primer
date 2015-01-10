@@ -24,7 +24,11 @@ class Console extends ConsoleObject
      *
      * @var string
      */
-    private $_applicationName;
+    private $_applicationName = '';
+
+    private $_version = '';
+
+    private $_logo = '';
 
     /**
      * Object that holds all possible arguments as well as parsed arguments
@@ -59,6 +63,10 @@ class Console extends ConsoleObject
             'alias'       => 'v',
             'stackable'   => true,
         ),
+        'version' => array(
+            'description' => "Display this application's version",
+            'alias'       => 'V',
+        ),
         'profile' => array(
             'description' => 'Display timing and memory usage information',
         ),
@@ -71,7 +79,7 @@ class Console extends ConsoleObject
      */
     private $_start_time;
 
-    public function __construct($applicationName = '', $argv = null)
+    public function __construct($applicationName = '', $version = '', $argv = null)
     {
         $this->_start_time = microtime(true);
 
@@ -80,6 +88,7 @@ class Console extends ConsoleObject
         }
 
         $this->_applicationName = $applicationName;
+        $this->_version = $version;
         $this->_userPassedArgv = $argv;
 
         $this->_arguments = new Arguments(array(
@@ -104,6 +113,9 @@ class Console extends ConsoleObject
         if (count($parsedCommands) === 1) {
             $this->_callApplication($parsedCommands[0]);
         }
+        else if ($this->_arguments->flags['V']->getExists()) {
+            $this->_displayVersionInformation();
+        }
         else {
             $this->_buildHelpScreen();
         }
@@ -114,6 +126,11 @@ class Console extends ConsoleObject
     public function setApp($app)
     {
         $this->_app = $app;
+    }
+
+    public function setLogo($logo)
+    {
+        $this->_logo = $logo;
     }
 
     private function _callApplication($applicationName)
@@ -137,8 +154,18 @@ class Console extends ConsoleObject
     private function _buildHelpScreen()
     {
         $helpScreen = new HelpScreen($this->_arguments);
-        $this->out($this->_applicationName . "\n");
+
+        if ($this->_logo) {
+            $this->out($this->_logo);
+        }
+
+        $this->out("<info>{$this->_applicationName}</info> version <warning>{$this->_version}</warning>");
         $this->out($helpScreen->render());
+    }
+
+    private function _displayVersionInformation()
+    {
+        $this->out("<info>{$this->_applicationName}</info> version <warning>{$this->_version}</warning>");
     }
 
     private function shutdown()
