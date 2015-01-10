@@ -263,14 +263,14 @@ class HelpScreen
         }
         $val = implode('|', $names);
 
-        if ($arg->getLongName()) {
-            $val .= "=";
-        }
-        else {
-            $val .= " ";
-        }
-
         if ($arg instanceof InputOption) {
+            if ($arg->getLongName()) {
+                $val .= "=";
+            }
+            else {
+                $val .= " ";
+            }
+
             $val .= '"..."';
         }
 
