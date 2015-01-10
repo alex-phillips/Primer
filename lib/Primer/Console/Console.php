@@ -59,10 +59,17 @@ class Console extends ConsoleObject
             'alias'       => 'v',
             'stackable'   => true,
         ),
+        'profile' => array(
+            'description' => 'Display timing and memory usage information'
+        )
     );
+
+    private $_start_time;
 
     public function __construct($applicationName = '', $argv = null)
     {
+        $this->_start_time = microtime(true);
+
         if (!$argv) {
             $argv = $_SERVER['argv'];
         }
@@ -95,6 +102,13 @@ class Console extends ConsoleObject
         else {
             $this->_buildHelpScreen();
         }
+
+        $this->shutdown();
+    }
+
+    public function setApp($app)
+    {
+        $this->_app = $app;
     }
 
     private function _callApplication($applicationName)
@@ -122,8 +136,16 @@ class Console extends ConsoleObject
         $this->out($helpScreen->render());
     }
 
-    public function setApp($app)
+    private function shutdown()
     {
-        $this->_app = $app;
+        if ($this->_arguments->getFlag('profile')) {
+            $memoryUsageMb = round(memory_get_usage(true) / 1048576, 2);
+            $memoryPeakMb = round(memory_get_peak_usage(true) / 1048576, 2);
+
+            // microseconds * 1,000,000 = seconds
+
+            sleep(3);
+            $this->out("<info>Memory usage: {$memoryUsageMb}MB (peak: {$memoryPeakMb}MB), time: " . number_format(((microtime(true) - $this->_start_time)), 2) . "s</info>");
+        }
     }
 }
