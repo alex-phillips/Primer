@@ -160,6 +160,7 @@ class Console extends ConsoleObject
         }
 
         $this->out("<info>{$this->_applicationName}</info> version <warning>{$this->_version}</warning>");
+        $this->line();
         $this->out($helpScreen->render());
     }
 
