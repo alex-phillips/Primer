@@ -147,9 +147,6 @@ class Console extends ConsoleObject
             $memoryUsageMb = round(memory_get_usage(true) / 1048576, 2);
             $memoryPeakMb = round(memory_get_peak_usage(true) / 1048576, 2);
 
-            // microseconds * 1,000,000 = seconds
-
-            sleep(3);
             $this->out("<info>Memory usage: {$memoryUsageMb}MB (peak: {$memoryPeakMb}MB), time: " . number_format(((microtime(true) - $this->_start_time)), 2) . "s</info>");
         }
     }
