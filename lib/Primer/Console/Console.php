@@ -60,10 +60,15 @@ class Console extends ConsoleObject
             'stackable'   => true,
         ),
         'profile' => array(
-            'description' => 'Display timing and memory usage information'
-        )
+            'description' => 'Display timing and memory usage information',
+        ),
     );
 
+    /**
+     * Application start time (set at construction) for profiling purposes
+     *
+     * @var mixed
+     */
     private $_start_time;
 
     public function __construct($applicationName = '', $argv = null)
