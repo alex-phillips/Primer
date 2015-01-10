@@ -26,8 +26,19 @@ class Console extends ConsoleObject
      */
     private $_applicationName = '';
 
+    /**
+     * Application version
+     *
+     * @var string
+     */
     private $_version = '';
 
+    /**
+     * Application logo. This will be outputted on its own line before the
+     * application information on the help screen.
+     *
+     * @var string
+     */
     private $_logo = '';
 
     /**
