@@ -159,6 +159,9 @@ class Console extends ConsoleObject
             if ($this->_arguments->flags['h']->getExists()) {
                 $command->renderHelpScreen();
             }
+            else if ($this->_arguments->flags['V']->getExists()) {
+                $this->_displayVersionInformation();
+            }
             else {
                 $command->prepare();
                 $command->run();
