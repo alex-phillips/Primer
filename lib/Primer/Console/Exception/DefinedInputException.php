@@ -11,4 +11,12 @@ use Exception;
 
 class DefinedInputException extends Exception
 {
+    public function __construct($message = '', $code = 500)
+    {
+        if (!$message) {
+            $message = "Invalid input";
+        }
+
+        parent::__construct($message, $code);
+    }
 }
