@@ -9,6 +9,7 @@ namespace Primer\Console;
 
 use Primer\Console\Command\BaseCommand;
 use Primer\Console\Arguments\Arguments;
+use Primer\Console\Exception\ExceptionHandler;
 
 class Console extends ConsoleObject
 {
@@ -97,6 +98,9 @@ class Console extends ConsoleObject
         if (!$argv) {
             $argv = $_SERVER['argv'];
         }
+
+        ExceptionHandler::setConsole($this);
+        set_exception_handler('Primer\\Console\\Exception\\ExceptionHandler::handleException');
 
         $this->_applicationName = $applicationName;
         $this->_version = $version;
