@@ -75,7 +75,7 @@ abstract class BaseCommand extends ConsoleObject
     {
         foreach ($this->_userDefinedFlags as $name => $argument) {
             if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && !$argument->getExists()) {
-                throw new DefinedInputException("Missing required argument '{$argument->getName()}'");
+                throw new DefinedInputException("Missing required flag '{$argument->getName()}'");
             }
         }
         foreach ($this->_userDefinedOptions as $name => $argument) {
@@ -85,7 +85,7 @@ abstract class BaseCommand extends ConsoleObject
         }
         foreach ($this->args->getArguments() as $name => $argument) {
             if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && !$argument->getExists()) {
-                throw new DefinedInputException("Missing required flag '{$argument->getName()}'");
+                throw new DefinedInputException("Missing required argument '{$argument->getName()}'");
             }
         }
     }
