@@ -177,14 +177,20 @@ class Console extends ConsoleObject
             $this->out($this->_logo);
         }
 
-        $this->out("<info>{$this->_applicationName}</info> version <warning>{$this->_version}</warning>");
+        $this->_displayVersionInformation();
         $this->line();
         $this->out($helpScreen->render());
     }
 
     private function _displayVersionInformation()
     {
-        $this->out("<info>{$this->_applicationName}</info> version <warning>{$this->_version}</warning>");
+        $app = "<info>{$this->_applicationName}</info>";
+
+        if ($this->_version) {
+            $app .= " version <warning>{$this->_version}</warning>";
+        }
+
+        $this->out($app);
     }
 
     private function shutdown()
