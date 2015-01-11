@@ -7,24 +7,21 @@
 
 namespace Primer\Console\Command;
 
-use Primer\Console\Input\DefinedInput;
-
 class DownCommand extends BaseCommand
 {
     public function configure()
     {
         $this->setName('down');
-        $this->setDescription("Bring the server down for maintenance mode");
-        $this->addOption('when', 'w', null, 'Specify time in seconds to delay until bringing down the application');
+        $this->setDescription("Bring the application down for maintenance");
     }
 
     public function run()
     {
         if (touch(APP_ROOT . '/Config/down')) {
-            $this->out("Server has been brought down.");
+            $this->out("<warning>Application has been brought down for maintenance</warning>");
         }
         else {
-            $this->out("There was a problem putting the server into maintenance mode. Please check file permissions.");
+            $this->out("<error>There was a problem putting the application into maintenance mode. Please check file permissions.</error>");
         }
     }
 }
