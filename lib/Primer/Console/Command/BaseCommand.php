@@ -10,6 +10,7 @@ namespace Primer\Console\Command;
 use Primer\Console\Arguments\ArgumentBag;
 use Primer\Console\Arguments\Arguments;
 use Primer\Console\ConsoleObject;
+use Primer\Console\Exception\DefinedInputException;
 use Primer\Console\HelpScreen;
 use Primer\Console\Input\DefinedInput;
 use Primer\Console\Output\Writer;
@@ -72,9 +73,19 @@ abstract class BaseCommand extends ConsoleObject
 
     private function checkArguments()
     {
+        foreach ($this->_userDefinedFlags as $name => $argument) {
+            if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && !$argument->getExists()) {
+                throw new DefinedInputException("Missing required argument '{$argument->getName()}'");
+            }
+        }
+        foreach ($this->_userDefinedOptions as $name => $argument) {
+            if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && !$argument->getExists()) {
+                throw new DefinedInputException("Missing required option '{$argument->getName()}'");
+            }
+        }
         foreach ($this->args->getArguments() as $name => $argument) {
-            if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && $argument->getValue() === null) {
-                throw new \InvalidArgumentException;
+            if ($argument->getMode() === DefinedInput::VALUE_REQUIRED && !$argument->getExists()) {
+                throw new DefinedInputException("Missing required flag '{$argument->getName()}'");
             }
         }
     }
