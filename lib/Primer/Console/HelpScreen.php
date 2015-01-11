@@ -89,6 +89,11 @@ class HelpScreen
      */
     protected $_command;
 
+    /**
+     * Generate a new HelpScreen object with given Arguments
+     *
+     * @param Arguments $arguments
+     */
     public function __construct(Arguments $arguments = null)
     {
         if ($arguments) {
@@ -119,6 +124,12 @@ class HelpScreen
         $this->consume($arguments->getCommands());
     }
 
+    /**
+     * Consume the given arguments in the ArgumentBag based on the type contained
+     * inside the Bag
+     *
+     * @param ArgumentBag $args
+     */
     public function consume(ArgumentBag $args)
     {
         if (!($val = $args->getType())) {
@@ -172,6 +183,15 @@ class HelpScreen
         return join($help, "\n\n") . "\n";
     }
 
+    /**
+     * Generate a single section of the help screen given the arguments passed in
+     *
+     * @param $header
+     * @param $options
+     * @param $max
+     *
+     * @return string
+     */
     private function _renderScreen($header, $options, $max)
     {
         $help = array();
@@ -214,6 +234,11 @@ class HelpScreen
         return join($help, "\n");
     }
 
+    /**
+     * Generate the usage string including flags, options, and arguments
+     *
+     * @return string
+     */
     private function _renderUsage()
     {
         $usage = array();
@@ -253,6 +278,13 @@ class HelpScreen
         return "<warning>Usage:</warning>\n  " . join(' ', $usage) . "";
     }
 
+    /**
+     * Return a string of an argument for use in the coomands usage description
+     *
+     * @param DefinedInput $arg
+     *
+     * @return string
+     */
     private function formatArgUsage(DefinedInput $arg)
     {
         $names = array_filter(array_reverse($arg->getNames()), function($var) {
@@ -285,6 +317,13 @@ class HelpScreen
         return $val;
     }
 
+    /**
+     * Return a string of formatted names of an argument
+     *
+     * @param DefinedInput $arg
+     *
+     * @return string
+     */
     private function getFormattedNames(DefinedInput $arg)
     {
         $retval = array();
