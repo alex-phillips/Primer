@@ -26,6 +26,11 @@ class Tree
     protected $_renderer;
     protected $_data = array();
 
+    public function __construct()
+    {
+        $this->_renderer = new Markdown();
+    }
+
     /**
      * Sets the renderer used by this tree.
      *
