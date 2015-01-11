@@ -54,6 +54,9 @@ abstract class ConsoleObject
 
         $error = new StyleFormatter('red');
         $this->setFormatter('error', $error);
+
+        $exception = new StyleFormatter('white', 'red');
+        $this->_stderr->setFormatter('exception', $exception);
     }
 
     public function setFormatter($xmlTag, StyleFormatter $displayFormat)
@@ -118,9 +121,10 @@ abstract class ConsoleObject
         return $message;
     }
 
-    public function err($message, $numberOfNewLines = 1, $verbosityLevel = Writer::VERBOSITY_NORMAL) {
+    public function err($message, $numberOfNewLines = 1, $verbosityLevel = Writer::VERBOSITY_NORMAL, $eol = Writer::LF) {
+        $this->_stdout->setVerbosityForOutput($verbosityLevel);
         $this->_stderr->writeMessage(
-            $message, $numberOfNewLines, $verbosityLevel
+            $message, $numberOfNewLines, $eol
         );
     }
 
