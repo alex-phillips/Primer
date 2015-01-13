@@ -25,37 +25,36 @@ namespace Primer\Console;
  */
 class Colors extends ConsoleObject
 {
-    static protected $_colors
-        = array(
-            'color'      => array(
-                'black'   => 30,
-                'red'     => 31,
-                'green'   => 32,
-                'yellow'  => 33,
-                'blue'    => 34,
-                'magenta' => 35,
-                'cyan'    => 36,
-                'white'   => 37
-            ),
-            'style'      => array(
-                'bright'    => 1,
-                'dim'       => 2,
-                'underline' => 4,
-                'blink'     => 5,
-                'reverse'   => 7,
-                'hidden'    => 8
-            ),
-            'background' => array(
-                'black'   => 40,
-                'red'     => 41,
-                'green'   => 42,
-                'yellow'  => 43,
-                'blue'    => 44,
-                'magenta' => 45,
-                'cyan'    => 46,
-                'white'   => 47
-            )
-        );
+    static protected $_colors = array(
+        'color'      => array(
+            'black'   => 30,
+            'red'     => 31,
+            'green'   => 32,
+            'yellow'  => 33,
+            'blue'    => 34,
+            'magenta' => 35,
+            'cyan'    => 36,
+            'white'   => 37
+        ),
+        'style'      => array(
+            'bright'    => 1,
+            'dim'       => 2,
+            'underline' => 4,
+            'blink'     => 5,
+            'reverse'   => 7,
+            'hidden'    => 8
+        ),
+        'background' => array(
+            'black'   => 40,
+            'red'     => 41,
+            'green'   => 42,
+            'yellow'  => 43,
+            'blue'    => 44,
+            'magenta' => 45,
+            'cyan'    => 46,
+            'white'   => 47
+        )
+    );
     static protected $_enabled = null;
 
     static protected $_string_cache = array();
