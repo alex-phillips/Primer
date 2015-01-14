@@ -129,12 +129,12 @@ class Console extends ConsoleObject
         /*
          * Set application verbosity based on flags
          */
-        $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_NORMAL);
+        self::$_stdout->setApplicationVerbosity(Writer::VERBOSITY_NORMAL);
         if ($this->_arguments->flags['q']->getValue()) {
-            $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_QUIET);
+            self::$_stdout->setApplicationVerbosity(Writer::VERBOSITY_QUIET);
         }
         else if ($this->_arguments->flags['v']->getValue()) {
-            $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_VERBOSE);
+            self::$_stdout->setApplicationVerbosity(Writer::VERBOSITY_VERBOSE);
         }
 
         $parsedCommands = $this->_arguments->getParsedCommands();

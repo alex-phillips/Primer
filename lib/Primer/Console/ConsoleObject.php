@@ -20,28 +20,33 @@ abstract class ConsoleObject
      *
      * @var Writer
      */
-    protected $_stdout;
+    protected static $_stdout;
 
     /**
      * Object to handle writing to std error
      *
      * @var
      */
-    protected $_stderr;
+    protected static $_stderr;
 
     /**
      * Object to handle standard input from user
      *
      * @var
      */
-    protected $_stdin;
+    protected static $_stdin;
+
+    protected static $_init = false;
 
     public function __construct()
     {
-        $this->_stdout = new Writer(Writer::STREAM_STDOUT);
-        $this->_stderr = new Writer(Writer::STREAM_STDERR);
-        $this->_stdin = new Reader(Reader::STREAM_READ);
-        $this->setupStyles();
+        if (!self::$_init) {
+            self::$_stdout = new Writer(Writer::STREAM_STDOUT);
+            self::$_stderr = new Writer(Writer::STREAM_STDERR);
+            self::$_stdin = new Reader(Reader::STREAM_READ);
+
+            $this->setupStyles();
+        }
     }
 
     protected function setupStyles()
@@ -56,12 +61,12 @@ abstract class ConsoleObject
         $this->setFormatter('error', $error);
 
         $exception = new StyleFormatter('white', 'red');
-        $this->_stderr->setFormatter('exception', $exception);
+        self::$_stderr->setFormatter('exception', $exception);
     }
 
     public function setFormatter($xmlTag, StyleFormatter $displayFormat)
     {
-        $this->_stdout->setFormatter($xmlTag, $displayFormat);
+        self::$_stdout->setFormatter($xmlTag, $displayFormat);
     }
 
     /**
@@ -71,26 +76,26 @@ abstract class ConsoleObject
      */
     public function getStdout()
     {
-        return $this->_stdout;
+        return self::$_stdout;
     }
 
     public function out($message, $numberOfNewLines = 1, $verbosityLevel = Writer::VERBOSITY_NORMAL, $eol = Writer::LF)
     {
-        $this->_stdout->setVerbosityForOutput($verbosityLevel);
-        $this->_stdout->writeMessage($message, $numberOfNewLines, $eol);
+        self::$_stdout->setVerbosityForOutput($verbosityLevel);
+        self::$_stdout->writeMessage($message, $numberOfNewLines, $eol);
     }
 
     public function outPadded($message, $numberOfNewLines = 1, $verbosityLevel = Writer::VERBOSITY_NORMAL, $eol = Writer::LF)
     {
-        $this->_stdout->setVerbosityForOutput($verbosityLevel);
-        $this->_stdout->writeMessage(
+        self::$_stdout->setVerbosityForOutput($verbosityLevel);
+        self::$_stdout->writeMessage(
             str_pad($message, $this->columns()), $numberOfNewLines, $eol
         );
     }
 
     public function line($eol = Writer::LF)
     {
-        $this->_stdout->writeMessage('', 1, $eol);
+        self::$_stdout->writeMessage('', 1, $eol);
     }
 
     public function format($message)
@@ -122,8 +127,8 @@ abstract class ConsoleObject
     }
 
     public function err($message, $numberOfNewLines = 1, $verbosityLevel = Writer::VERBOSITY_NORMAL, $eol = Writer::LF) {
-        $this->_stdout->setVerbosityForOutput($verbosityLevel);
-        $this->_stderr->writeMessage(
+        self::$_stdout->setVerbosityForOutput($verbosityLevel);
+        self::$_stderr->writeMessage(
             $message, $numberOfNewLines, $eol
         );
     }
@@ -134,7 +139,7 @@ abstract class ConsoleObject
             $this->out($message);
         }
 
-        return $this->_stdin->getReadedValue();
+        return self::$_stdin->getReadedValue();
     }
 
     public function json($data)

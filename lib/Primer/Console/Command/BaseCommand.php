@@ -93,14 +93,14 @@ abstract class BaseCommand extends ConsoleObject
     private function _setOutputSystemVerbosity()
     {
         if ($this->_isVerboseSet()) {
-            $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_VERBOSE);
+            self::$_stdout->setApplicationVerbosity(Writer::VERBOSITY_VERBOSE);
         }
         else {
             if ($this->_isQuietSet()) {
-                $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_QUIET);
+                self::$_stdout->setApplicationVerbosity(Writer::VERBOSITY_QUIET);
             }
             else {
-                $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_NORMAL);
+                self::$_stdout->setApplicationVerbosity(Writer::VERBOSITY_NORMAL);
             }
         }
     }
