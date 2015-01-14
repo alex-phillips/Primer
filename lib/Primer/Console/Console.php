@@ -10,6 +10,7 @@ namespace Primer\Console;
 use Primer\Console\Command\BaseCommand;
 use Primer\Console\Arguments\Arguments;
 use Primer\Console\Exception\ExceptionHandler;
+use Primer\Console\Output\Writer;
 
 class Console extends ConsoleObject
 {
@@ -124,6 +125,18 @@ class Console extends ConsoleObject
     public function run()
     {
         $this->_arguments->parse();
+
+        /*
+         * Set application verbosity based on flags
+         */
+        $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_NORMAL);
+        if ($this->_arguments->flags['q']) {
+            $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_QUIET);
+        }
+        else if ($this->_arguments->flags['v']) {
+            $this->_stdout->setApplicationVerbosity(Writer::VERBOSITY_VERBOSE);
+        }
+
         $parsedCommands = $this->_arguments->getParsedCommands();
         if (count($parsedCommands) === 1) {
             $this->_callApplication($parsedCommands[0]);
