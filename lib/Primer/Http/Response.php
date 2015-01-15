@@ -372,7 +372,17 @@ class Response extends Object
         return $this;
     }
 
-    private function setContent($content)
+    public function setStatusCode($code)
+    {
+        $this->_status = $code;
+    }
+
+    public function getStatusCode()
+    {
+        return $this->_status;
+    }
+
+    public function setContent($content)
     {
         if (!is_string($content)) {
             throw new \ErrorException('Body for response content must be a string or implement __toString() function');
@@ -436,5 +446,14 @@ class Response extends Object
 
         $this->sendHeaders();
         exit(1);
+    }
+
+    public function getStatusCodeText($code)
+    {
+        if (isset($this->_statusCodes[$code])) {
+            return $this->_statusCodes[$code];
+        }
+
+        return null;
     }
 }

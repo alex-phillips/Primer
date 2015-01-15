@@ -5,6 +5,7 @@ namespace Primer\View;
 use Primer\Controller\Controller;
 use Primer\Core\Object;
 use Primer\Utility\Paginator;
+use Primer\View\Exception\MissingViewException;
 use Whoops\Example\Exception;
 
 /**
@@ -12,20 +13,6 @@ use Whoops\Example\Exception;
  */
 class View extends Object
 {
-    /**
-     * Additional CSS files to be included at render
-     *
-     * @var string
-     */
-    private static $_cssFiles = array();
-
-    /**
-     * Additional JS files to be included at render
-     *
-     * @var array
-     */
-    private static $_jsFiles = array();
-
     public $paginationConfig = array();
 
     /**
@@ -63,14 +50,30 @@ class View extends Object
     public $rendered = false;
 
     /**
+     * Additional CSS files to be included at render
+     *
+     * @var string
+     */
+    private static $_cssFiles = array();
+
+    /**
+     * Additional JS files to be included at render
+     *
+     * @var array
+     */
+    private static $_jsFiles = array();
+
+    /**
      * Constructor
      */
-    public function __construct(Controller $controller)
+    public function __construct(Controller $controller = null)
     {
-        $this->paginationConfig = $controller->paginationConfig;
+        if ($controller) {
+            $this->paginationConfig = $controller->paginationConfig;
+            $this->viewVars = $controller->viewVars;
+        }
 
         $this->paginator = new Paginator($this->paginationConfig);
-        $this->viewVars = $controller->viewVars;
     }
 
     /**
@@ -148,19 +151,29 @@ class View extends Object
      *
      * @return mixed|string
      */
-    public function render($view, $template)
+    public function render($view, $template = null)
     {
-        // @TODO: modify code to use a proper reponse class
         if (ob_get_contents()) {
             ob_clean();
         }
         ob_start();
 
         $view = str_replace('.', '/', $view);
-        $this->filename = 'Views/' . $view . '.php';
+        $this->filename = APP_ROOT . '/Views/' . $view . '.php';
 
         extract($this->viewVars);
-        require_once("Views/templates/$this->template.php");
+        if ($template) {
+            if (!file_exists(APP_ROOT . "/Views/templates/$this->template.php")) {
+                throw new MissingViewException($this->template);
+            }
+            require(APP_ROOT . "/Views/templates/$this->template.php");
+        }
+        else {
+            if (!file_exists($this->filename)) {
+                throw new MissingViewException($this->filename);
+            }
+            require($this->filename);
+        }
 
         if ($response = ob_get_contents()) {
             ob_end_clean();
@@ -185,6 +198,9 @@ class View extends Object
 
         try {
             extract($this->viewVars);
+            if (!file_exists($partial)) {
+                throw new MissingViewException($partial);
+            }
             require_once($partial);
         }
         catch (Exception $e) {

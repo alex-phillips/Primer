@@ -3,7 +3,9 @@
 namespace Primer\Controller;
 
 use Primer\Http\Request;
+use Primer\Http\Response;
 use Primer\Utility\Inflector;
+use Primer\Controller\Exception\MissingActionException;
 
 /**
  * This is the "base controller class". All other "real" controllers extend this class.
@@ -37,8 +39,12 @@ class Controller
             'query'    => 'q',
         );
 
-    public function __construct()
+    public function __construct(Request $request, Response $response)
     {
+        $this->request = $request;
+        $this->response = $response;
+
+        // @TODO: Clean this up - we should instantiate a default model.
         $modelName = ucfirst(
             strtolower(
                 Inflector::singularize(
@@ -47,7 +53,6 @@ class Controller
             )
         );
 
-        // @TODO: Clean this up - we should instantiate a default model.
         if (class_exists($modelName)) {
             $this->{$modelName} = new $modelName;
         }
@@ -95,7 +100,7 @@ class Controller
             return $this->render();
         }
         catch (\ReflectionException $e) {
-            $test = 1;
+            throw new MissingActionException($request->params['action']);
         }
     }
 
@@ -123,7 +128,7 @@ class Controller
         $this->view = implode('.', $this->view);
     }
 
-    protected function render($view = null, $template = 'default')
+    public function render($view = null, $template = 'default')
     {
         $viewObject = $this->_getViewObject();
         $view = $view ?: $this->view;

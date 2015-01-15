@@ -8,31 +8,29 @@
 namespace Primer\Http;
 
 use Primer\Core\Object;
-use Primer\Routing\Route;
 use Primer\Utility\ParameterBag;
 
 class Request extends Object
 {
+    public $url = '';
+    public $requestMethod;
     public $post = array();
     public $query = array();
     public $files = array();
-    public $params = array();
-    public $controller;
-    public $action;
-    private $_requestMethod;
+    public $params;
 
-    public function __construct(Route $route)
+    public function __construct($url = '', $params = array())
     {
-        $this->params = $route->getParameters();
-        $this->params['pass'] = array();
+        $this->parseRequestUrl($url);
 
-        foreach ($this->params as $key => $value) {
-            if (property_exists($this, $key)) {
-                $this->$key = $value;
-            }
-            else {
-                $this->params['pass'][$key] = $value;
-            }
+        $this->params = new ParameterBag(array(
+                'controller' => '',
+                'action'     => '',
+                'pass'       => array(),
+            ));
+
+        if ($params) {
+            $this->addParams($params);
         }
 
         $this->post = new ParameterBag($_POST);
@@ -43,17 +41,25 @@ class Request extends Object
                 $this->files[$name] = $info;
             }
         }
-
-        $this->_requestMethod = $_SERVER['REQUEST_METHOD'];
     }
 
     public function is($type)
     {
-        if (strcasecmp($this->_requestMethod, $type) == 0) {
+        if (strcasecmp($this->requestMethod, $type) == 0) {
             return true;
         }
 
         return false;
+    }
+
+    public function here($base = true)
+    {
+        $url = $this->url;
+        if (!empty($this->query)) {
+            $url .= http_build_query($this->query, null, '&');
+        }
+
+        return $url;
     }
 
     public function post()
@@ -73,11 +79,44 @@ class Request extends Object
 
     public function getController()
     {
-        return $this->controller;
+        return $this->params->get('controller');
     }
 
     public function getAction()
     {
-        return $this->action;
+        return $this->params->get('action');
+    }
+
+    public function setRequestUrl($url)
+    {
+        $this->parseRequestUrl($url);
+    }
+
+    public function addParams($params)
+    {
+        foreach ($params as $k => $v) {
+            if ($this->params->has($k)) {
+                $this->params[$k] = $v;
+            }
+            else {
+                $this->params["pass.$k"] = $v;
+            }
+        }
+    }
+
+    private function parseRequestUrl($url = '')
+    {
+        $this->requestMethod = (isset($_POST['_method']) && ($_method = strtoupper($_POST['_method'])) && in_array($_method,array('PUT','DELETE'))) ? $_method : $_SERVER['REQUEST_METHOD'];
+
+        if (!$url) {
+            $url = $_SERVER['REQUEST_URI'];
+        }
+
+        // strip GET variables from URL
+        if (($pos = strpos($url, '?')) !== false) {
+            $url =  substr($url, 0, $pos);
+        }
+
+        $this->url = $url;
     }
 }

@@ -1,35 +1,39 @@
 <?php
-/**
- * Class Bootstrap
- */
-
 namespace Primer\Core;
 
 use ArrayAccess;
-use Monolog\Handler\RotatingFileHandler;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
 use Primer\Console\Console;
+use Primer\CLI\CLI;
+use Primer\Error\ExceptionHandler;
 use Primer\Http\Request;
 use Primer\Proxy\Proxy;
 use Primer\Routing\Dispatcher;
 use Primer\Utility\ParameterBag;
 use Primer\Utility\Paginator;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Whoops\Exception\ErrorException;
 use Whoops\Handler\PrettyPageHandler;
 use Whoops\Run;
 
 class Application extends Container
 {
-    /*
+    /**
      * Contains values that may be accessible throughout the framework
+     *
+     * @var array
      */
     private $_values = array();
 
-    /*
+    /**
      * Contains values to be passed and used in JavaScript through RequireJS
+     *
+     * @var array
      */
     private $_jsValues = array();
+
+    const VERSION = '0.1';
 
     /**
      * Starts the bootstrap
@@ -63,23 +67,32 @@ class Application extends Container
 
         $this->bind(
             'Primer\\Mail\\Mail',
-            function ($this) {
-                return new Mail($this['config']['email']);
+            function ($app) {
+                return new Mail($app['config']['email']);
+            }
+        );
+        $this->bind(
+            'Primer\\Routing\\Dispatcher',
+            function ($app) {
+                $dispatcher = new Dispatcher($app['request'], $app['response'], $app['router']);
+                $dispatcher->setApp($app);
+
+                return $dispatcher;
             }
         );
     }
 
     private function _readConfigs()
     {
-        $domain = '';
+        $domain = 'cli';
         if (!$this->isRunningInConsole()) {
             $domain = str_replace('www.', '', $_SERVER['SERVER_NAME']);
         }
 
         $files = scandir(APP_ROOT . DS . 'Config' . DS);
         foreach ($files as $file) {
-            if (preg_match("#$domain.php$#", $file)) {
-                $this['config']['app'] = require(APP_ROOT . '/Config/' . $file . '.php');
+            if (preg_match("#$domain\.php$#", $file)) {
+                $this['config']['app'] = require(APP_ROOT . '/Config/' . $file);
                 continue;
             }
 
@@ -90,7 +103,7 @@ class Application extends Container
 
         $this['config']['database'] = $this['config']['database'][$this['config']['app']['environment']];
 
-        if ($this['config']['app.debug'] === true || $this->isRunningInConsole()) {
+        if ($this['config']['app.debug'] === true) {
             error_reporting(E_ALL);
             ini_set("display_errors", 1);
 
@@ -103,10 +116,15 @@ class Application extends Container
         else {
             error_reporting(0);
             ini_set("display_errors", 0);
+
+            if (!$this->isRunningInConsole()) {
+                ExceptionHandler::setApp($this);
+                set_exception_handler('Primer\\Error\\ExceptionHandler::handleException');
+            }
         }
     }
 
-    private function isRunningInConsole()
+    public function isRunningInConsole()
     {
         return php_sapi_name() === 'cli';
     }
@@ -118,26 +136,30 @@ class Application extends Container
     private function _registerAliases()
     {
         $aliases = array(
-            'app'       => 'Primer\\Core\\Application',
-            'primer'    => 'Primer\\Core\\Application',
-            'router'    => 'Primer\\Routing\\Router',
-            'view'      => 'Primer\\View\\View',
-            'ioc'       => 'Primer\\IOC\\IOC',
-            'session'   => 'Primer\\Session\\Session',
-            'auth'      => 'Primer\\Security\\Auth',
-            'request'   => 'Primer\\Http\\Request',
-            'mail'      => 'Primer\\Mail\\Mail',
-            'security'  => 'Primer\\Utility\\Security',
-            'form'      => 'Primer\\Form\\Form',
-            'response'  => 'Primer\\Http\\Response',
-            'cookie'    => 'Primer\\Http\\Cookie',
+            'app'        => 'Primer\\Core\\Application',
+            'primer'     => 'Primer\\Core\\Application',
+            'router'     => 'Primer\\Routing\\Router',
+            'view'       => 'Primer\\View\\View',
+            'ioc'        => 'Primer\\IOC\\IOC',
+            'session'    => 'Primer\\Session\\Session',
+            'auth'       => 'Primer\\Security\\Auth',
+            'request'    => 'Primer\\Http\\Request',
+            'mail'       => 'Primer\\Mail\\Mail',
+            'security'   => 'Primer\\Utility\\Security',
+            'form'       => 'Primer\\Form\\Form',
+            'response'   => 'Primer\\Http\\Response',
+            'cookie'     => 'Primer\\Http\\Cookie',
+            'console'    => 'Primer\\Console\\Console',
+            'cli'        => 'Primer\\CLI\\CLI',
+            'dispatcher' => 'Primer\\Routing\\Dispatcher',
+            'controller' => 'Primer\\Controller\\Controller',
 
             /*
              * Third-party aliasing
              */
-            'logger'    => 'Monolog\\Logger',
-            'Inflector' => 'Primer\\Utility\\Inflector',
-            'Carbon'    => 'Carbon\\Carbon',
+            'logger'     => 'Monolog\\Logger',
+            'Inflector'  => 'Primer\\Utility\\Inflector',
+            'Carbon'     => 'Carbon\\Carbon',
         );
 
         foreach ($aliases as $alias => $class) {
@@ -180,9 +202,13 @@ class Application extends Container
         $this->singleton('Primer\\Session\\Session');
         $this->singleton('Primer\\Security\\Auth');
         $this->singleton('Primer\\Routing\\Router');
-        $this->singleton('Primer\\Http\\Request', function($app) {
-                return new Request($app['router']->matchCurrentRequest());
-            });
+        $this->singleton('Primer\\Http\\Request');
+        $this->singleton('Primer\\CLI\\CLI', function ($app) {
+            $cli = new CLI();
+            $cli->setApp($app);
+
+            return $cli;
+        });
         $this->singleton(
             'Primer\\Datasource\\Database',
             function () {
@@ -198,39 +224,62 @@ class Application extends Container
 
             $fileName = $app['config']['app.logfile'];
             if ($app['config']['app.log_daily_files'] === true) {
-                $logger->pushHandler(new RotatingFileHandler(LOG_PATH . $fileName, 7));
+                $logger->pushHandler(new RotatingFileHandler($app['config']['app.log_path'] . $fileName, 7));
             }
             else {
-                $logger->pushHandler(new StreamHandler(LOG_PATH . $fileName));
+                $logger->pushHandler(new StreamHandler($app['config']['app.log_path'] . $fileName));
             }
 
             return $logger;
         });
+        $this->singleton('Primer\\Console\\Console', function($app) {
+            $version = self::VERSION;
+
+            // Styling is 'graffiti' from bigtext.org
+            $logo = <<<__TEXT__
+__________        .__
+\______   \_______|__| _____   ___________
+ |     ___/\_  __ \  |/     \_/ __ \_  __ \
+ |    |     |  | \/  |  Y Y  \  ___/|  | \/
+ |____|     |__|  |__|__|_|  /\___  >__|
+                           \/     \/
+__TEXT__;
+
+            $cli = new Console('Prime', self::VERSION);
+            $cli->setApp($app);
+            $cli->setLogo($logo);
+
+            return $cli;
+        }
+        );
     }
 
     public function run()
     {
-        /*
-         * If the server is down for maintenance, only instantiate necessary
-         * objects to send response.
-         */
-        if ($this->isServerDown()) {
-            $this['view']->set('title', 'Down for Maintenance');
-            $this['view']->useTemplate('ajax');
-            $this['response']->set($this['view']->render('errors/maintenance'))->send();
-            exit(1);
-        }
-
-        require_once(APP_ROOT . '/Config/routes.php');
-
         if ($this->isRunningInConsole()) {
-            $console = new Console();
-            $console->run();
+            $this['console']->run();
         }
         else {
-            $dispatcher = new Dispatcher($this['request']);
-            $this['response']->set($dispatcher->dispatch())->send();
+            /*
+             * If the server is down for maintenance, only instantiate necessary
+             * objects to send response.
+             */
+            if ($this->isServerDown()) {
+                $this['response']->set($this['view']->render('errors/maintenance'))->send();
+                exit(1);
+            }
+
+            $this['response']->set($this['dispatcher']->dispatch())->send();
         }
+    }
+
+    private function isServerDown()
+    {
+        if (file_exists(APP_ROOT . DS . 'Config/down')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -260,8 +309,8 @@ class Application extends Container
 
     public function abort($code = 404)
     {
-        $this['view']->set('title', 'Page Not Found');
-        $this['response']->set($this['view']->render('errors/404'), $code)->send();
+
+        $this['response']->set($this['view']->render('errors/404', 'default'), $code)->send();
         exit(1);
     }
 
@@ -431,14 +480,5 @@ class Application extends Container
     public function offsetUnset($key)
     {
         unset($this->_aliases[$key]);
-    }
-
-    private function isServerDown()
-    {
-        if (file_exists(APP_ROOT . DS . 'Config/down')) {
-            return true;
-        }
-
-        return false;
     }
 }

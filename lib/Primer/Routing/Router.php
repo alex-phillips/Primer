@@ -64,16 +64,8 @@ class Router
     /**
      * Matches the current request against mapped routes
      */
-    public function matchCurrentRequest()
+    public function matchRequest($requestUrl, $requestMethod)
     {
-        $requestMethod = (isset($_POST['_method']) && ($_method = strtoupper($_POST['_method'])) && in_array($_method,array('PUT','DELETE'))) ? $_method : $_SERVER['REQUEST_METHOD'];
-        $requestUrl = $_SERVER['REQUEST_URI'];
-
-        // strip GET variables from URL
-        if (($pos = strpos($requestUrl, '?')) !== false) {
-            $requestUrl =  substr($requestUrl, 0, $pos);
-        }
-
         return $this->match($requestUrl, $requestMethod);
     }
 
@@ -124,7 +116,6 @@ class Router
             if ($params) {
                 $routes->addParameters($params);
             }
-//            $routes->dispatch();
 
             return $routes;
         }

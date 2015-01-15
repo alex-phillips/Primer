@@ -3,7 +3,7 @@
 namespace Primer\Data;
 
 use PDO;
-use PDOException;
+use Primer\Data\Exception\MissingConnectionException;
 use Primer\Proxy\Config;
 
 class Database
@@ -31,8 +31,8 @@ class Database
                         $config['password'],
                         $options
                     );
-                } catch (PDOException $e) {
-                    die('Database connection could not be established.');
+                } catch (MissingConnectionException $e) {
+                    throw new MissingConnectionException('MySQL');
                 }
                 break;
             case 'sqlite3':
@@ -43,8 +43,8 @@ class Database
                     }
 
                     $this->_dbHandle = new PDO("sqlite:" . $config['path']);
-                } catch(PDOException $e) {
-                    die('Database connection could not be established.');
+                } catch(MissingConnectionException $e) {
+                    throw new MissingConnectionException('SQLite3');
                 }
                 break;
             case 'postgres':
