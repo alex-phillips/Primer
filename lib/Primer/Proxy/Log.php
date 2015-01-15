@@ -21,10 +21,10 @@ class Log extends Proxy
         if (!array_key_exists($file, self::$_channels)) {
             $logger = new Logger($file);
             if (static::$_app['config']['app.log_daily_files'] === true) {
-                $logger->pushHandler(new RotatingFileHandler(LOG_PATH . $file, 7));
+                $logger->pushHandler(new RotatingFileHandler(static::$_app['config']['app.log_path'] . $file, 7));
             }
             else {
-                $logger->pushHandler(new StreamHandler(LOG_PATH . $file));
+                $logger->pushHandler(new StreamHandler(static::$_app['config']['app.log_path'] . $file));
             }
 
             self::$_channels[$file] = $logger;
