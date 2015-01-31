@@ -123,8 +123,17 @@ class Lexer extends Memoize implements Iterator
 
     private function _shift()
     {
-        $this->_item = new Argument(array_shift($this->_items));
-        $this->_index += 1;
+        $key = array_shift($this->_items);
+        if (preg_match('#\A([^\s\'"=]+)=(.+?)$#', $key, $matches)) {
+            $key = $matches[1];
+            array_unshift($this->_items, $matches[2]);
+        }
+        else {
+            // Only push index ahead if no value was added
+            $this->_index += 1;
+        }
+
+        $this->_item = new Argument($key);
         $this->_explode();
         $this->_unmemo('peek');
     }
