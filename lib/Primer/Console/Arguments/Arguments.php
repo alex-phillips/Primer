@@ -501,6 +501,7 @@ class Arguments implements ArrayAccess
         }
 
         $this[$key] = $value;
+        $this->options[$key]->setExists($value);
         $this->options[$key]->setValue($value);
 
         return true;
